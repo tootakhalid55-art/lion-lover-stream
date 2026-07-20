@@ -66,7 +66,10 @@ function WatchPage() {
     <div className="min-h-dvh bg-background">
       <div className="mx-auto max-w-6xl px-4 py-6">
         <button
-          onClick={() => navigate({ to: ".." as "/" })}
+          onClick={() => {
+            if (window.history.length > 1) router.history.back();
+            else router.navigate({ to: "/" });
+          }}
           className="inline-flex items-center gap-1 text-sm text-foreground/70 hover:text-foreground"
         >
           <ArrowRight className="h-4 w-4" /> رجوع
