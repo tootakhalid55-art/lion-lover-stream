@@ -17,10 +17,11 @@ export function HealthBanner() {
 
     async function tick() {
       try {
-        const r = (await api.system?.health()) ?? { ok: true };
+        const r = (await api.system?.health()) ?? { ok: true, message: undefined };
         if (cancelled) return;
-        setState({ ok: r.ok, message: r.message });
+        setState({ ok: r.ok, message: "message" in r ? r.message : undefined });
         backoff = r.ok ? POLL_MS : Math.min(120_000, backoff * 1.5);
+
       } catch {
         if (cancelled) return;
         setState({ ok: false, message: "تعذّر الاتصال بالخادم" });
