@@ -164,30 +164,34 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
             ))}
           </div>
           <div className="mt-4 flex flex-wrap gap-2.5">
-            <button
-              type="button"
+            <Link
+              to={heroWatchPath(h.id) as "/"}
               onClick={() => track({ name: "hero_interacted", heroId: h.id, action: "play" })}
               className="inline-flex items-center gap-1.5 rounded-full bg-pill px-5 py-2.5 text-sm font-extrabold text-pill-foreground shadow-lg transition duration-200 hover:brightness-110 hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-nav-active focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <Play className="h-4 w-4 fill-current" />
               تشغيل الآن
-            </button>
+            </Link>
             <button
               type="button"
-              onClick={() => track({ name: "hero_interacted", heroId: h.id, action: "add_list" })}
+              onClick={() => {
+                const inner = h.id.startsWith("hero-") ? h.id.slice(5) : h.id;
+                const nowFav = toggleFavorite({ id: inner, title: h.title, imageUrl: h.imageUrl, gradient: h.gradient, year: h.year, rating: h.imdb });
+                track({ name: "hero_interacted", heroId: h.id, action: nowFav ? "add_list" : "remove_list" });
+              }}
               className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-5 py-2.5 text-sm font-extrabold text-foreground ring-1 ring-white/15 backdrop-blur-md transition duration-200 hover:bg-white/20 hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-nav-active"
             >
               <Plus className="h-4 w-4" />
-              أضف إلى قائمتي
+              {favBookmarked ? "في قائمتي" : "أضف إلى قائمتي"}
             </button>
-            <button
-              type="button"
+            <Link
+              to={heroDetailPath(h.id) as "/"}
               aria-label="تفاصيل"
               onClick={() => track({ name: "hero_interacted", heroId: h.id, action: "info" })}
               className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3.5 py-2.5 text-sm font-bold text-foreground/85 ring-1 ring-white/10 backdrop-blur transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-nav-active"
             >
               <Info className="h-4 w-4" />
-            </button>
+            </Link>
           </div>
         </div>
 
