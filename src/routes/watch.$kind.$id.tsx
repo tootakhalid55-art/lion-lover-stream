@@ -14,7 +14,7 @@ export const Route = createFileRoute("/watch/$kind/$id")({
 function WatchPage() {
   const { kind, id } = Route.useParams();
   const { ext } = Route.useSearch();
-  const navigate = useNavigate();
+  const router = useRouter();
   const fullId = `${kind}:${id}`;
   const [src, setSrc] = useState<string | null>(null);
   const [meta, setMeta] = useState<{ title: string; imageUrl?: string; gradient: string; year: string } | null>(null);
