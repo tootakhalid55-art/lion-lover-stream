@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Clock, Film, LayoutGrid, Mic, Search, TrendingUp, Tv, Users, X } from "lucide-react";
 import { api } from "@/services/api";
 import { GlassPanel } from "@/components/primitives/GlassPanel";
@@ -6,6 +7,7 @@ import { Section } from "@/components/primitives/Section";
 import { HighlightMatch } from "@/components/primitives/HighlightMatch";
 import { readJSON, writeJSON } from "@/lib/storage";
 import { track } from "@/lib/analytics";
+import { detailPath } from "@/lib/user-data";
 import type { Poster } from "@/services/api/types";
 
 const CATEGORIES = [
@@ -113,15 +115,16 @@ export function SearchPanel({ onClose }: { onClose: () => void }) {
             <ul className="space-y-1">
               {suggestions.map((s) => (
                 <li key={s.id}>
-                  <button
-                    onClick={() => commit(s.title)}
+                  <Link
+                    to={detailPath(s.id) as "/"}
+                    onClick={() => { commit(s.title); onClose(); }}
                     className="w-full flex items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm text-foreground hover:bg-white/5"
                   >
                     <span className="truncate">
                       <HighlightMatch text={s.title} query={q} />
                     </span>
                     <span className="text-[11px] text-muted-foreground">{s.year}</span>
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>

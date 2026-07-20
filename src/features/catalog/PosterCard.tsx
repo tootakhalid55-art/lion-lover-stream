@@ -1,20 +1,21 @@
 import { useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Bookmark, Play, Star } from "lucide-react";
 import type { Poster } from "@/services/api/types";
 import { useInView } from "@/hooks/use-in-view";
 import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion";
 import { track } from "@/lib/analytics";
 import { BadgePill } from "./BadgePill";
+import { detailPath, isFavorite, toggleFavorite, useFavorites } from "@/lib/user-data";
 
 /**
- * Portrait 2:3 poster card.
- * Interactions: hover parallax (desktop), long-press bookmark (touch),
- * click bookmark toggle. Skeleton until in view.
+ * Portrait 2:3 poster card. Navigates to the appropriate detail page.
  */
 export function PosterCard({ poster, eager, rowId }: { poster: Poster; eager?: boolean; rowId: string }) {
   const { ref: inViewRef, inView } = useInView<HTMLDivElement>();
   const visible = eager || inView;
-  const [bookmarked, setBookmarked] = useState(false);
+  const favs = useFavorites();
+  const bookmarked = favs.some((f) => f.id === poster.id);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const reduced = usePrefersReducedMotion();
@@ -36,9 +37,21 @@ export function PosterCard({ poster, eager, rowId }: { poster: Poster; eager?: b
     el.style.setProperty("--ry", "0deg");
   };
 
+  const doToggle = () => {
+    const nowFav = toggleFavorite({
+      id: poster.id,
+      title: poster.title,
+      imageUrl: poster.imageUrl,
+      gradient: poster.gradient,
+      year: poster.year,
+      rating: poster.rating,
+    });
+    track({ name: "favorite_toggled", posterId: poster.id, value: nowFav });
+  };
+
   const startPress = () => {
     longPressTimer.current = setTimeout(() => {
-      toggle();
+      doToggle();
       navigator.vibrate?.(20);
     }, 500);
   };
@@ -49,16 +62,10 @@ export function PosterCard({ poster, eager, rowId }: { poster: Poster; eager?: b
     }
   };
 
-  const toggle = () => {
-    setBookmarked((b) => {
-      track({ name: "favorite_toggled", posterId: poster.id, value: !b });
-      return !b;
-    });
-  };
-
   const toggleBookmark = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    toggle();
+    doToggle();
     navigator.vibrate?.(10);
   };
 
@@ -67,8 +74,8 @@ export function PosterCard({ poster, eager, rowId }: { poster: Poster; eager?: b
     poster.badges?.filter((b) => b === "HDR" || b === "DOLBY_VISION" || b === "DOLBY_ATMOS") ?? [];
 
   return (
-    <button
-      type="button"
+    <Link
+      to={detailPath(poster.id) as "/"}
       aria-label={`${poster.title} ${poster.year}${poster.rating ? `، تقييم ${poster.rating}` : ""}`}
       onTouchStart={startPress}
       onTouchEnd={endPress}
@@ -113,9 +120,11 @@ export function PosterCard({ poster, eager, rowId }: { poster: Poster; eager?: b
                   </span>
                 )}
               </div>
-              <button
-                type="button"
+              <span
+                role="button"
+                tabIndex={0}
                 onClick={toggleBookmark}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); doToggle(); } }}
                 aria-label={bookmarked ? "إزالة من قائمتي" : "أضف إلى قائمتي"}
                 aria-pressed={bookmarked}
                 className={`grid h-7 w-7 place-items-center rounded-full backdrop-blur transition ${
@@ -123,7 +132,7 @@ export function PosterCard({ poster, eager, rowId }: { poster: Poster; eager?: b
                 }`}
               >
                 <Bookmark className={`h-3.5 w-3.5 ${bookmarked ? "fill-current" : ""}`} />
-              </button>
+              </span>
             </div>
 
             {poster.badges?.includes("TOP10") && poster.rank !== undefined && (
@@ -212,6 +221,6 @@ export function PosterCard({ poster, eager, rowId }: { poster: Poster; eager?: b
       <p className="mt-2 truncate text-xs text-foreground/85">
         {poster.title} · {poster.year}
       </p>
-    </button>
+    </Link>
   );
 }

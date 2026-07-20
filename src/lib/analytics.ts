@@ -8,7 +8,7 @@
 
 export type AnalyticsEvent =
   | { name: "home_viewed" }
-  | { name: "hero_interacted"; heroId: string; action: "play" | "add_list" | "info" | "dot" | "swipe" }
+  | { name: "hero_interacted"; heroId: string; action: "play" | "add_list" | "remove_list" | "info" | "dot" | "swipe" }
   | { name: "poster_clicked"; posterId: string; row: string }
   | { name: "favorite_toggled"; posterId: string; value: boolean }
   | { name: "continue_watching_resumed"; posterId: string }

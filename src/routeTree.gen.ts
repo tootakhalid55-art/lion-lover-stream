@@ -10,7 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as MoreRouteImport } from './routes/more'
+import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SeriesIdRouteImport } from './routes/series.$id'
+import { Route as MovieIdRouteImport } from './routes/movie.$id'
+import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
 import { Route as ApiPublicStreamKindFileRouteImport } from './routes/api.public.stream.$kind.$file'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -18,9 +24,39 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MoreRoute = MoreRouteImport.update({
+  id: '/more',
+  path: '/more',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavoritesRoute = FavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SeriesIdRoute = SeriesIdRouteImport.update({
+  id: '/series/$id',
+  path: '/series/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MovieIdRoute = MovieIdRouteImport.update({
+  id: '/movie/$id',
+  path: '/movie/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WatchKindIdRoute = WatchKindIdRouteImport.update({
+  id: '/watch/$kind/$id',
+  path: '/watch/$kind/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicStreamKindFileRoute = ApiPublicStreamKindFileRouteImport.update({
@@ -31,31 +67,83 @@ const ApiPublicStreamKindFileRoute = ApiPublicStreamKindFileRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/favorites': typeof FavoritesRoute
+  '/more': typeof MoreRoute
+  '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/movie/$id': typeof MovieIdRoute
+  '/series/$id': typeof SeriesIdRoute
+  '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/favorites': typeof FavoritesRoute
+  '/more': typeof MoreRoute
+  '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/movie/$id': typeof MovieIdRoute
+  '/series/$id': typeof SeriesIdRoute
+  '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/favorites': typeof FavoritesRoute
+  '/more': typeof MoreRoute
+  '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/movie/$id': typeof MovieIdRoute
+  '/series/$id': typeof SeriesIdRoute
+  '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/settings' | '/api/public/stream/$kind/$file'
+  fullPaths:
+    | '/'
+    | '/favorites'
+    | '/more'
+    | '/search'
+    | '/settings'
+    | '/movie/$id'
+    | '/series/$id'
+    | '/watch/$kind/$id'
+    | '/api/public/stream/$kind/$file'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings' | '/api/public/stream/$kind/$file'
-  id: '__root__' | '/' | '/settings' | '/api/public/stream/$kind/$file'
+  to:
+    | '/'
+    | '/favorites'
+    | '/more'
+    | '/search'
+    | '/settings'
+    | '/movie/$id'
+    | '/series/$id'
+    | '/watch/$kind/$id'
+    | '/api/public/stream/$kind/$file'
+  id:
+    | '__root__'
+    | '/'
+    | '/favorites'
+    | '/more'
+    | '/search'
+    | '/settings'
+    | '/movie/$id'
+    | '/series/$id'
+    | '/watch/$kind/$id'
+    | '/api/public/stream/$kind/$file'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FavoritesRoute: typeof FavoritesRoute
+  MoreRoute: typeof MoreRoute
+  SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
+  MovieIdRoute: typeof MovieIdRoute
+  SeriesIdRoute: typeof SeriesIdRoute
+  WatchKindIdRoute: typeof WatchKindIdRoute
   ApiPublicStreamKindFileRoute: typeof ApiPublicStreamKindFileRoute
 }
 
@@ -68,11 +156,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/more': {
+      id: '/more'
+      path: '/more'
+      fullPath: '/more'
+      preLoaderRoute: typeof MoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favorites': {
+      id: '/favorites'
+      path: '/favorites'
+      fullPath: '/favorites'
+      preLoaderRoute: typeof FavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/series/$id': {
+      id: '/series/$id'
+      path: '/series/$id'
+      fullPath: '/series/$id'
+      preLoaderRoute: typeof SeriesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/movie/$id': {
+      id: '/movie/$id'
+      path: '/movie/$id'
+      fullPath: '/movie/$id'
+      preLoaderRoute: typeof MovieIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/watch/$kind/$id': {
+      id: '/watch/$kind/$id'
+      path: '/watch/$kind/$id'
+      fullPath: '/watch/$kind/$id'
+      preLoaderRoute: typeof WatchKindIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/stream/$kind/$file': {
@@ -87,7 +217,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FavoritesRoute: FavoritesRoute,
+  MoreRoute: MoreRoute,
+  SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
+  MovieIdRoute: MovieIdRoute,
+  SeriesIdRoute: SeriesIdRoute,
+  WatchKindIdRoute: WatchKindIdRoute,
   ApiPublicStreamKindFileRoute: ApiPublicStreamKindFileRoute,
 }
 export const routeTree = rootRouteImport

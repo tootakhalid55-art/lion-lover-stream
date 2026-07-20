@@ -1,25 +1,19 @@
+import { Link, useLocation } from "@tanstack/react-router";
 import { Bookmark, Home, MoreHorizontal, Search } from "lucide-react";
 import { useScrollState } from "@/hooks/use-scroll-state";
-import { usePersistentState } from "@/hooks/use-persistent-state";
 import { track } from "@/lib/analytics";
 
 const ITEMS = [
-  { label: "المزيد", icon: MoreHorizontal },
-  { label: "قائمتي", icon: Bookmark },
-  { label: "البحث", icon: Search },
-  { label: "الرئيسية", icon: Home },
+  { label: "المزيد", icon: MoreHorizontal, to: "/more" },
+  { label: "قائمتي", icon: Bookmark, to: "/favorites" },
+  { label: "البحث", icon: Search, to: "/search" },
+  { label: "الرئيسية", icon: Home, to: "/" },
 ] as const;
 
-/** Floating bottom navigation. Persists last-selected tab and hides on scroll-down. */
+/** Floating bottom navigation using real routes. */
 export function BottomNav() {
   const { hidden } = useScrollState();
-  const [active, setActive] = usePersistentState<string>("nav", "الرئيسية");
-
-  const tap = (label: string) => {
-    setActive(label);
-    track({ name: "navigation_tabbed", tab: label });
-    navigator.vibrate?.(8);
-  };
+  const pathname = useLocation({ select: (s) => s.pathname });
 
   return (
     <nav
@@ -32,12 +26,12 @@ export function BottomNav() {
       <ul className="flex items-center justify-around rounded-full border border-white/10 bg-neutral-900/60 px-2 py-2 shadow-2xl backdrop-blur-xl">
         {ITEMS.map((it) => {
           const Icon = it.icon;
-          const isActive = active === it.label;
+          const isActive = it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);
           return (
             <li key={it.label}>
-              <button
-                type="button"
-                onClick={() => tap(it.label)}
+              <Link
+                to={it.to}
+                onClick={() => { track({ name: "navigation_tabbed", tab: it.label }); navigator.vibrate?.(8); }}
                 aria-current={isActive ? "page" : undefined}
                 aria-label={it.label}
                 className={`relative flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-full px-3 py-1.5 transition-all duration-300 active:scale-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-nav-active ${
@@ -52,7 +46,7 @@ export function BottomNav() {
                 {isActive && (
                   <span aria-hidden className="absolute -bottom-1 h-1 w-1 rounded-full bg-nav-active motion-safe:animate-glow" />
                 )}
-              </button>
+              </Link>
             </li>
           );
         })}
