@@ -1,7 +1,9 @@
+import { Link } from "@tanstack/react-router";
 import { Play } from "lucide-react";
 import type { Poster } from "@/services/api/types";
 import { useInView } from "@/hooks/use-in-view";
 import { track } from "@/lib/analytics";
+import { watchPath } from "@/lib/user-data";
 
 /** Landscape 16:9 resume card used in the Continue Watching row. */
 export function ContinueCard({ poster, eager }: { poster: Poster; eager?: boolean }) {
@@ -9,8 +11,8 @@ export function ContinueCard({ poster, eager }: { poster: Poster; eager?: boolea
   const visible = eager || inView;
   const pct = Math.round((poster.progress ?? 0) * 100);
   return (
-    <button
-      type="button"
+    <Link
+      to={watchPath(poster.id) as "/"}
       aria-label={`متابعة ${poster.title}، ${pct}٪ تمت المشاهدة`}
       onClick={() => track({ name: "continue_watching_resumed", posterId: poster.id })}
       className="group block w-full text-right focus:outline-none"
@@ -58,6 +60,6 @@ export function ContinueCard({ poster, eager }: { poster: Poster; eager?: boolea
           </div>
         )}
       </div>
-    </button>
+    </Link>
   );
 }
