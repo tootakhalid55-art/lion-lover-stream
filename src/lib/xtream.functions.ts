@@ -184,23 +184,25 @@ export const searchAll = createServerFn({ method: "POST" })
     if (!q) return [];
     const { xtream } = await import("./xtream.server");
     const { resolveCreds } = await import("./xtream-session.server");
+    const { cached, TTL } = await import("./xtream-cache.server");
     try {
-      const { creds } = await resolveCreds();
+      const { creds, isOverride } = await resolveCreds();
+      const scope = isOverride ? `u:${creds.username}` : "default";
       const results: Poster[] = [];
       if (data.scope !== "series") {
-        const movies = await xtream.getVodStreams(creds).catch(() => []);
+        const movies = await cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)).catch(() => []);
         results.push(
           ...movies.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 20).map(vodToPoster),
         );
       }
       if (data.scope !== "movies") {
-        const series = await xtream.getSeriesList(creds).catch(() => []);
+        const series = await cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)).catch(() => []);
         results.push(
           ...series.filter((s) => s.name.toLowerCase().includes(q)).slice(0, 20).map(seriesToPoster),
         );
       }
       if (data.scope === "all") {
-        const live = await xtream.getLiveStreams(creds).catch(() => []);
+        const live = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds)).catch(() => []);
         results.push(
           ...live.filter((l) => l.name.toLowerCase().includes(q)).slice(0, 10).map(liveToPoster),
         );
@@ -210,6 +212,7 @@ export const searchAll = createServerFn({ method: "POST" })
       return [];
     }
   });
+
 
 /** Resolve a stream URL for playback. Returns a URL to our own proxy so
  * credentials never leave the server. */
