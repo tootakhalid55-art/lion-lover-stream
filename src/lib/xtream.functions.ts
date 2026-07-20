@@ -294,3 +294,174 @@ export const useDefaultAccount = createServerFn({ method: "POST" }).handler(asyn
 export const getNotifications = createServerFn({ method: "GET" }).handler(
   async (): Promise<Notification[]> => [],
 );
+
+// ─── Detail views ────────────────────────────────────────────────────────
+
+export interface MovieDetail {
+  id: string;
+  title: string;
+  year: string;
+  gradient: string;
+  imageUrl?: string;
+  backdropUrl?: string;
+  rating?: number;
+  plot?: string;
+  cast?: string;
+  director?: string;
+  genre?: string;
+  duration?: string;
+  ext: string;
+}
+
+export const getMovieDetail = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }): Promise<MovieDetail | null> => {
+    const [kind, raw] = data.id.split(":");
+    if (kind !== "movie" || !raw) return null;
+    const { xtream } = await import("./xtream.server");
+    const { resolveCreds } = await import("./xtream-session.server");
+    const { cached, TTL } = await import("./xtream-cache.server");
+    try {
+      const { creds, isOverride } = await resolveCreds();
+      const scope = isOverride ? `u:${creds.username}` : "default";
+      const streamId = Number(raw);
+      const [info, list] = await Promise.all([
+        cached(`${scope}:vod-info:${streamId}`, TTL.lists, () => xtream.getVodInfo(creds, streamId)).catch(() => null),
+        cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)).catch(() => []),
+      ]);
+      const listItem = list.find((v) => v.stream_id === streamId);
+      const md = (info?.movie_data ?? {}) as Record<string, unknown>;
+      const meta = (info?.info ?? {}) as Record<string, unknown>;
+      const str = (v: unknown) => (typeof v === "string" || typeof v === "number" ? String(v) : undefined);
+      const arr = (v: unknown) => (Array.isArray(v) ? v : []);
+      const rating = toNumber(meta.rating ?? listItem?.rating);
+      const backdrops = arr(meta.backdrop_path);
+      return {
+        id: data.id,
+        title: str(md.name) || listItem?.name || "بدون عنوان",
+        year: str(meta.releasedate)?.slice(0, 4) || listItem?.year || "",
+        gradient: pickGradient(streamId),
+        imageUrl: str(meta.movie_image) || str(meta.cover_big) || listItem?.stream_icon,
+        backdropUrl: typeof backdrops[0] === "string" ? backdrops[0] : undefined,
+        rating: rating > 10 ? rating / 10 : rating || undefined,
+        plot: str(meta.plot) || str(meta.description),
+        cast: str(meta.cast) || str(meta.actors),
+        director: str(meta.director),
+        genre: str(meta.genre),
+        duration: str(meta.duration),
+        ext: str(md.container_extension) || listItem?.container_extension || "mp4",
+      };
+    } catch (err) {
+      console.error("[xtream] getMovieDetail failed:", err);
+      return null;
+    }
+  });
+
+export interface Episode {
+  id: string;
+  title: string;
+  season: number;
+  episode: number;
+  plot?: string;
+  imageUrl?: string;
+  duration?: string;
+  ext: string;
+}
+
+export interface SeriesDetail {
+  id: string;
+  title: string;
+  year: string;
+  gradient: string;
+  imageUrl?: string;
+  backdropUrl?: string;
+  rating?: number;
+  plot?: string;
+  cast?: string;
+  director?: string;
+  genre?: string;
+  seasons: { season: number; episodes: Episode[] }[];
+}
+
+export const getSeriesDetail = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }): Promise<SeriesDetail | null> => {
+    const [kind, raw] = data.id.split(":");
+    if (kind !== "series" || !raw) return null;
+    const { xtream } = await import("./xtream.server");
+    const { resolveCreds } = await import("./xtream-session.server");
+    const { cached, TTL } = await import("./xtream-cache.server");
+    try {
+      const { creds, isOverride } = await resolveCreds();
+      const scope = isOverride ? `u:${creds.username}` : "default";
+      const seriesId = Number(raw);
+      const [info, list] = await Promise.all([
+        cached(`${scope}:series-info:${seriesId}`, TTL.lists, () => xtream.getSeriesInfo(creds, seriesId)).catch(() => null),
+        cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)).catch(() => []),
+      ]);
+      const listItem = list.find((s) => s.series_id === seriesId);
+      const meta = (info?.info ?? {}) as Record<string, unknown>;
+      const str = (v: unknown) => (typeof v === "string" || typeof v === "number" ? String(v) : undefined);
+      const rating = toNumber(meta.rating ?? listItem?.rating);
+      const backdrops = Array.isArray(meta.backdrop_path) ? meta.backdrop_path : [];
+      const seasons: SeriesDetail["seasons"] = [];
+      const epMap = info?.episodes ?? {};
+      for (const [seasonKey, eps] of Object.entries(epMap)) {
+        const season = Number(seasonKey);
+        if (!Array.isArray(eps)) continue;
+        const episodes: Episode[] = eps.map((e) => {
+          const ep = e as Record<string, unknown>;
+          const info = (ep.info ?? {}) as Record<string, unknown>;
+          const epId = String(ep.id ?? "");
+          return {
+            id: `series:${epId}`,
+            title: str(ep.title) || `الحلقة ${str(ep.episode_num) ?? ""}`,
+            season,
+            episode: Number(ep.episode_num ?? 0),
+            plot: str(info.plot),
+            imageUrl: str(info.movie_image) || str(ep.info && (ep.info as Record<string, unknown>).movie_image),
+            duration: str(info.duration),
+            ext: str(ep.container_extension) || "mp4",
+          };
+        });
+        seasons.push({ season, episodes });
+      }
+      seasons.sort((a, b) => a.season - b.season);
+      return {
+        id: data.id,
+        title: str(meta.name) || listItem?.name || "بدون عنوان",
+        year: (str(meta.releaseDate) || listItem?.releaseDate || "").slice(0, 4),
+        gradient: pickGradient(seriesId),
+        imageUrl: str(meta.cover) || listItem?.cover,
+        backdropUrl: typeof backdrops[0] === "string" ? backdrops[0] : undefined,
+        rating: rating > 10 ? rating / 10 : rating || undefined,
+        plot: str(meta.plot) || listItem?.plot,
+        cast: str(meta.cast),
+        director: str(meta.director),
+        genre: str(meta.genre),
+        seasons,
+      };
+    } catch (err) {
+      console.error("[xtream] getSeriesDetail failed:", err);
+      return null;
+    }
+  });
+
+export const getLiveChannel = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }): Promise<Poster | null> => {
+    const [kind, raw] = data.id.split(":");
+    if (kind !== "live" || !raw) return null;
+    const { xtream } = await import("./xtream.server");
+    const { resolveCreds } = await import("./xtream-session.server");
+    const { cached, TTL } = await import("./xtream-cache.server");
+    try {
+      const { creds, isOverride } = await resolveCreds();
+      const scope = isOverride ? `u:${creds.username}` : "default";
+      const list = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds));
+      const item = list.find((l) => l.stream_id === Number(raw));
+      return item ? liveToPoster(item) : null;
+    } catch {
+      return null;
+    }
+  });
