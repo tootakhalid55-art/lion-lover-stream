@@ -66,6 +66,9 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
   };
 
   const h = heroes[i];
+  const favs = useFavorites();
+  const heroInner = h?.id?.startsWith("hero-") ? h.id.slice(5) : h?.id;
+  const favBookmarked = !!heroInner && favs.some((f) => f.id === heroInner);
 
   return (
     <section
