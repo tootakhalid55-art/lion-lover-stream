@@ -5,6 +5,7 @@
  */
 
 const DEFAULT_TIMEOUT_MS = 15_000;
+const MAX_ATTEMPTS = 3;
 
 export interface XtreamCreds {
   serverUrl: string; // no trailing slash
@@ -22,17 +23,48 @@ export function getDefaultCreds(): XtreamCreds {
   return { serverUrl, username, password };
 }
 
-async function xtreamFetch(url: string): Promise<Response> {
+async function xtreamFetch(url: string, opts?: { timeoutMs?: number; method?: string; headers?: HeadersInit }): Promise<Response> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), opts?.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   try {
     return await fetch(url, {
+      method: opts?.method ?? "GET",
       signal: controller.signal,
-      headers: { "User-Agent": "LionTV/1.0" },
+      headers: { "User-Agent": "LionTV/1.0", ...(opts?.headers ?? {}) },
     });
   } finally {
     clearTimeout(timeout);
   }
+}
+
+/** Fetch with retry on network / 5xx / 429. Records audit entries. */
+async function fetchWithRetry(url: string, action: string, opts?: { timeoutMs?: number }): Promise<Response> {
+  const { record, safeUrl } = await import("./xtream-log.server");
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const start = Date.now();
+    try {
+      const res = await xtreamFetch(url, opts);
+      const dur = Date.now() - start;
+      if (res.ok) {
+        record({ ts: Date.now(), action, ok: true, status: res.status, durationMs: dur, attempt });
+        return res;
+      }
+      const retryable = res.status >= 500 || res.status === 429;
+      record({ ts: Date.now(), action, ok: false, status: res.status, durationMs: dur, attempt, error: `HTTP ${res.status} ${safeUrl(url)}` });
+      if (!retryable || attempt === MAX_ATTEMPTS) return res;
+    } catch (e) {
+      const dur = Date.now() - start;
+      lastErr = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      record({ ts: Date.now(), action, ok: false, durationMs: dur, attempt, error: msg });
+      if (attempt === MAX_ATTEMPTS) throw e;
+    }
+    // Exponential backoff with jitter
+    const backoff = Math.min(2000, 250 * 2 ** (attempt - 1)) + Math.random() * 150;
+    await new Promise((r) => setTimeout(r, backoff));
+  }
+  throw lastErr ?? new Error("Upstream failed");
 }
 
 /** Call player_api.php with an action. Returns parsed JSON. */
@@ -46,7 +78,8 @@ export async function callApi<T = unknown>(
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined) url.searchParams.set(k, String(v));
   }
-  const res = await xtreamFetch(url.toString());
+  const action = String(params.action ?? "auth");
+  const res = await fetchWithRetry(url.toString(), `api:${action}`);
   if (!res.ok) {
     throw new Error(`Xtream upstream returned ${res.status}`);
   }
@@ -58,6 +91,20 @@ export async function callApi<T = unknown>(
     throw new Error("Xtream returned invalid JSON");
   }
 }
+
+/** Lightweight health check with short timeout. Never throws. */
+export async function healthCheck(): Promise<{ ok: boolean; latencyMs: number; error?: string }> {
+  const start = Date.now();
+  try {
+    const serverUrl = process.env.XTREAM_SERVER_URL?.replace(/\/+$/, "");
+    if (!serverUrl) return { ok: false, latencyMs: 0, error: "server-not-configured" };
+    const res = await xtreamFetch(`${serverUrl}/player_api.php`, { timeoutMs: 5000, method: "HEAD" });
+    return { ok: res.ok || res.status < 500, latencyMs: Date.now() - start };
+  } catch (e) {
+    return { ok: false, latencyMs: Date.now() - start, error: e instanceof Error ? e.message : "unknown" };
+  }
+}
+
 
 /** Verify credentials. Returns account/server info when valid. */
 export async function authenticate(creds: XtreamCreds): Promise<{
