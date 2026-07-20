@@ -22,6 +22,17 @@ export function ContinueCard({ poster, eager }: { poster: Poster; eager?: boolea
         {!visible && <div className="absolute inset-0 skeleton" />}
         {visible && (
           <div className={`absolute inset-0 bg-gradient-to-br ${poster.gradient} motion-safe:animate-fade-in`}>
+            {poster.imageUrl && (
+              <img
+                src={poster.imageUrl}
+                alt=""
+                aria-hidden
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+            )}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_60%)]" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
             <div className="absolute inset-0 grid place-items-center">
