@@ -217,7 +217,7 @@ export const searchAll = createServerFn({ method: "POST" })
 /** Resolve a stream URL for playback. Returns a URL to our own proxy so
  * credentials never leave the server. */
 export const resolveStream = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .inputValidator((d: { id: string; ext?: string }) => d)
   .handler(async ({ data }): Promise<{
     manifestUrl: string;
     protocol: "hls" | "dash";
@@ -226,15 +226,16 @@ export const resolveStream = createServerFn({ method: "POST" })
   }> => {
     const [kind, rawId] = data.id.split(":");
     if (!kind || !rawId) throw new Error("Invalid stream id");
+    const ext = data.ext || (kind === "live" ? "m3u8" : "mp4");
     const proxyPath =
       kind === "live"
-        ? `/api/public/stream/live/${encodeURIComponent(rawId)}.m3u8`
+        ? `/api/public/stream/live/${encodeURIComponent(rawId)}.${ext}`
         : kind === "series"
-          ? `/api/public/stream/series/${encodeURIComponent(rawId)}.mp4`
-          : `/api/public/stream/movie/${encodeURIComponent(rawId)}.mp4`;
+          ? `/api/public/stream/series/${encodeURIComponent(rawId)}.${ext}`
+          : `/api/public/stream/movie/${encodeURIComponent(rawId)}.${ext}`;
     return {
       manifestUrl: proxyPath,
-      protocol: kind === "live" ? "hls" : "hls",
+      protocol: kind === "live" ? "hls" : ext === "m3u8" ? "hls" : "hls",
       audioLanguages: ["ar", "en"],
       subtitleLanguages: ["ar", "en"],
     };
