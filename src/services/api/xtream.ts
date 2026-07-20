@@ -11,7 +11,9 @@ import {
   searchAll,
   resolveStream,
   getNotifications,
+  getHealth,
 } from "@/lib/xtream.functions";
+
 
 export const xtreamApi: Api = {
   home: { getFeed: () => getHomeFeed() },
