@@ -124,8 +124,22 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <HealthBannerLazy />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
   );
 }
+
+import { lazy, Suspense } from "react";
+const HealthBanner = lazy(() =>
+  import("../components/HealthBanner").then((m) => ({ default: m.HealthBanner })),
+);
+function HealthBannerLazy() {
+  return (
+    <Suspense fallback={null}>
+      <HealthBanner />
+    </Suspense>
+  );
+}
+

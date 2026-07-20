@@ -141,6 +141,10 @@ export interface PlaybackRepository {
   }>;
 }
 
+export interface SystemRepository {
+  health(): Promise<{ ok: boolean; latencyMs: number; message?: string }>;
+}
+
 export interface Api {
   home: HomeRepository;
   catalog: CatalogRepository;
@@ -152,4 +156,6 @@ export interface Api {
   recommendations: RecommendationsRepository;
   downloads: DownloadsRepository;
   playback: PlaybackRepository;
+  system?: SystemRepository;
 }
+
