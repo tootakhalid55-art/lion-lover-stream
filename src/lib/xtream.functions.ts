@@ -1,0 +1,268 @@
+/**
+ * Server functions exposing the Xtream backend to the client.
+ * All credentials stay server-side. Handler bodies are stripped from the
+ * client bundle by the TanStack Start Vite plugin.
+ */
+import { createServerFn } from "@tanstack/react-start";
+import type { Hero, HomeFeed, Notification, Poster } from "@/services/api/types";
+
+// ─── Mapping helpers ─────────────────────────────────────────────────────
+
+const GRADIENTS = [
+  "from-fuchsia-900 via-neutral-900 to-black",
+  "from-amber-800 via-red-950 to-black",
+  "from-cyan-900 via-slate-900 to-black",
+  "from-emerald-900 via-neutral-900 to-black",
+  "from-indigo-900 via-slate-900 to-black",
+  "from-rose-900 via-neutral-900 to-black",
+] as const;
+
+function pickGradient(seed: number | string): string {
+  const n = typeof seed === "number" ? seed : Array.from(String(seed)).reduce((a, c) => a + c.charCodeAt(0), 0);
+  return GRADIENTS[Math.abs(n) % GRADIENTS.length];
+}
+
+function toNumber(v: unknown, d = 0): number {
+  const n = typeof v === "number" ? v : parseFloat(String(v ?? ""));
+  return Number.isFinite(n) ? n : d;
+}
+
+function vodToPoster(v: import("./xtream.server").XtreamVod): Poster {
+  const rating = toNumber(v.rating);
+  return {
+    id: `movie:${v.stream_id}`,
+    title: v.name,
+    year: v.year || (v.added ? new Date(Number(v.added) * 1000).getFullYear().toString() : ""),
+    gradient: pickGradient(v.stream_id),
+    imageUrl: v.stream_icon || undefined,
+    rating: rating > 10 ? rating / 10 : rating || undefined,
+    tag: v.container_extension?.toUpperCase(),
+  };
+}
+
+function seriesToPoster(s: import("./xtream.server").XtreamSeries): Poster {
+  const rating = toNumber(s.rating);
+  return {
+    id: `series:${s.series_id}`,
+    title: s.name,
+    year: s.releaseDate?.slice(0, 4) || "",
+    gradient: pickGradient(s.series_id),
+    imageUrl: s.cover || (s.backdrop_path && s.backdrop_path[0]) || undefined,
+    rating: rating > 10 ? rating / 10 : rating || undefined,
+    description: s.plot,
+  };
+}
+
+function liveToPoster(l: import("./xtream.server").XtreamLive): Poster {
+  return {
+    id: `live:${l.stream_id}`,
+    title: l.name,
+    year: "LIVE",
+    gradient: pickGradient(l.stream_id),
+    imageUrl: l.stream_icon || undefined,
+    tag: "LIVE",
+  };
+}
+
+// ─── Server functions ────────────────────────────────────────────────────
+
+export const getHomeFeed = createServerFn({ method: "GET" }).handler(async (): Promise<HomeFeed> => {
+  const { xtream } = await import("./xtream.server");
+  const { resolveCreds } = await import("./xtream-session.server");
+  try {
+    const { creds } = await resolveCreds();
+    const [movies, series, live] = await Promise.all([
+      xtream.getVodStreams(creds).catch(() => []),
+      xtream.getSeriesList(creds).catch(() => []),
+      xtream.getLiveStreams(creds).catch(() => []),
+    ]);
+
+    const recentMovies = [...movies]
+      .sort((a, b) => toNumber(b.added) - toNumber(a.added))
+      .slice(0, 24)
+      .map(vodToPoster);
+    const recentSeries = [...series]
+      .sort((a, b) => toNumber(b.last_modified) - toNumber(a.last_modified))
+      .slice(0, 24)
+      .map(seriesToPoster);
+    const topLive = live.slice(0, 24).map(liveToPoster);
+
+    const heroPool = [...recentMovies.slice(0, 3), ...recentSeries.slice(0, 3)];
+    const heroes: Hero[] = heroPool.slice(0, 5).map((p, i): Hero => ({
+      id: `hero-${p.id}`,
+      title: p.title,
+      subtitle: p.description || "استمتع بأفضل المحتوى على ليون تي في.",
+      badge: i === 0 ? "مميز اليوم" : "جديد",
+      gradient: p.gradient,
+      imageUrl: p.imageUrl,
+      imdb: p.rating || 0,
+      genres: [],
+      year: p.year,
+      ageRating: "+13",
+    }));
+
+    return {
+      heroes,
+      continueWatching: [],
+      rows: [
+        { id: "row-new-movies", title: "أفلام جديدة", items: recentMovies },
+        { id: "row-new-series", title: "مسلسلات جديدة", items: recentSeries },
+        { id: "row-live", title: "قنوات مباشرة", items: topLive },
+      ],
+    };
+  } catch (err) {
+    console.error("[xtream] getHomeFeed failed:", err);
+    return { heroes: [], continueWatching: [], rows: [] };
+  }
+});
+
+export const getMovies = createServerFn({ method: "GET" }).handler(async (): Promise<Poster[]> => {
+  const { xtream } = await import("./xtream.server");
+  const { resolveCreds } = await import("./xtream-session.server");
+  try {
+    const { creds } = await resolveCreds();
+    const list = await xtream.getVodStreams(creds);
+    return list.slice(0, 200).map(vodToPoster);
+  } catch {
+    return [];
+  }
+});
+
+export const getSeries = createServerFn({ method: "GET" }).handler(async (): Promise<Poster[]> => {
+  const { xtream } = await import("./xtream.server");
+  const { resolveCreds } = await import("./xtream-session.server");
+  try {
+    const { creds } = await resolveCreds();
+    const list = await xtream.getSeriesList(creds);
+    return list.slice(0, 200).map(seriesToPoster);
+  } catch {
+    return [];
+  }
+});
+
+export const getLive = createServerFn({ method: "GET" }).handler(async (): Promise<Poster[]> => {
+  const { xtream } = await import("./xtream.server");
+  const { resolveCreds } = await import("./xtream-session.server");
+  try {
+    const { creds } = await resolveCreds();
+    const list = await xtream.getLiveStreams(creds);
+    return list.slice(0, 200).map(liveToPoster);
+  } catch {
+    return [];
+  }
+});
+
+export const searchAll = createServerFn({ method: "POST" })
+  .inputValidator((d: { query: string; scope: "movies" | "series" | "all" }) => d)
+  .handler(async ({ data }): Promise<Poster[]> => {
+    const q = data.query.trim().toLowerCase();
+    if (!q) return [];
+    const { xtream } = await import("./xtream.server");
+    const { resolveCreds } = await import("./xtream-session.server");
+    try {
+      const { creds } = await resolveCreds();
+      const results: Poster[] = [];
+      if (data.scope !== "series") {
+        const movies = await xtream.getVodStreams(creds).catch(() => []);
+        results.push(
+          ...movies.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 20).map(vodToPoster),
+        );
+      }
+      if (data.scope !== "movies") {
+        const series = await xtream.getSeriesList(creds).catch(() => []);
+        results.push(
+          ...series.filter((s) => s.name.toLowerCase().includes(q)).slice(0, 20).map(seriesToPoster),
+        );
+      }
+      if (data.scope === "all") {
+        const live = await xtream.getLiveStreams(creds).catch(() => []);
+        results.push(
+          ...live.filter((l) => l.name.toLowerCase().includes(q)).slice(0, 10).map(liveToPoster),
+        );
+      }
+      return results.slice(0, 30);
+    } catch {
+      return [];
+    }
+  });
+
+/** Resolve a stream URL for playback. Returns a URL to our own proxy so
+ * credentials never leave the server. */
+export const resolveStream = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }): Promise<{
+    manifestUrl: string;
+    protocol: "hls" | "dash";
+    audioLanguages: string[];
+    subtitleLanguages: string[];
+  }> => {
+    const [kind, rawId] = data.id.split(":");
+    if (!kind || !rawId) throw new Error("Invalid stream id");
+    const proxyPath =
+      kind === "live"
+        ? `/api/public/stream/live/${encodeURIComponent(rawId)}.m3u8`
+        : kind === "series"
+          ? `/api/public/stream/series/${encodeURIComponent(rawId)}.mp4`
+          : `/api/public/stream/movie/${encodeURIComponent(rawId)}.mp4`;
+    return {
+      manifestUrl: proxyPath,
+      protocol: kind === "live" ? "hls" : "hls",
+      audioLanguages: ["ar", "en"],
+      subtitleLanguages: ["ar", "en"],
+    };
+  });
+
+// ─── Auth (per-user override) ────────────────────────────────────────────
+
+export const getAccountInfo = createServerFn({ method: "GET" }).handler(async (): Promise<{
+  isOverride: boolean;
+  username: string | null;
+  status: string | null;
+  expiresAt: string | null;
+}> => {
+  const { authenticate } = await import("./xtream.server");
+  const { resolveCreds } = await import("./xtream-session.server");
+  try {
+    const { creds, isOverride } = await resolveCreds();
+    const info = await authenticate(creds);
+    return {
+      isOverride,
+      username: info.user_info.username,
+      status: info.user_info.status,
+      expiresAt: info.user_info.exp_date
+        ? new Date(Number(info.user_info.exp_date) * 1000).toISOString()
+        : null,
+    };
+  } catch {
+    return { isOverride: false, username: null, status: null, expiresAt: null };
+  }
+});
+
+export const signInWithOwnAccount = createServerFn({ method: "POST" })
+  .inputValidator((d: { username: string; password: string; serverUrl?: string }) => d)
+  .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
+    const { authenticate } = await import("./xtream.server");
+    const { setOverride } = await import("./xtream-session.server");
+    const serverUrl = (data.serverUrl || process.env.XTREAM_SERVER_URL || "").replace(/\/+$/, "");
+    if (!serverUrl) return { ok: false, error: "الخادم غير مُهيَّأ" };
+    if (!data.username || !data.password) return { ok: false, error: "أدخل اسم المستخدم وكلمة المرور" };
+    try {
+      await authenticate({ serverUrl, username: data.username, password: data.password });
+      await setOverride(data.username, data.password, serverUrl);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "بيانات الدخول غير صحيحة" };
+    }
+  });
+
+export const useDefaultAccount = createServerFn({ method: "POST" }).handler(async () => {
+  const { clearOverride } = await import("./xtream-session.server");
+  await clearOverride();
+  return { ok: true };
+});
+
+// ─── Notifications / Continue Watching stubs (no upstream equivalent) ───
+
+export const getNotifications = createServerFn({ method: "GET" }).handler(
+  async (): Promise<Notification[]> => [],
+);

@@ -24,6 +24,8 @@ export interface Poster {
   title: string;
   year: string;
   gradient: string;
+  /** Optional real poster image URL from backend. Falls back to `gradient`. */
+  imageUrl?: string;
   tag?: string;
   rating?: number;
   quality?: Quality;
@@ -43,6 +45,8 @@ export interface Hero {
   subtitle: string;
   badge: string;
   gradient: string;
+  /** Optional real backdrop image URL from backend. */
+  imageUrl?: string;
   imdb: number;
   genres: string[];
   year: string;

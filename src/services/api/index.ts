@@ -1,12 +1,10 @@
 /**
- * API composition root.
- *
- * The rest of the app imports `api` from here and never reaches into
- * `./mock`. To switch providers (staging, production, Supabase, GraphQL),
- * change only this file.
+ * API composition root. Points at the live Xtream backend via server
+ * functions. To fall back to mock data (offline dev), swap `xtreamApi`
+ * for `mockApi` in this single file.
  */
 import type { Api } from "./types";
-import { mockApi } from "./mock";
+import { xtreamApi } from "./xtream";
 
-export const api: Api = mockApi;
+export const api: Api = xtreamApi;
 export type { Api } from "./types";

@@ -84,6 +84,17 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
             <div
               className={`absolute inset-0 bg-gradient-to-br ${slide.gradient} ${idx === i && !reduced ? "motion-safe:animate-kenburns" : ""}`}
             />
+            {slide.imageUrl && (
+              <img
+                src={slide.imageUrl}
+                alt=""
+                aria-hidden
+                loading={idx === i ? "eager" : "lazy"}
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+            )}
             <div className="absolute inset-0 opacity-40 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklab,var(--color-brand)_60%,transparent),transparent_60%)]" />
             {idx === i && slide.previewUrl && (
               <video
