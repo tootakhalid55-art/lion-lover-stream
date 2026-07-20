@@ -56,6 +56,9 @@ export const xtreamApi: Api = {
     resolve: async (titleId) => {
       const r = await resolveStream({ data: { id: titleId } });
       return { ...r };
-    },
+  },
+  system: {
+    health: () => getHealth(),
   },
 };
+
