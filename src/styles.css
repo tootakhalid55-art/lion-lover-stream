@@ -95,6 +95,20 @@
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-nav-active) 55%, transparent); }
   50%      { box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-nav-active) 0%, transparent); }
 }
+@keyframes scale-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes kenburns {
+  from { transform: scale(1) translate(0, 0); }
+  to   { transform: scale(1.12) translate(-1%, -1%); }
+}
+
+@utility momentum {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
 
 @utility skeleton {
   background: linear-gradient(
