@@ -1,0 +1,17 @@
+{
+  "name": "LionTV — أفلام ومسلسلات",
+  "short_name": "LionTV",
+  "description": "تطبيق ليون تي في لمشاهدة الأفلام والمسلسلات والبث المباشر",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "ar",
+  "background_color": "#0b0b0f",
+  "theme_color": "#0b0b0f",
+  "categories": ["entertainment", "video"],
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+  ]
+}
