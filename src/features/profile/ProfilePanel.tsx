@@ -1,13 +1,15 @@
 import { Download, ListVideo, LogOut, Settings, UserRound } from "lucide-react";
 import { GlassPanel } from "@/components/primitives/GlassPanel";
 
-const ITEMS = [
+type Item = { icon: typeof UserRound; label: string; danger?: boolean };
+
+const ITEMS: readonly Item[] = [
   { icon: UserRound, label: "الحساب" },
   { icon: ListVideo, label: "المشاهدة لاحقًا" },
   { icon: Download, label: "التنزيلات" },
   { icon: Settings, label: "الإعدادات" },
   { icon: LogOut, label: "تسجيل الخروج", danger: true },
-] as const;
+];
 
 export function ProfilePanel({ onClose }: { onClose: () => void }) {
   return (
