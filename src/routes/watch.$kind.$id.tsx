@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Player } from "@/features/player/Player";
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/watch/$kind/$id")({
 function WatchPage() {
   const { kind, id } = Route.useParams();
   const { ext } = Route.useSearch();
-  const navigate = useNavigate();
+  const router = useRouter();
   const fullId = `${kind}:${id}`;
   const [src, setSrc] = useState<string | null>(null);
   const [meta, setMeta] = useState<{ title: string; imageUrl?: string; gradient: string; year: string } | null>(null);
@@ -66,7 +66,10 @@ function WatchPage() {
     <div className="min-h-dvh bg-background">
       <div className="mx-auto max-w-6xl px-4 py-6">
         <button
-          onClick={() => navigate({ to: ".." as "/" })}
+          onClick={() => {
+            if (window.history.length > 1) router.history.back();
+            else router.navigate({ to: "/" });
+          }}
           className="inline-flex items-center gap-1 text-sm text-foreground/70 hover:text-foreground"
         >
           <ArrowRight className="h-4 w-4" /> رجوع
