@@ -69,12 +69,14 @@ function liveToPoster(l: import("./xtream.server").XtreamLive): Poster {
 export const getHomeFeed = createServerFn({ method: "GET" }).handler(async (): Promise<HomeFeed> => {
   const { xtream } = await import("./xtream.server");
   const { resolveCreds } = await import("./xtream-session.server");
+  const { cached, TTL } = await import("./xtream-cache.server");
   try {
-    const { creds } = await resolveCreds();
+    const { creds, isOverride } = await resolveCreds();
+    const scope = isOverride ? `u:${creds.username}` : "default";
     const [movies, series, live] = await Promise.all([
-      xtream.getVodStreams(creds).catch(() => []),
-      xtream.getSeriesList(creds).catch(() => []),
-      xtream.getLiveStreams(creds).catch(() => []),
+      cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)).catch(() => []),
+      cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)).catch(() => []),
+      cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds)).catch(() => []),
     ]);
 
     const recentMovies = [...movies]
@@ -119,9 +121,11 @@ export const getHomeFeed = createServerFn({ method: "GET" }).handler(async (): P
 export const getMovies = createServerFn({ method: "GET" }).handler(async (): Promise<Poster[]> => {
   const { xtream } = await import("./xtream.server");
   const { resolveCreds } = await import("./xtream-session.server");
+  const { cached, TTL } = await import("./xtream-cache.server");
   try {
-    const { creds } = await resolveCreds();
-    const list = await xtream.getVodStreams(creds);
+    const { creds, isOverride } = await resolveCreds();
+    const scope = isOverride ? `u:${creds.username}` : "default";
+    const list = await cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds));
     return list.slice(0, 200).map(vodToPoster);
   } catch {
     return [];
@@ -131,9 +135,11 @@ export const getMovies = createServerFn({ method: "GET" }).handler(async (): Pro
 export const getSeries = createServerFn({ method: "GET" }).handler(async (): Promise<Poster[]> => {
   const { xtream } = await import("./xtream.server");
   const { resolveCreds } = await import("./xtream-session.server");
+  const { cached, TTL } = await import("./xtream-cache.server");
   try {
-    const { creds } = await resolveCreds();
-    const list = await xtream.getSeriesList(creds);
+    const { creds, isOverride } = await resolveCreds();
+    const scope = isOverride ? `u:${creds.username}` : "default";
+    const list = await cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds));
     return list.slice(0, 200).map(seriesToPoster);
   } catch {
     return [];
@@ -143,14 +149,33 @@ export const getSeries = createServerFn({ method: "GET" }).handler(async (): Pro
 export const getLive = createServerFn({ method: "GET" }).handler(async (): Promise<Poster[]> => {
   const { xtream } = await import("./xtream.server");
   const { resolveCreds } = await import("./xtream-session.server");
+  const { cached, TTL } = await import("./xtream-cache.server");
   try {
-    const { creds } = await resolveCreds();
-    const list = await xtream.getLiveStreams(creds);
+    const { creds, isOverride } = await resolveCreds();
+    const scope = isOverride ? `u:${creds.username}` : "default";
+    const list = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds));
     return list.slice(0, 200).map(liveToPoster);
   } catch {
     return [];
   }
 });
+
+/** Lightweight health probe for the client (cached 30s). */
+export const getHealth = createServerFn({ method: "GET" }).handler(async (): Promise<{
+  ok: boolean;
+  latencyMs: number;
+  message?: string;
+}> => {
+  const { healthCheck } = await import("./xtream.server");
+  const { cached, TTL } = await import("./xtream-cache.server");
+  const r = await cached("health", TTL.health, healthCheck);
+  return {
+    ok: r.ok,
+    latencyMs: r.latencyMs,
+    message: r.ok ? undefined : "الخادم غير متاح حالياً. جارٍ إعادة المحاولة…",
+  };
+});
+
 
 export const searchAll = createServerFn({ method: "POST" })
   .inputValidator((d: { query: string; scope: "movies" | "series" | "all" }) => d)
