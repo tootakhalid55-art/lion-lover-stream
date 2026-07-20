@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Clock, Film, LayoutGrid, Mic, Search, TrendingUp, Tv, Users, X } from "lucide-react";
 import { api } from "@/services/api";
 import { GlassPanel } from "@/components/primitives/GlassPanel";
@@ -6,6 +7,7 @@ import { Section } from "@/components/primitives/Section";
 import { HighlightMatch } from "@/components/primitives/HighlightMatch";
 import { readJSON, writeJSON } from "@/lib/storage";
 import { track } from "@/lib/analytics";
+import { detailPath } from "@/lib/user-data";
 import type { Poster } from "@/services/api/types";
 
 const CATEGORIES = [
