@@ -28,6 +28,13 @@ import {
   Settings,
   LogOut,
   ListVideo,
+  Volume2,
+  VolumeX,
+  Info,
+  Film,
+  Tv,
+  Users,
+  LayoutGrid,
 } from "lucide-react";
 import lionLogo from "@/assets/lion-logo.png";
 import { useScrollState } from "@/hooks/use-scroll-state";
@@ -38,7 +45,13 @@ export const Route = createFileRoute("/")({
   component: LionTV,
 });
 
+// ============================================================
+// Types — designed for future backend integration
+// ============================================================
+type Badge = "NEW" | "TOP10" | "HDR" | "DOLBY_VISION" | "DOLBY_ATMOS" | "4K";
+
 type Poster = {
+  id: string;
   title: string;
   year: string;
   gradient: string;
@@ -47,64 +60,179 @@ type Poster = {
   quality?: "4K" | "HD";
   duration?: string;
   description?: string;
+  badges?: Badge[];
+  ageRating?: string;
+  progress?: number; // 0..1 → watched progress
+  rank?: number; // Top 10 rank
 };
 
 type Hero = {
+  id: string;
   title: string;
   subtitle: string;
   badge: string;
   gradient: string;
+  imdb: number;
+  genres: string[];
+  year: string;
+  ageRating: string;
+  previewUrl?: string;
 };
 
+// ============================================================
+// Placeholder data — swap for API responses later
+// ============================================================
 const heroes: Hero[] = [
   {
+    id: "h-1",
     title: "أسطورة الأسد",
     subtitle: "رحلة ملحمية عبر ممالك منسية — حصريًا على ليون تي في.",
     badge: "مميز اليوم",
     gradient: "from-fuchsia-900 via-neutral-900 to-black",
+    imdb: 8.9,
+    genres: ["ملحمي", "مغامرة", "درامي"],
+    year: "2026",
+    ageRating: "+13",
   },
   {
+    id: "h-2",
     title: "ليالي الصحراء",
     subtitle: "قصة حب وخيانة تحت سماء الصحراء الذهبية.",
     badge: "جديد كليًا",
     gradient: "from-amber-800 via-red-950 to-black",
+    imdb: 8.1,
+    genres: ["رومانسي", "درامي"],
+    year: "2026",
+    ageRating: "+16",
   },
   {
+    id: "h-3",
     title: "ظلال المدينة",
     subtitle: "جريمة غامضة تهز أعتى شوارع العاصمة.",
     badge: "الأكثر مشاهدة",
     gradient: "from-cyan-900 via-slate-900 to-black",
+    imdb: 8.5,
+    genres: ["جريمة", "غموض", "إثارة"],
+    year: "2025",
+    ageRating: "+18",
   },
   {
+    id: "h-4",
     title: "قسمة ونصيب",
     subtitle: "دراما عائلية تُلامس قلوب الملايين.",
     badge: "حصري",
     gradient: "from-rose-800 via-purple-950 to-black",
+    imdb: 8.8,
+    genres: ["عائلي", "درامي"],
+    year: "2026",
+    ageRating: "+7",
   },
 ];
 
+const continueWatching: Poster[] = [
+  { id: "cw-1", title: "قسمة ونصيب — ح٩", year: "2026", gradient: "from-amber-600 via-rose-800 to-neutral-900", tag: "عائلي", duration: "٤٢ د متبقية", progress: 0.62, ageRating: "+7" },
+  { id: "cw-2", title: "The East Palace — ح٤", year: "2026", gradient: "from-emerald-800 via-teal-900 to-black", tag: "تاريخي", duration: "١٨ د متبقية", progress: 0.83, ageRating: "+13" },
+  { id: "cw-3", title: "Silent Verdict — ح٢", year: "2026", gradient: "from-cyan-700 via-blue-900 to-black", tag: "جريمة", duration: "٣٠ د متبقية", progress: 0.35, ageRating: "+16" },
+  { id: "cw-4", title: "Silver Coast", year: "2025", gradient: "from-amber-500 via-orange-800 to-neutral-900", tag: "مغامرة", duration: "٥٥ د متبقية", progress: 0.48, ageRating: "+13" },
+];
+
 const newMovies: Poster[] = [
-  { title: "They Fight", year: "2026", gradient: "from-slate-800 via-red-900 to-black", tag: "أكشن", rating: 8.4, quality: "4K", duration: "١ س ٥٨ د", description: "معركة أخيرة بين فارسين في عالم مُنهار." },
-  { title: "The Bay", year: "2026", gradient: "from-sky-700 via-blue-900 to-slate-950", tag: "غموض", rating: 7.9, quality: "HD", duration: "٢ س ١٢ د", description: "أسرار الخليج تعود إلى السطح بعد عقود." },
-  { title: "Stop! That! Train!", year: "2026", gradient: "from-pink-500 via-fuchsia-700 to-indigo-900", tag: "كوميدي", rating: 7.1, quality: "HD", duration: "١ س ٤٠ د", description: "مطاردة جنونية على متن قطار عبر القارات." },
-  { title: "Kill Trip", year: "2026", gradient: "from-red-700 via-red-950 to-black", tag: "إثارة", rating: 8.0, quality: "4K", duration: "٢ س ٠٥ د", description: "رحلة عطلة تتحول إلى كابوس دموي." },
-  { title: "Night Runner", year: "2026", gradient: "from-emerald-700 via-slate-900 to-black", tag: "درامي", rating: 7.6, quality: "HD", duration: "١ س ٥٠ د", description: "عدّاء ليلي يهرب من ماضيه في شوارع المدينة." },
-  { title: "Silver Coast", year: "2025", gradient: "from-amber-500 via-orange-800 to-neutral-900", tag: "مغامرة", rating: 8.2, quality: "4K", duration: "٢ س ١٨ د", description: "بحث عن كنز مفقود على ساحل مسحور." },
-  { title: "Iron Vow", year: "2025", gradient: "from-zinc-700 via-neutral-900 to-black", tag: "حربي", rating: 8.7, quality: "4K", duration: "٢ س ٣٠ د", description: "قسم لا يُنقض في زمن الحرب الكبرى." },
+  { id: "m-1", title: "They Fight", year: "2026", gradient: "from-slate-800 via-red-900 to-black", tag: "أكشن", rating: 8.4, quality: "4K", duration: "١ س ٥٨ د", description: "معركة أخيرة بين فارسين في عالم مُنهار.", badges: ["NEW", "DOLBY_ATMOS"], ageRating: "+16", rank: 1 },
+  { id: "m-2", title: "The Bay", year: "2026", gradient: "from-sky-700 via-blue-900 to-slate-950", tag: "غموض", rating: 7.9, quality: "HD", duration: "٢ س ١٢ د", description: "أسرار الخليج تعود إلى السطح بعد عقود.", badges: ["NEW"], ageRating: "+13", rank: 2 },
+  { id: "m-3", title: "Stop! That! Train!", year: "2026", gradient: "from-pink-500 via-fuchsia-700 to-indigo-900", tag: "كوميدي", rating: 7.1, quality: "HD", duration: "١ س ٤٠ د", description: "مطاردة جنونية على متن قطار عبر القارات.", ageRating: "+7", rank: 3 },
+  { id: "m-4", title: "Kill Trip", year: "2026", gradient: "from-red-700 via-red-950 to-black", tag: "إثارة", rating: 8.0, quality: "4K", duration: "٢ س ٠٥ د", description: "رحلة عطلة تتحول إلى كابوس دموي.", badges: ["HDR", "DOLBY_VISION"], ageRating: "+18", rank: 4 },
+  { id: "m-5", title: "Night Runner", year: "2026", gradient: "from-emerald-700 via-slate-900 to-black", tag: "درامي", rating: 7.6, quality: "HD", duration: "١ س ٥٠ د", description: "عدّاء ليلي يهرب من ماضيه في شوارع المدينة.", ageRating: "+13", rank: 5 },
+  { id: "m-6", title: "Silver Coast", year: "2025", gradient: "from-amber-500 via-orange-800 to-neutral-900", tag: "مغامرة", rating: 8.2, quality: "4K", duration: "٢ س ١٨ د", description: "بحث عن كنز مفقود على ساحل مسحور.", badges: ["DOLBY_ATMOS"], ageRating: "+13", rank: 6 },
+  { id: "m-7", title: "Iron Vow", year: "2025", gradient: "from-zinc-700 via-neutral-900 to-black", tag: "حربي", rating: 8.7, quality: "4K", duration: "٢ س ٣٠ د", description: "قسم لا يُنقض في زمن الحرب الكبرى.", badges: ["HDR"], ageRating: "+16" },
 ];
 
 const newSeries: Poster[] = [
-  { title: "قسمة ونصيب", year: "2026", gradient: "from-amber-600 via-rose-800 to-neutral-900", tag: "عائلي", rating: 8.8, quality: "4K", duration: "٢٤ حلقة", description: "دراما عائلية تعبر أجيالًا وحدود." },
-  { title: "The Map of Longing", year: "2026", gradient: "from-violet-500 via-purple-800 to-indigo-950", tag: "رومانسي", rating: 8.1, quality: "HD", duration: "١٦ حلقة", description: "خارطة قديمة تقود عاشقين نحو مصيرهما." },
-  { title: "The East Palace", year: "2026", gradient: "from-emerald-800 via-teal-900 to-black", tag: "تاريخي", rating: 9.0, quality: "4K", duration: "٣٢ حلقة", description: "مؤامرات القصر الشرقي في عصر الإمبراطورية." },
-  { title: "Tomb Raider King", year: "2026", gradient: "from-yellow-500 via-orange-700 to-slate-900", tag: "أنمي", rating: 8.5, quality: "HD", duration: "١٢ حلقة", description: "صياد كنوز يواجه أرواح المقابر القديمة." },
-  { title: "Silent Verdict", year: "2026", gradient: "from-cyan-700 via-blue-900 to-black", tag: "جريمة", rating: 8.3, quality: "4K", duration: "١٠ حلقات", description: "محاكمة صامتة تكشف أسرار مدينة كاملة." },
-  { title: "قلوب متصلة", year: "2025", gradient: "from-rose-500 via-pink-800 to-neutral-900", tag: "درامي", rating: 7.9, quality: "HD", duration: "٢٠ حلقة", description: "قلوب تجمعها الصدفة وتفرقها الأقدار." },
-  { title: "ظلال المدينة", year: "2025", gradient: "from-indigo-700 via-slate-900 to-black", tag: "غموض", rating: 8.4, quality: "4K", duration: "١٨ حلقة", description: "ظلال تتحرك في شوارع لا تنام." },
+  { id: "s-1", title: "قسمة ونصيب", year: "2026", gradient: "from-amber-600 via-rose-800 to-neutral-900", tag: "عائلي", rating: 8.8, quality: "4K", duration: "٢٤ حلقة", description: "دراما عائلية تعبر أجيالًا وحدود.", badges: ["NEW", "DOLBY_VISION"], ageRating: "+7", rank: 1 },
+  { id: "s-2", title: "The Map of Longing", year: "2026", gradient: "from-violet-500 via-purple-800 to-indigo-950", tag: "رومانسي", rating: 8.1, quality: "HD", duration: "١٦ حلقة", description: "خارطة قديمة تقود عاشقين نحو مصيرهما.", badges: ["NEW"], ageRating: "+13", rank: 2 },
+  { id: "s-3", title: "The East Palace", year: "2026", gradient: "from-emerald-800 via-teal-900 to-black", tag: "تاريخي", rating: 9.0, quality: "4K", duration: "٣٢ حلقة", description: "مؤامرات القصر الشرقي في عصر الإمبراطورية.", badges: ["HDR", "DOLBY_ATMOS"], ageRating: "+13", rank: 3 },
+  { id: "s-4", title: "Tomb Raider King", year: "2026", gradient: "from-yellow-500 via-orange-700 to-slate-900", tag: "أنمي", rating: 8.5, quality: "HD", duration: "١٢ حلقة", description: "صياد كنوز يواجه أرواح المقابر القديمة.", ageRating: "+13", rank: 4 },
+  { id: "s-5", title: "Silent Verdict", year: "2026", gradient: "from-cyan-700 via-blue-900 to-black", tag: "جريمة", rating: 8.3, quality: "4K", duration: "١٠ حلقات", description: "محاكمة صامتة تكشف أسرار مدينة كاملة.", badges: ["DOLBY_VISION"], ageRating: "+16", rank: 5 },
+  { id: "s-6", title: "قلوب متصلة", year: "2025", gradient: "from-rose-500 via-pink-800 to-neutral-900", tag: "درامي", rating: 7.9, quality: "HD", duration: "٢٠ حلقة", description: "قلوب تجمعها الصدفة وتفرقها الأقدار.", ageRating: "+13" },
+  { id: "s-7", title: "ظلال المدينة", year: "2025", gradient: "from-indigo-700 via-slate-900 to-black", tag: "غموض", rating: 8.4, quality: "4K", duration: "١٨ حلقة", description: "ظلال تتحرك في شوارع لا تنام.", badges: ["HDR"], ageRating: "+16" },
 ];
 
 const trendingSearches = ["أسطورة الأسد", "The East Palace", "قسمة ونصيب", "Kill Trip", "Silent Verdict"];
 
+const searchCategories = [
+  { id: "movies", label: "أفلام", icon: Film },
+  { id: "series", label: "مسلسلات", icon: Tv },
+  { id: "actors", label: "ممثلون", icon: Users },
+  { id: "genres", label: "تصنيفات", icon: LayoutGrid },
+] as const;
+
+// ============================================================
+// Utilities
+// ============================================================
+function getGreeting(now = new Date()): string {
+  const h = now.getHours();
+  if (h < 12) return "صباح الخير";
+  return "مساء الخير";
+}
+
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+  return reduced;
+}
+
+function useHydrated() {
+  const [h, setH] = useState(false);
+  useEffect(() => setH(true), []);
+  return h;
+}
+
+// Persist a value under a namespaced key with hydration safety
+function usePersistentState<T>(key: string, initial: T): [T, (v: T) => void] {
+  const [value, setValue] = useState<T>(initial);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`liontv:${key}`);
+      if (raw !== null) setValue(JSON.parse(raw) as T);
+    } catch {}
+  }, [key]);
+  const set = useCallback(
+    (v: T) => {
+      setValue(v);
+      try {
+        localStorage.setItem(`liontv:${key}`, JSON.stringify(v));
+      } catch {}
+    },
+    [key],
+  );
+  return [value, set];
+}
+
+// Highlight matching substring inside Arabic/Latin text
+function HighlightMatch({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <>{text}</>;
+  const idx = text.toLowerCase().indexOf(query.trim().toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  const before = text.slice(0, idx);
+  const match = text.slice(idx, idx + query.length);
+  const after = text.slice(idx + query.length);
+  return (
+    <>
+      {before}
+      <mark className="rounded bg-nav-active/25 px-0.5 text-nav-active">{match}</mark>
+      {after}
+    </>
+  );
+}
+
+// ============================================================
+// Root
+// ============================================================
 function LionTV() {
   return (
     <div className="min-h-dvh bg-background text-foreground pb-32">
@@ -115,8 +243,15 @@ function LionTV() {
         تخطي إلى المحتوى
       </a>
       <Header />
-      <main id="main" className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-10 space-y-10 lg:space-y-14">
+      <main
+        id="main"
+        className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-10 space-y-10 lg:space-y-14"
+      >
+        <Greeting />
         <Hero />
+        {continueWatching.length > 0 && (
+          <Row id="row-continue" title="متابعة المشاهدة" items={continueWatching} variant="continue" />
+        )}
         <Row id="row-movies" title="أفلام جديدة" items={newMovies} />
         <Row id="row-series" title="مسلسلات جديدة" items={newSeries} />
       </main>
@@ -125,6 +260,27 @@ function LionTV() {
   );
 }
 
+// ============================================================
+// Greeting
+// ============================================================
+function Greeting() {
+  const hydrated = useHydrated();
+  const greeting = hydrated ? getGreeting() : "أهلًا بك";
+  return (
+    <section aria-label="ترحيب" className="pt-4 animate-fade-in">
+      <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+        {greeting}
+      </p>
+      <h2 className="mt-1 text-xl sm:text-2xl font-black tracking-tight">
+        ماذا تود مشاهدته اليوم؟
+      </h2>
+    </section>
+  );
+}
+
+// ============================================================
+// Header + panels (unchanged shell, expanded search)
+// ============================================================
 function IconBtn({
   label,
   children,
@@ -150,7 +306,7 @@ function IconBtn({
       {children}
       {badge && (
         <span className="pointer-events-none absolute -top-0.5 -right-0.5 flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
+          <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 motion-safe:animate-ping" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500 ring-2 ring-background" />
         </span>
       )}
@@ -158,7 +314,6 @@ function IconBtn({
   );
 }
 
-// Close on outside click / Escape
 function useDismiss(open: boolean, close: () => void) {
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -245,8 +400,7 @@ function Header() {
 function GlassPanel({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`absolute top-[calc(100%+8px)] left-0 z-40 origin-top rounded-2xl border border-white/10 bg-neutral-950/85 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.85)] backdrop-blur-2xl animate-scale-in ${className}`}
-      style={{ animation: "scale-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both" }}
+      className={`absolute top-[calc(100%+8px)] left-0 z-40 origin-top rounded-2xl border border-white/10 bg-neutral-950/85 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.85)] backdrop-blur-2xl motion-safe:animate-scale-in ${className}`}
       role="dialog"
     >
       {children}
@@ -256,6 +410,7 @@ function GlassPanel({ children, className = "" }: { children: ReactNode; classNa
 
 function SearchPanel({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState("");
+  const [category, setCategory] = useState<(typeof searchCategories)[number]["id"]>("movies");
   const [recent, setRecent] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -267,12 +422,17 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
     } catch {}
   }, []);
 
-  const all = useMemo(() => [...newMovies, ...newSeries], []);
+  const pool = useMemo(() => {
+    if (category === "series") return newSeries;
+    if (category === "movies") return newMovies;
+    return [...newMovies, ...newSeries];
+  }, [category]);
+
   const suggestions = useMemo(() => {
     if (!q.trim()) return [];
     const s = q.trim().toLowerCase();
-    return all.filter((p) => p.title.toLowerCase().includes(s)).slice(0, 6);
-  }, [q, all]);
+    return pool.filter((p) => p.title.toLowerCase().includes(s)).slice(0, 6);
+  }, [q, pool]);
 
   const commit = (term: string) => {
     if (!term.trim()) return;
@@ -293,7 +453,8 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && commit(q)}
-          placeholder="ابحث عن فيلم أو مسلسل…"
+          placeholder="ابحث في أفلام، مسلسلات، ممثلين…"
+          aria-label="حقل البحث"
           className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
         />
         <button aria-label="بحث صوتي" className="grid h-8 w-8 place-items-center rounded-full text-foreground/80 hover:bg-white/10">
@@ -304,17 +465,43 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
+      {/* Category tabs */}
+      <div role="tablist" aria-label="فئات البحث" className="mt-2 flex items-center gap-1 overflow-x-auto scrollbar-hide">
+        {searchCategories.map((c) => {
+          const Icon = c.icon;
+          const active = category === c.id;
+          return (
+            <button
+              key={c.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setCategory(c.id)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold whitespace-nowrap transition ${
+                active
+                  ? "bg-nav-active/20 text-nav-active ring-1 ring-nav-active/40"
+                  : "text-foreground/70 hover:bg-white/5"
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {c.label}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="mt-3 max-h-[60vh] overflow-y-auto space-y-4">
         {suggestions.length > 0 && (
           <Section title="اقتراحات">
             <ul className="space-y-1">
               {suggestions.map((s) => (
-                <li key={s.title}>
+                <li key={s.id}>
                   <button
                     onClick={() => commit(s.title)}
                     className="w-full flex items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm text-foreground hover:bg-white/5"
                   >
-                    <span className="truncate">{s.title}</span>
+                    <span className="truncate">
+                      <HighlightMatch text={s.title} query={q} />
+                    </span>
                     <span className="text-[11px] text-muted-foreground">{s.year}</span>
                   </button>
                 </li>
@@ -454,36 +641,91 @@ function ProfilePanel({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ============================================================
+// Hero — with IMDb, genres, age rating, animated progress, swipe, muted preview
+// ============================================================
 function Hero() {
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [muted, setMuted] = useState(true);
   const total = heroes.length;
+  const reduced = usePrefersReducedMotion();
+  const rotationMs = 7000;
+  const [progress, setProgress] = useState(0);
+  const touchStartX = useRef<number | null>(null);
 
+  // Rotation
   useEffect(() => {
-    if (paused) return;
-    const t = setInterval(() => setI((v) => (v + 1) % total), 6000);
+    if (paused || reduced) return;
+    const t = setInterval(() => setI((v) => (v + 1) % total), rotationMs);
     return () => clearInterval(t);
-  }, [paused, total]);
+  }, [paused, total, reduced]);
+
+  // Animated progress indicator
+  useEffect(() => {
+    if (paused || reduced) return;
+    setProgress(0);
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / rotationMs);
+      setProgress(p);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [i, paused, reduced]);
+
+  const goTo = (idx: number) => setI(((idx % total) + total) % total);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+    setPaused(true);
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartX.current;
+    touchStartX.current = null;
+    if (start !== null) {
+      const end = e.changedTouches[0]?.clientX ?? start;
+      const dx = end - start;
+      // RTL: swipe left (dx<0) → next; swipe right (dx>0) → prev
+      if (Math.abs(dx) > 40) goTo(dx < 0 ? i + 1 : i - 1);
+    }
+    setTimeout(() => setPaused(false), 3000);
+  };
+
+  const h = heroes[i];
 
   return (
     <section
       aria-label="محتوى مميز"
       aria-roledescription="carousel"
-      className="mt-4"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
-      onTouchStart={() => setPaused(true)}
-      onTouchEnd={() => setTimeout(() => setPaused(false), 4000)}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
     >
-      <div className="relative overflow-hidden rounded-3xl ring-1 ring-white/10 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] aspect-[16/10] sm:aspect-[21/9] lg:aspect-[24/9] animate-fade-in">
-        {heroes.map((h, idx) => (
+      <div className="relative overflow-hidden rounded-3xl ring-1 ring-white/10 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] aspect-[16/10] sm:aspect-[21/9] lg:aspect-[24/9] motion-safe:animate-fade-in">
+        {heroes.map((slide, idx) => (
           <div
-            key={h.title}
+            key={slide.id}
             aria-hidden={idx !== i}
             className={`absolute inset-0 transition-opacity duration-[900ms] ease-out ${idx === i ? "opacity-100" : "opacity-0"}`}
           >
-            <div className={`absolute inset-0 bg-gradient-to-br ${h.gradient} ${idx === i ? "animate-kenburns" : ""}`} />
+            <div className={`absolute inset-0 bg-gradient-to-br ${slide.gradient} ${idx === i && !reduced ? "motion-safe:animate-kenburns" : ""}`} />
             <div className="absolute inset-0 opacity-40 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklab,var(--color-brand)_60%,transparent),transparent_60%)]" />
+            {idx === i && slide.previewUrl && (
+              <video
+                key={slide.previewUrl}
+                src={slide.previewUrl}
+                autoPlay
+                muted={muted}
+                loop
+                playsInline
+                preload="none"
+                className="absolute inset-0 h-full w-full object-cover opacity-90"
+              />
+            )}
           </div>
         ))}
         <img
@@ -496,12 +738,42 @@ function Hero() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-black/40" />
 
-        <div key={i} className="relative z-10 flex h-full flex-col justify-end p-5 sm:p-8 lg:p-12 animate-hero-in">
-          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-foreground/90 backdrop-blur ring-1 ring-white/15">
-            {heroes[i].badge}
-          </span>
-          <h1 className="mt-2 text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight">{heroes[i].title}</h1>
-          <p className="mt-1 max-w-md text-xs sm:text-sm lg:text-base text-foreground/80">{heroes[i].subtitle}</p>
+        {/* Mute toggle (top-left, only visible when a preview exists) */}
+        {h.previewUrl && (
+          <button
+            type="button"
+            onClick={() => setMuted((m) => !m)}
+            aria-label={muted ? "تفعيل الصوت" : "كتم الصوت"}
+            className="absolute top-3 left-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-black/50 text-foreground ring-1 ring-white/15 backdrop-blur hover:bg-black/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-nav-active"
+          >
+            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </button>
+        )}
+
+        <div key={i} className="relative z-10 flex h-full flex-col justify-end p-5 sm:p-8 lg:p-12 motion-safe:animate-hero-in">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-foreground/90 backdrop-blur ring-1 ring-white/15">
+              {h.badge}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#F5C518] px-1.5 py-0.5 text-[10px] font-black text-black" aria-label={`تقييم IMDb ${h.imdb}`}>
+              IMDb
+              <span className="text-black">{h.imdb.toFixed(1)}</span>
+            </span>
+            <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-foreground/90 ring-1 ring-white/15">
+              {h.ageRating}
+            </span>
+            <span className="text-[11px] font-medium text-foreground/70">{h.year}</span>
+          </div>
+          <h1 className="mt-2 text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight">{h.title}</h1>
+          <p className="mt-1 max-w-md text-xs sm:text-sm lg:text-base text-foreground/80">{h.subtitle}</p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-foreground/70">
+            {h.genres.map((g, gi) => (
+              <span key={g} className="inline-flex items-center gap-1.5">
+                {gi > 0 && <span aria-hidden className="h-1 w-1 rounded-full bg-foreground/40" />}
+                {g}
+              </span>
+            ))}
+          </div>
           <div className="mt-4 flex flex-wrap gap-2.5">
             <button
               type="button"
@@ -517,29 +789,57 @@ function Hero() {
               <Plus className="h-4 w-4" />
               أضف إلى قائمتي
             </button>
+            <button
+              type="button"
+              aria-label="تفاصيل"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3.5 py-2.5 text-sm font-bold text-foreground/85 ring-1 ring-white/10 backdrop-blur transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-nav-active"
+            >
+              <Info className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
-        {/* Pagination */}
+        {/* Animated progress bars + pagination */}
         <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 flex items-center gap-1.5">
-          {heroes.map((h, idx) => (
-            <button
-              key={h.title}
-              aria-label={`الشريحة ${idx + 1}`}
-              aria-current={idx === i}
-              onClick={() => setI(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                idx === i ? "w-6 bg-nav-active" : "w-1.5 bg-white/40 hover:bg-white/70"
-              }`}
-            />
-          ))}
+          {heroes.map((slide, idx) => {
+            const isActive = idx === i;
+            const isPast = idx < i;
+            const fill = isActive ? progress : isPast ? 1 : 0;
+            return (
+              <button
+                key={slide.id}
+                aria-label={`الشريحة ${idx + 1}: ${slide.title}`}
+                aria-current={isActive}
+                onClick={() => goTo(idx)}
+                className={`h-1.5 rounded-full overflow-hidden bg-white/25 transition-all duration-300 ${isActive ? "w-8" : "w-2 hover:bg-white/50"}`}
+              >
+                <span
+                  className="block h-full rounded-full bg-nav-active"
+                  style={{ width: `${fill * 100}%`, transition: reduced ? undefined : "width 60ms linear" }}
+                />
+              </button>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 }
 
-function Row({ id, title, items }: { id: string; title: string; items: Poster[] }) {
+// ============================================================
+// Row + PosterCard
+// ============================================================
+function Row({
+  id,
+  title,
+  items,
+  variant = "poster",
+}: {
+  id: string;
+  title: string;
+  items: Poster[];
+  variant?: "poster" | "continue";
+}) {
   const scrollerRef = useRowScrollMemory<HTMLUListElement>(id);
   const [edges, setEdges] = useState<{ start: boolean; end: boolean }>({ start: true, end: false });
 
@@ -562,8 +862,10 @@ function Row({ id, title, items }: { id: string; title: string; items: Poster[] 
     el.scrollBy({ left: dir * -amount, behavior: "smooth" });
   };
 
+  const isContinue = variant === "continue";
+
   return (
-    <section aria-labelledby={`row-${id}`} className="space-y-3 group/row">
+    <section aria-labelledby={`row-${id}`} className="space-y-3 group/row motion-safe:animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 id={`row-${id}`} className="text-lg sm:text-xl lg:text-2xl font-extrabold">
           {title}
@@ -600,8 +902,17 @@ function Row({ id, title, items }: { id: string; title: string; items: Poster[] 
             className="flex gap-3 sm:gap-4 lg:gap-5 min-w-max"
           >
             {items.map((p, i) => (
-              <li key={p.title} className="w-32 sm:w-40 md:w-44 lg:w-48 shrink-0 snap-start">
-                <PosterCard poster={p} eager={i < 3} />
+              <li
+                key={p.id}
+                className={`shrink-0 snap-start ${
+                  isContinue ? "w-56 sm:w-64 md:w-72" : "w-32 sm:w-40 md:w-44 lg:w-48"
+                }`}
+              >
+                {isContinue ? (
+                  <ContinueCard poster={p} eager={i < 2} />
+                ) : (
+                  <PosterCard poster={p} eager={i < 3} />
+                )}
               </li>
             ))}
           </ul>
@@ -611,11 +922,48 @@ function Row({ id, title, items }: { id: string; title: string; items: Poster[] 
   );
 }
 
+function BadgePill({ kind }: { kind: Badge }) {
+  const map: Record<Badge, { label: string; className: string }> = {
+    NEW: { label: "جديد", className: "bg-red-500 text-white" },
+    TOP10: { label: "TOP 10", className: "bg-nav-active text-neutral-900" },
+    HDR: { label: "HDR", className: "bg-white/15 text-foreground ring-1 ring-white/20" },
+    DOLBY_VISION: { label: "Dolby Vision", className: "bg-white/15 text-foreground ring-1 ring-white/20" },
+    DOLBY_ATMOS: { label: "Dolby Atmos", className: "bg-white/15 text-foreground ring-1 ring-white/20" },
+    "4K": { label: "4K", className: "bg-black/60 text-nav-active ring-1 ring-nav-active/40" },
+  };
+  const { label, className } = map[kind];
+  return (
+    <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-black tracking-wider backdrop-blur ${className}`}>
+      {label}
+    </span>
+  );
+}
+
 function PosterCard({ poster, eager }: { poster: Poster; eager?: boolean }) {
   const { ref, inView } = useInView<HTMLDivElement>();
   const visible = eager || inView;
   const [bookmarked, setBookmarked] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Parallax hover (desktop only, disabled for reduced motion)
+  const reduced = usePrefersReducedMotion();
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const onMove = (e: React.MouseEvent) => {
+    if (reduced) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    el.style.setProperty("--rx", `${(-py * 6).toFixed(2)}deg`);
+    el.style.setProperty("--ry", `${(px * 8).toFixed(2)}deg`);
+  };
+  const onLeave = () => {
+    const el = cardRef.current;
+    if (!el) return;
+    el.style.setProperty("--rx", "0deg");
+    el.style.setProperty("--ry", "0deg");
+  };
 
   const startPress = () => {
     longPressTimer.current = setTimeout(() => {
@@ -636,31 +984,45 @@ function PosterCard({ poster, eager }: { poster: Poster; eager?: boolean }) {
     if ("vibrate" in navigator) navigator.vibrate?.(10);
   };
 
+  const topBadges = poster.badges?.filter((b) => b === "NEW" || b === "TOP10") ?? [];
+  const techBadges = poster.badges?.filter((b) => b === "HDR" || b === "DOLBY_VISION" || b === "DOLBY_ATMOS") ?? [];
+
   return (
     <button
       type="button"
-      aria-label={`${poster.title} ${poster.year}`}
+      aria-label={`${poster.title} ${poster.year}${poster.rating ? `، تقييم ${poster.rating}` : ""}`}
       onTouchStart={startPress}
       onTouchEnd={endPress}
       onTouchCancel={endPress}
-      className="group block w-full text-right focus:outline-none"
+      className="group block w-full text-right focus:outline-none [perspective:1000px]"
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
     >
       <div
-        ref={ref}
-        className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.7)] transition duration-300 ease-out will-change-transform group-hover:-translate-y-1 group-hover:scale-[1.05] group-hover:brightness-110 group-hover:shadow-[0_25px_45px_-15px_rgba(0,0,0,0.9)] group-focus-visible:ring-2 group-focus-visible:ring-nav-active"
+        ref={(el) => {
+          ref.current = el;
+          cardRef.current = el;
+        }}
+        style={{ transform: "rotateX(var(--rx,0)) rotateY(var(--ry,0))" }}
+        className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.7)] transition duration-300 ease-out will-change-transform [transform-style:preserve-3d] group-hover:-translate-y-1 group-hover:scale-[1.04] group-hover:brightness-110 group-hover:shadow-[0_25px_45px_-15px_rgba(0,0,0,0.9)] group-focus-visible:ring-2 group-focus-visible:ring-nav-active"
       >
         {!visible && <div className="absolute inset-0 skeleton rounded-2xl" />}
         {visible && (
-          <div className={`absolute inset-0 bg-gradient-to-br ${poster.gradient} animate-fade-in`}>
+          <div className={`absolute inset-0 bg-gradient-to-br ${poster.gradient} motion-safe:animate-fade-in`}>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_60%)]" />
 
-            {/* Top row: tag + bookmark */}
+            {/* Top row: badges + bookmark */}
             <div className="absolute inset-x-2 top-2 flex items-start justify-between gap-2">
-              {poster.tag && (
-                <span className="rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold text-foreground backdrop-blur">
-                  {poster.tag}
-                </span>
-              )}
+              <div className="flex flex-wrap items-center gap-1">
+                {topBadges.map((b) => (
+                  <BadgePill key={b} kind={b} />
+                ))}
+                {poster.tag && !topBadges.length && (
+                  <span className="rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold text-foreground backdrop-blur">
+                    {poster.tag}
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={toggleBookmark}
@@ -673,6 +1035,25 @@ function PosterCard({ poster, eager }: { poster: Poster; eager?: boolean }) {
                 <Bookmark className={`h-3.5 w-3.5 ${bookmarked ? "fill-current" : ""}`} />
               </button>
             </div>
+
+            {/* Large Top 10 rank number */}
+            {poster.badges?.includes("TOP10") && poster.rank !== undefined && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -bottom-2 -right-1 text-[68px] font-black leading-none text-black/60 [text-shadow:_-1px_-1px_0_rgba(255,255,255,0.15)]"
+              >
+                {poster.rank}
+              </span>
+            )}
+
+            {/* Tech badges (HDR / Dolby) */}
+            {techBadges.length > 0 && (
+              <div className="absolute top-10 right-2 flex flex-col items-end gap-1">
+                {techBadges.map((b) => (
+                  <BadgePill key={b} kind={b} />
+                ))}
+              </div>
+            )}
 
             {/* Quality chip */}
             {poster.quality && (
@@ -688,6 +1069,12 @@ function PosterCard({ poster, eager }: { poster: Poster; eager?: boolean }) {
               </p>
               <div className="mt-1 flex items-center gap-1.5 text-[10px] text-foreground/80">
                 <span>{poster.year}</span>
+                {poster.ageRating && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span className="rounded bg-white/10 px-1 font-bold">{poster.ageRating}</span>
+                  </>
+                )}
                 {poster.rating !== undefined && (
                   <>
                     <span aria-hidden>·</span>
@@ -704,9 +1091,21 @@ function PosterCard({ poster, eager }: { poster: Poster; eager?: boolean }) {
                   </>
                 )}
               </div>
+              {poster.progress !== undefined && poster.progress > 0 && (
+                <div
+                  className="mt-1.5 h-1 w-full rounded-full bg-white/15 overflow-hidden"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(poster.progress * 100)}
+                  aria-label="نسبة المشاهدة"
+                >
+                  <div className="h-full rounded-full bg-nav-active" style={{ width: `${Math.round(poster.progress * 100)}%` }} />
+                </div>
+              )}
             </div>
 
-            {/* Hover: play overlay + description (desktop only) */}
+            {/* Hover overlay */}
             <div className="absolute inset-0 hidden md:grid place-items-center opacity-0 transition duration-200 group-hover:opacity-100 bg-black/40">
               <span className="grid h-12 w-12 place-items-center rounded-full bg-pill text-pill-foreground shadow-[0_10px_30px_-6px_color-mix(in_oklab,var(--color-nav-active)_60%,transparent)] scale-90 transition duration-300 group-hover:scale-100">
                 <Play className="h-5 w-5 fill-current" />
@@ -729,9 +1128,63 @@ function PosterCard({ poster, eager }: { poster: Poster; eager?: boolean }) {
   );
 }
 
+// Wide "Continue Watching" card
+function ContinueCard({ poster, eager }: { poster: Poster; eager?: boolean }) {
+  const { ref, inView } = useInView<HTMLDivElement>();
+  const visible = eager || inView;
+  const pct = Math.round((poster.progress ?? 0) * 100);
+  return (
+    <button
+      type="button"
+      aria-label={`متابعة ${poster.title}، ${pct}٪ تمت المشاهدة`}
+      className="group block w-full text-right focus:outline-none"
+    >
+      <div
+        ref={ref}
+        className="relative aspect-video w-full overflow-hidden rounded-xl ring-1 ring-white/10 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.7)] transition duration-300 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:brightness-110"
+      >
+        {!visible && <div className="absolute inset-0 skeleton" />}
+        {visible && (
+          <div className={`absolute inset-0 bg-gradient-to-br ${poster.gradient} motion-safe:animate-fade-in`}>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_60%)]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+
+            {/* Center resume play */}
+            <div className="absolute inset-0 grid place-items-center">
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-black/55 text-foreground ring-1 ring-white/20 backdrop-blur transition group-hover:bg-black/70 group-hover:scale-105">
+                <Play className="h-5 w-5 fill-current" />
+              </span>
+            </div>
+
+            {/* Footer: title + progress */}
+            <div className="absolute inset-x-0 bottom-0 p-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="truncate text-[13px] font-extrabold text-foreground drop-shadow">{poster.title}</p>
+                <span className="text-[10px] text-foreground/80">{poster.duration}</span>
+              </div>
+              <div
+                className="mt-1.5 h-1 w-full rounded-full bg-white/20 overflow-hidden"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={pct}
+              >
+                <div className="h-full rounded-full bg-nav-active" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// ============================================================
+// Bottom Nav (persists last visited tab)
+// ============================================================
 function BottomNav() {
   const { hidden } = useScrollState();
-  const [active, setActive] = useState("الرئيسية");
+  const [active, setActive] = usePersistentState<string>("nav", "الرئيسية");
   const items = [
     { label: "المزيد", icon: MoreHorizontal },
     { label: "قائمتي", icon: Bookmark },
@@ -773,7 +1226,7 @@ function BottomNav() {
                 {isActive && (
                   <span
                     aria-hidden
-                    className="absolute -bottom-1 h-1 w-1 rounded-full bg-nav-active animate-glow"
+                    className="absolute -bottom-1 h-1 w-1 rounded-full bg-nav-active motion-safe:animate-glow"
                   />
                 )}
               </button>

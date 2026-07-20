@@ -127,3 +127,21 @@
   & > * { scroll-snap-align: start; }
 }
 
+/* Accessibility: honor reduced-motion at the CSS layer as a safety net */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Accessibility: high-contrast mode support */
+@media (prefers-contrast: more) {
+  :root {
+    --border: oklch(0.6 0.01 260);
+    --muted-foreground: oklch(0.85 0.01 260);
+  }
+}
+
