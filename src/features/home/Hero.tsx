@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Info, Play, Plus, Volume2, VolumeX } from "lucide-react";
 import type { Hero as HeroData } from "@/services/api/types";
 import lionLogo from "@/assets/lion-logo.png";
 import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion";
 import { track } from "@/lib/analytics";
+import { heroDetailPath, heroWatchPath, toggleFavorite, useFavorites } from "@/lib/user-data";
 
 const ROTATION_MS = 7000;
 
