@@ -1,14 +1,20 @@
+import { Link } from "@tanstack/react-router";
 import { Download, ListVideo, LogOut, Settings, UserRound } from "lucide-react";
 import { GlassPanel } from "@/components/primitives/GlassPanel";
 
-type Item = { icon: typeof UserRound; label: string; danger?: boolean };
+type Item = {
+  icon: typeof UserRound;
+  label: string;
+  to?: "/settings";
+  danger?: boolean;
+};
 
 const ITEMS: readonly Item[] = [
-  { icon: UserRound, label: "الحساب" },
+  { icon: UserRound, label: "الحساب", to: "/settings" },
   { icon: ListVideo, label: "المشاهدة لاحقًا" },
   { icon: Download, label: "التنزيلات" },
-  { icon: Settings, label: "الإعدادات" },
-  { icon: LogOut, label: "تسجيل الخروج", danger: true },
+  { icon: Settings, label: "الإعدادات", to: "/settings" },
+  { icon: LogOut, label: "تسجيل الخروج", to: "/settings", danger: true },
 ];
 
 export function ProfilePanel({ onClose }: { onClose: () => void }) {
@@ -24,19 +30,26 @@ export function ProfilePanel({ onClose }: { onClose: () => void }) {
         </div>
       </div>
       <ul className="mt-1">
-        {ITEMS.map(({ icon: Icon, label, danger }) => (
-          <li key={label}>
-            <button
-              onClick={onClose}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/5 ${
-                danger ? "text-red-300 hover:text-red-200" : "text-foreground"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              <span>{label}</span>
-            </button>
-          </li>
-        ))}
+        {ITEMS.map(({ icon: Icon, label, danger, to }) => {
+          const cls = `flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/5 ${
+            danger ? "text-red-300 hover:text-red-200" : "text-foreground"
+          }`;
+          return (
+            <li key={label}>
+              {to ? (
+                <Link to={to} onClick={onClose} className={cls}>
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
+                </Link>
+              ) : (
+                <button onClick={onClose} className={cls}>
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
+                </button>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </GlassPanel>
   );
