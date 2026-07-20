@@ -74,7 +74,10 @@
   --animate-fade-in: fade-in 400ms ease-out both;
   --animate-shimmer: shimmer 1.4s linear infinite;
   --animate-glow: glow 2.4s ease-in-out infinite;
+  --animate-scale-in: scale-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-kenburns: kenburns 12s ease-out both;
 }
+
 
 @keyframes hero-in {
   from { opacity: 0; transform: translateY(16px); }
