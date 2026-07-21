@@ -121,6 +121,7 @@ export function Player({
           { type: "mpegts", isLive, cors: true, url: activeSrc },
           {
             enableWorker: false,
+            enableWorkerForMSE: true,
             enableStashBuffer: !isLive,
             stashInitialSize: 384 * 1024,
             seekType: "range",
@@ -162,13 +163,9 @@ export function Player({
       if (!video) return;
 
       if (isTs) {
-        if (canPlayNativeHls) {
-          // Safari/iOS cannot consume raw TS as a normal video src, but it can
-          // play the same bytes through our one-segment HLS manifest.
-          if (retryWithHlsSource()) return;
-        }
         const attached = await attachMpegTs(video);
         if (cancelled || attached) return;
+        if (canPlayNativeHls && retryWithHlsSource()) return;
         setError("هذا المتصفح لا يدعم مشغل MPEG-TS المطلوب لهذا الملف");
         return;
       }
