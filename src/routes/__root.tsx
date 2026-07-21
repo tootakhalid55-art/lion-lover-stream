@@ -45,6 +45,20 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    const msg = error?.message ?? "";
+    if (
+      /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|ChunkLoadError|Unable to preload CSS/i.test(
+        msg,
+      )
+    ) {
+      const key = `__chunk_reload_at:${window.location.pathname}`;
+      const last = Number(sessionStorage.getItem(key) ?? 0);
+      if (Date.now() - last > 30_000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        window.location.reload();
+        return;
+      }
+    }
     logRuntimeDiagnostic({
       filename: "src/routes/__root.tsx",
       functionName: "ErrorComponent",
@@ -154,14 +168,16 @@ function RootComponent() {
   useEffect(() => {
     const RELOAD_KEY = "__chunk_reload_at";
     const isChunkError = (msg: string) =>
-      /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|ChunkLoadError/i.test(
+      /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|ChunkLoadError|Unable to preload CSS/i.test(
         msg,
       );
     const maybeReload = (msg: string) => {
       if (!isChunkError(msg)) return;
-      const last = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0);
-      if (Date.now() - last < 10_000) return;
-      sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+      // Key by pathname so each failing route gets one fresh reload attempt.
+      const key = `${RELOAD_KEY}:${window.location.pathname}`;
+      const last = Number(sessionStorage.getItem(key) ?? 0);
+      if (Date.now() - last < 30_000) return;
+      sessionStorage.setItem(key, String(Date.now()));
       window.location.reload();
     };
     const onError = (e: ErrorEvent) => maybeReload(e.message || String(e.error ?? ""));
