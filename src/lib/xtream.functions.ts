@@ -6,6 +6,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { Hero, HomeFeed, Notification, Poster } from "@/services/api/types";
 
+async function logServerFunctionError(
+  functionName: string,
+  lineNumber: number,
+  error: unknown,
+  httpStatus?: number,
+) {
+  const { logServerDiagnostic } = await import("./runtime-diagnostics.server");
+  logServerDiagnostic({
+    filename: "src/lib/xtream.functions.ts",
+    functionName,
+    lineNumber,
+    error,
+    httpStatus,
+  });
+}
+
 // ─── Mapping helpers ─────────────────────────────────────────────────────
 
 const GRADIENTS = [
@@ -74,9 +90,9 @@ export const getHomeFeed = createServerFn({ method: "GET" }).handler(async (): P
     const { creds, isOverride } = await resolveCreds();
     const scope = isOverride ? `u:${creds.username}` : "default";
     const [movies, series, live] = await Promise.all([
-      cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)).catch(() => []),
-      cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)).catch(() => []),
-      cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds)).catch(() => []),
+      cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)),
+      cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)),
+      cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds)),
     ]);
 
     const recentMovies = [...movies]
@@ -113,8 +129,8 @@ export const getHomeFeed = createServerFn({ method: "GET" }).handler(async (): P
       ],
     };
   } catch (err) {
-    console.error("[xtream] getHomeFeed failed:", err);
-    return { heroes: [], continueWatching: [], rows: [] };
+    await logServerFunctionError("getHomeFeed", 115, err);
+    throw err;
   }
 });
 
@@ -127,8 +143,9 @@ export const getMovies = createServerFn({ method: "GET" }).handler(async (): Pro
     const scope = isOverride ? `u:${creds.username}` : "default";
     const list = await cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds));
     return list.slice(0, 200).map(vodToPoster);
-  } catch {
-    return [];
+  } catch (err) {
+    await logServerFunctionError("getMovies", 130, err);
+    throw err;
   }
 });
 
@@ -141,8 +158,9 @@ export const getSeries = createServerFn({ method: "GET" }).handler(async (): Pro
     const scope = isOverride ? `u:${creds.username}` : "default";
     const list = await cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds));
     return list.slice(0, 200).map(seriesToPoster);
-  } catch {
-    return [];
+  } catch (err) {
+    await logServerFunctionError("getSeries", 144, err);
+    throw err;
   }
 });
 
@@ -155,8 +173,9 @@ export const getLive = createServerFn({ method: "GET" }).handler(async (): Promi
     const scope = isOverride ? `u:${creds.username}` : "default";
     const list = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds));
     return list.slice(0, 200).map(liveToPoster);
-  } catch {
-    return [];
+  } catch (err) {
+    await logServerFunctionError("getLive", 158, err);
+    throw err;
   }
 });
 
@@ -166,19 +185,24 @@ export const getHealth = createServerFn({ method: "GET" }).handler(async (): Pro
   latencyMs: number;
   message?: string;
 }> => {
-  const { healthCheck } = await import("./xtream.server");
-  const { cached, TTL } = await import("./xtream-cache.server");
-  const r = await cached("health", TTL.health, healthCheck);
-  return {
-    ok: r.ok,
-    latencyMs: r.latencyMs,
-    message: r.ok ? undefined : "الخادم غير متاح حالياً. جارٍ إعادة المحاولة…",
-  };
+  try {
+    const { healthCheck } = await import("./xtream.server");
+    const { cached, TTL } = await import("./xtream-cache.server");
+    const r = await cached("health", TTL.health, healthCheck);
+    return {
+      ok: r.ok,
+      latencyMs: r.latencyMs,
+      message: r.ok ? undefined : "الخادم غير متاح حالياً. جارٍ إعادة المحاولة…",
+    };
+  } catch (err) {
+    await logServerFunctionError("getHealth", 164, err);
+    return { ok: false, latencyMs: 0, message: err instanceof Error ? err.message : "تعذّر الاتصال بالخادم" };
+  }
 });
 
 
 export const searchAll = createServerFn({ method: "POST" })
-  .inputValidator((d: { query: string; scope: "movies" | "series" | "all" }) => d)
+  .validator((d: { query: string; scope: "movies" | "series" | "all" }) => d)
   .handler(async ({ data }): Promise<Poster[]> => {
     const q = data.query.trim().toLowerCase();
     if (!q) return [];
@@ -190,26 +214,27 @@ export const searchAll = createServerFn({ method: "POST" })
       const scope = isOverride ? `u:${creds.username}` : "default";
       const results: Poster[] = [];
       if (data.scope !== "series") {
-        const movies = await cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)).catch(() => []);
+        const movies = await cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds));
         results.push(
           ...movies.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 20).map(vodToPoster),
         );
       }
       if (data.scope !== "movies") {
-        const series = await cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)).catch(() => []);
+        const series = await cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds));
         results.push(
           ...series.filter((s) => s.name.toLowerCase().includes(q)).slice(0, 20).map(seriesToPoster),
         );
       }
       if (data.scope === "all") {
-        const live = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds)).catch(() => []);
+        const live = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds));
         results.push(
           ...live.filter((l) => l.name.toLowerCase().includes(q)).slice(0, 10).map(liveToPoster),
         );
       }
       return results.slice(0, 30);
-    } catch {
-      return [];
+    } catch (err) {
+      await logServerFunctionError("searchAll", 211, err);
+      throw err;
     }
   });
 
@@ -217,28 +242,33 @@ export const searchAll = createServerFn({ method: "POST" })
 /** Resolve a stream URL for playback. Returns a URL to our own proxy so
  * credentials never leave the server. */
 export const resolveStream = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; ext?: string }) => d)
+  .validator((d: { id: string; ext?: string }) => d)
   .handler(async ({ data }): Promise<{
     manifestUrl: string;
     protocol: "hls" | "dash";
     audioLanguages: string[];
     subtitleLanguages: string[];
   }> => {
-    const [kind, rawId] = data.id.split(":");
-    if (!kind || !rawId) throw new Error("Invalid stream id");
-    const ext = data.ext || (kind === "live" ? "m3u8" : "mp4");
-    const proxyPath =
-      kind === "live"
-        ? `/api/public/stream/live/${encodeURIComponent(rawId)}.${ext}`
-        : kind === "series"
-          ? `/api/public/stream/series/${encodeURIComponent(rawId)}.${ext}`
-          : `/api/public/stream/movie/${encodeURIComponent(rawId)}.${ext}`;
-    return {
-      manifestUrl: proxyPath,
-      protocol: kind === "live" ? "hls" : ext === "m3u8" ? "hls" : "hls",
-      audioLanguages: ["ar", "en"],
-      subtitleLanguages: ["ar", "en"],
-    };
+    try {
+      const [kind, rawId] = data.id.split(":");
+      if (!kind || !rawId) throw new Error("Invalid stream id");
+      const ext = data.ext || (kind === "live" ? "m3u8" : "mp4");
+      const proxyPath =
+        kind === "live"
+          ? `/api/public/stream/live/${encodeURIComponent(rawId)}.${ext}`
+          : kind === "series"
+            ? `/api/public/stream/series/${encodeURIComponent(rawId)}.${ext}`
+            : `/api/public/stream/movie/${encodeURIComponent(rawId)}.${ext}`;
+      return {
+        manifestUrl: proxyPath,
+        protocol: kind === "live" ? "hls" : ext === "m3u8" ? "hls" : "hls",
+        audioLanguages: ["ar", "en"],
+        subtitleLanguages: ["ar", "en"],
+      };
+    } catch (err) {
+      await logServerFunctionError("resolveStream", 227, err);
+      throw err;
+    }
   });
 
 // ─── Auth (per-user override) ────────────────────────────────────────────
@@ -262,13 +292,14 @@ export const getAccountInfo = createServerFn({ method: "GET" }).handler(async ()
         ? new Date(Number(info.user_info.exp_date) * 1000).toISOString()
         : null,
     };
-  } catch {
-    return { isOverride: false, username: null, status: null, expiresAt: null };
+  } catch (err) {
+    await logServerFunctionError("getAccountInfo", 265, err);
+    throw err;
   }
 });
 
 export const signInWithOwnAccount = createServerFn({ method: "POST" })
-  .inputValidator((d: { username: string; password: string; serverUrl?: string }) => d)
+  .validator((d: { username: string; password: string; serverUrl?: string }) => d)
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
     const { authenticate } = await import("./xtream.server");
     const { setOverride } = await import("./xtream-session.server");
@@ -279,21 +310,34 @@ export const signInWithOwnAccount = createServerFn({ method: "POST" })
       await authenticate({ serverUrl, username: data.username, password: data.password });
       await setOverride(data.username, data.password, serverUrl);
       return { ok: true };
-    } catch {
+    } catch (err) {
+      await logServerFunctionError("signInWithOwnAccount", 282, err, 401);
       return { ok: false, error: "بيانات الدخول غير صحيحة" };
     }
   });
 
 export const useDefaultAccount = createServerFn({ method: "POST" }).handler(async () => {
-  const { clearOverride } = await import("./xtream-session.server");
-  await clearOverride();
-  return { ok: true };
+  try {
+    const { clearOverride } = await import("./xtream-session.server");
+    await clearOverride();
+    return { ok: true };
+  } catch (err) {
+    await logServerFunctionError("useDefaultAccount", 287, err);
+    return { ok: false };
+  }
 });
 
 // ─── Notifications / Continue Watching stubs (no upstream equivalent) ───
 
 export const getNotifications = createServerFn({ method: "GET" }).handler(
-  async (): Promise<Notification[]> => [],
+  async (): Promise<Notification[]> => {
+    try {
+      return [];
+    } catch (err) {
+      await logServerFunctionError("getNotifications", 295, err);
+      return [];
+    }
+  },
 );
 
 // ─── Detail views ────────────────────────────────────────────────────────
@@ -315,7 +359,7 @@ export interface MovieDetail {
 }
 
 export const getMovieDetail = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data }): Promise<MovieDetail | null> => {
     const [kind, raw] = data.id.split(":");
     if (kind !== "movie" || !raw) return null;
@@ -327,8 +371,8 @@ export const getMovieDetail = createServerFn({ method: "POST" })
       const scope = isOverride ? `u:${creds.username}` : "default";
       const streamId = Number(raw);
       const [info, list] = await Promise.all([
-        cached(`${scope}:vod-info:${streamId}`, TTL.lists, () => xtream.getVodInfo(creds, streamId)).catch(() => null),
-        cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)).catch(() => []),
+        cached(`${scope}:vod-info:${streamId}`, TTL.lists, () => xtream.getVodInfo(creds, streamId)),
+        cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)),
       ]);
       const listItem = list.find((v) => v.stream_id === streamId);
       const md = (info?.movie_data ?? {}) as Record<string, unknown>;
@@ -353,8 +397,8 @@ export const getMovieDetail = createServerFn({ method: "POST" })
         ext: str(md.container_extension) || listItem?.container_extension || "mp4",
       };
     } catch (err) {
-      console.error("[xtream] getMovieDetail failed:", err);
-      return null;
+      await logServerFunctionError("getMovieDetail", 355, err);
+      throw err;
     }
   });
 
@@ -385,7 +429,7 @@ export interface SeriesDetail {
 }
 
 export const getSeriesDetail = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data }): Promise<SeriesDetail | null> => {
     const [kind, raw] = data.id.split(":");
     if (kind !== "series" || !raw) return null;
@@ -397,8 +441,8 @@ export const getSeriesDetail = createServerFn({ method: "POST" })
       const scope = isOverride ? `u:${creds.username}` : "default";
       const seriesId = Number(raw);
       const [info, list] = await Promise.all([
-        cached(`${scope}:series-info:${seriesId}`, TTL.lists, () => xtream.getSeriesInfo(creds, seriesId)).catch(() => null),
-        cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)).catch(() => []),
+        cached(`${scope}:series-info:${seriesId}`, TTL.lists, () => xtream.getSeriesInfo(creds, seriesId)),
+        cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)),
       ]);
       const listItem = list.find((s) => s.series_id === seriesId);
       const meta = (info?.info ?? {}) as Record<string, unknown>;
@@ -443,13 +487,13 @@ export const getSeriesDetail = createServerFn({ method: "POST" })
         seasons,
       };
     } catch (err) {
-      console.error("[xtream] getSeriesDetail failed:", err);
-      return null;
+      await logServerFunctionError("getSeriesDetail", 445, err);
+      throw err;
     }
   });
 
 export const getLiveChannel = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data }): Promise<Poster | null> => {
     const [kind, raw] = data.id.split(":");
     if (kind !== "live" || !raw) return null;
@@ -462,7 +506,8 @@ export const getLiveChannel = createServerFn({ method: "POST" })
       const list = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds));
       const item = list.find((l) => l.stream_id === Number(raw));
       return item ? liveToPoster(item) : null;
-    } catch {
-      return null;
+    } catch (err) {
+      await logServerFunctionError("getLiveChannel", 465, err);
+      throw err;
     }
   });

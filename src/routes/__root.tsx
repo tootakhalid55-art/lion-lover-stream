@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { buildRuntimeDiagnostic, logRuntimeDiagnostic } from "../lib/runtime-diagnostics";
 
 function NotFoundComponent() {
   return (
@@ -35,9 +36,21 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+  const diagnostic = buildRuntimeDiagnostic({
+    filename: "src/routes/__root.tsx",
+    functionName: "ErrorComponent",
+    lineNumber: 39,
+    error,
+  });
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    logRuntimeDiagnostic({
+      filename: "src/routes/__root.tsx",
+      functionName: "ErrorComponent",
+      lineNumber: 39,
+      error,
+    });
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
@@ -45,11 +58,23 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          Runtime exception
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          {diagnostic.message}
         </p>
+        <dl className="mt-4 space-y-1 rounded-xl bg-white/5 p-3 text-left text-xs text-muted-foreground" dir="ltr">
+          <div><dt className="inline font-bold text-foreground">file: </dt><dd className="inline">{diagnostic.filename}</dd></div>
+          <div><dt className="inline font-bold text-foreground">function: </dt><dd className="inline">{diagnostic.functionName}</dd></div>
+          <div><dt className="inline font-bold text-foreground">line: </dt><dd className="inline">{diagnostic.lineNumber ?? "unknown"}</dd></div>
+          <div><dt className="inline font-bold text-foreground">status: </dt><dd className="inline">{diagnostic.httpStatus ?? "n/a"}</dd></div>
+          <div><dt className="inline font-bold text-foreground">url: </dt><dd className="inline break-all">{diagnostic.requestUrl}</dd></div>
+        </dl>
+        {diagnostic.stack && (
+          <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-xl bg-black/40 p-3 text-left text-[11px] text-foreground/80" dir="ltr">
+            {diagnostic.stack}
+          </pre>
+        )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {

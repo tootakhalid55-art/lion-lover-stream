@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Search as SearchIcon, ArrowRight } from "lucide-react";
 import { api } from "@/services/api";
@@ -6,28 +6,51 @@ import { Header } from "@/features/navigation/Header";
 import { BottomNav } from "@/features/navigation/BottomNav";
 import { PosterCard } from "@/features/catalog/PosterCard";
 import type { Poster } from "@/services/api/types";
-import { detailPath } from "@/lib/user-data";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/search")({
   head: () => ({ meta: [{ title: "البحث — LionTV" }, { name: "description", content: "ابحث عن الأفلام والمسلسلات." }] }),
   component: SearchPage,
+  errorComponent: ({ error, reset }) => (
+    <RouteError error={error} reset={reset} filename="src/routes/search.tsx" functionName="SearchPage" lineNumber={22} />
+  ),
 });
 
 function SearchPage() {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Poster[]>([]);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [loadError, setLoadError] = useState<Error | null>(null);
 
   useEffect(() => {
     let alive = true;
-    if (!q.trim()) { setResults([]); return; }
+    setLoadError(null);
+    if (!q.trim()) { setResults([]); setLoading(false); return; }
     setLoading(true);
-    void api.search.suggest(q, "all").then((r) => {
-      if (alive) { setResults(r); setLoading(false); }
-    });
+    void api.search.suggest(q, "all")
+      .then((r) => {
+        if (alive) { setResults(r); setLoading(false); }
+      })
+      .catch((err) => {
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.error("[runtime:exception]", {
+          filename: "src/routes/search.tsx",
+          functionName: "SearchPage.useEffect:searchAll",
+          lineNumber: 28,
+          message: error.message,
+          stack: error.stack ?? null,
+          requestUrl: window.location.href,
+          httpStatus: null,
+        });
+        if (alive) {
+          setLoading(false);
+          setLoadError(error);
+        }
+      });
     return () => { alive = false; };
   }, [q]);
+
+  if (loadError) return <RouteError error={loadError} filename="src/routes/search.tsx" functionName="SearchPage.useEffect:searchAll" lineNumber={28} />;
 
   return (
     <div className="min-h-dvh bg-background pb-32">

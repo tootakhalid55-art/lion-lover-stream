@@ -5,22 +5,50 @@ import { getMovieDetail, type MovieDetail } from "@/lib/xtream.functions";
 import { Header } from "@/features/navigation/Header";
 import { BottomNav } from "@/features/navigation/BottomNav";
 import { toggleFavorite, useFavorites, watchPath } from "@/lib/user-data";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/movie/$id")({
   component: MoviePage,
+  errorComponent: ({ error, reset }) => (
+    <RouteError error={error} reset={reset} filename="src/routes/movie.$id.tsx" functionName="MoviePage" lineNumber={20} />
+  ),
 });
 
 function MoviePage() {
   const { id } = Route.useParams();
   const fullId = `movie:${id}`;
   const [detail, setDetail] = useState<MovieDetail | null | undefined>(undefined);
+  const [loadError, setLoadError] = useState<Error | null>(null);
   const favs = useFavorites();
   const isFav = favs.some((f) => f.id === fullId);
 
   useEffect(() => {
-    void getMovieDetail({ data: { id: fullId } }).then(setDetail);
+    let alive = true;
+    setLoadError(null);
+    setDetail(undefined);
+    void getMovieDetail({ data: { id: fullId } })
+      .then((d) => {
+        if (alive) setDetail(d);
+      })
+      .catch((err) => {
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.error("[runtime:exception]", {
+          filename: "src/routes/movie.$id.tsx",
+          functionName: "MoviePage.useEffect:getMovieDetail",
+          lineNumber: 24,
+          message: error.message,
+          stack: error.stack ?? null,
+          requestUrl: window.location.href,
+          httpStatus: null,
+        });
+        if (alive) setLoadError(error);
+      });
+    return () => {
+      alive = false;
+    };
   }, [fullId]);
 
+  if (loadError) return <RouteError error={loadError} filename="src/routes/movie.$id.tsx" functionName="MoviePage.useEffect:getMovieDetail" lineNumber={24} />;
   if (detail === undefined) return <PageShell><p className="p-6 text-foreground/70">جاري التحميل…</p></PageShell>;
   if (detail === null) return <PageShell><p className="p-6 text-foreground/70">لم يتم العثور على الفيلم</p></PageShell>;
 

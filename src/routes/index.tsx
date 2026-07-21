@@ -8,6 +8,7 @@ import { Hero } from "@/features/home/Hero";
 import { Row } from "@/features/catalog/Row";
 import { bootstrap, track } from "@/lib/analytics";
 import { useQuery } from "@tanstack/react-query";
+import { RouteError } from "@/components/RouteError";
 
 /**
  * Home route. All heavy lifting lives in feature modules; this file only
@@ -16,6 +17,9 @@ import { useQuery } from "@tanstack/react-query";
  */
 export const Route = createFileRoute("/")({
   component: LionTV,
+  errorComponent: ({ error, reset }) => (
+    <RouteError error={error} reset={reset} filename="src/routes/index.tsx" functionName="LionTV" lineNumber={25} />
+  ),
 });
 
 // Ensure the dev-mode analytics logger is only wired once per session.
@@ -25,6 +29,7 @@ function LionTV() {
   const { data: feed } = useQuery({
     queryKey: ["home-feed"],
     queryFn: () => api.home.getFeed(),
+    throwOnError: true,
   });
 
   useEffect(() => {
