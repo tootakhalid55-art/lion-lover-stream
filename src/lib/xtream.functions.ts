@@ -252,7 +252,10 @@ export const resolveStream = createServerFn({ method: "POST" })
     try {
       const [kind, rawId] = data.id.split(":");
       if (!kind || !rawId) throw new Error("Invalid stream id");
-      const ext = data.ext || (kind === "live" ? "m3u8" : "mp4");
+      // Default to HLS (.m3u8) for everything — Xtream transcodes on the fly
+      // and HLS plays reliably across Safari/iOS/Chrome, while direct MP4
+      // often carries HEVC/DivX codecs the browser can't decode.
+      const ext = data.ext || "m3u8";
       const proxyPath =
         kind === "live"
           ? `/api/public/stream/live/${encodeURIComponent(rawId)}.${ext}`
