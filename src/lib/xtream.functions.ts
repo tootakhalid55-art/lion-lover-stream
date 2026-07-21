@@ -202,7 +202,7 @@ export const getHealth = createServerFn({ method: "GET" }).handler(async (): Pro
 
 
 export const searchAll = createServerFn({ method: "POST" })
-  .inputValidator((d: { query: string; scope: "movies" | "series" | "all" }) => d)
+  .validator((d: { query: string; scope: "movies" | "series" | "all" }) => d)
   .handler(async ({ data }): Promise<Poster[]> => {
     const q = data.query.trim().toLowerCase();
     if (!q) return [];
@@ -242,7 +242,7 @@ export const searchAll = createServerFn({ method: "POST" })
 /** Resolve a stream URL for playback. Returns a URL to our own proxy so
  * credentials never leave the server. */
 export const resolveStream = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; ext?: string }) => d)
+  .validator((d: { id: string; ext?: string }) => d)
   .handler(async ({ data }): Promise<{
     manifestUrl: string;
     protocol: "hls" | "dash";
@@ -299,7 +299,7 @@ export const getAccountInfo = createServerFn({ method: "GET" }).handler(async ()
 });
 
 export const signInWithOwnAccount = createServerFn({ method: "POST" })
-  .inputValidator((d: { username: string; password: string; serverUrl?: string }) => d)
+  .validator((d: { username: string; password: string; serverUrl?: string }) => d)
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
     const { authenticate } = await import("./xtream.server");
     const { setOverride } = await import("./xtream-session.server");
@@ -359,7 +359,7 @@ export interface MovieDetail {
 }
 
 export const getMovieDetail = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data }): Promise<MovieDetail | null> => {
     const [kind, raw] = data.id.split(":");
     if (kind !== "movie" || !raw) return null;
@@ -429,7 +429,7 @@ export interface SeriesDetail {
 }
 
 export const getSeriesDetail = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data }): Promise<SeriesDetail | null> => {
     const [kind, raw] = data.id.split(":");
     if (kind !== "series" || !raw) return null;
@@ -493,7 +493,7 @@ export const getSeriesDetail = createServerFn({ method: "POST" })
   });
 
 export const getLiveChannel = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data }): Promise<Poster | null> => {
     const [kind, raw] = data.id.split(":");
     if (kind !== "live" || !raw) return null;
