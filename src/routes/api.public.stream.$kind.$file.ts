@@ -22,8 +22,35 @@ function maskUsername(u: string): string {
   return `${u.slice(0, 1)}${"*".repeat(u.length - 3)}${u.slice(-2)}`;
 }
 
+function streamOriginFallbacks(serverUrl: string): string[] {
+  const origins = [serverUrl.replace(/\/+$/, "")];
+  try {
+    const url = new URL(serverUrl);
+    if (url.protocol === "http:") {
+      const httpsOrigin = `https://${url.hostname}`;
+      if (!origins.includes(httpsOrigin)) origins.push(httpsOrigin);
+    }
+  } catch {
+    /* ignore malformed optional fallback */
+  }
+  return origins;
+}
+
+function buildStreamCandidates(
+  creds: { serverUrl: string; username: string; password: string },
+  kind: "movie" | "series" | "live",
+  id: string,
+  ext: string,
+): string[] {
+  const path = kind === "live" ? "live" : kind;
+  return streamOriginFallbacks(creds.serverUrl).map(
+    (origin) =>
+      `${origin}/${path}/${encodeURIComponent(creds.username)}/${encodeURIComponent(creds.password)}/${id}.${ext}`,
+  );
+}
+
 async function proxy(request: Request, kind: "movie" | "series" | "live", fileName: string) {
-  const { buildStreamUrl, xtream, authenticate } = await import("@/lib/xtream.server");
+  const { xtream, authenticate } = await import("@/lib/xtream.server");
   const { resolveCreds } = await import("@/lib/xtream-session.server");
   const { rateLimit, clientKey } = await import("@/lib/rate-limit.server");
   const { record, safeUrl } = await import("@/lib/xtream-log.server");
@@ -43,8 +70,8 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   if (!/^\d+$/.test(id)) return new Response("Bad id", { status: 400 });
 
   const { creds, isOverride } = await resolveCreds();
-  const upstream = buildStreamUrl(creds, kind, id, ext);
-  const safe = safeUrl(upstream);
+  const upstreamCandidates = buildStreamCandidates(creds, kind, id, ext);
+  const safe = safeUrl(upstreamCandidates[0]);
   const maskedUser = maskUsername(creds.username);
   const accountLabel = isOverride ? "user-override" : "default";
 
@@ -91,18 +118,32 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   const maxAttempts = range ? 1 : 3;
   let upstreamRes: Response | null = null;
   let lastErr: unknown;
+  let lastErrorBody = "";
+  let usedUpstream = upstreamCandidates[0];
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const start = Date.now();
     try {
-      upstreamRes = await fetch(upstream, {
-        // Some Xtream servers return non-standard codes for HEAD. Always GET.
-        method: "GET",
-        headers: forwardHeaders,
-        redirect: "follow",
-      });
+      for (const candidate of upstreamCandidates) {
+        usedUpstream = candidate;
+        upstreamRes = await fetch(candidate, {
+          // Some Xtream servers return non-standard codes for HEAD. Always GET.
+          method: "GET",
+          headers: forwardHeaders,
+          redirect: "follow",
+        });
+
+        if (upstreamRes.status !== 401 && upstreamRes.status !== 403) break;
+
+        lastErrorBody = (await upstreamRes.clone().text().catch(() => "")).slice(0, 300);
+        const hasFallback = upstreamCandidates.indexOf(candidate) < upstreamCandidates.length - 1;
+        console.warn(
+          `[stream] auth rejected by ${safeUrl(candidate)} status=${upstreamRes.status}${lastErrorBody ? ` body=${lastErrorBody}` : ""}${hasFallback ? " — trying HTTPS fallback" : ""}`,
+        );
+        if (!hasFallback) break;
+      }
       const dur = Date.now() - start;
       const transient = upstreamRes.status >= 500 || upstreamRes.status === 429;
-      console.log(`[stream] ${kind}/${id}.${ext} → ${safe} :: ${upstreamRes.status} (${dur}ms, attempt ${attempt})`);
+      console.log(`[stream] ${kind}/${id}.${ext} → ${safeUrl(usedUpstream)} :: ${upstreamRes.status} (${dur}ms, attempt ${attempt})`);
       record({
         ts: Date.now(),
         action: `stream:${kind}`,
@@ -110,13 +151,13 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
         status: upstreamRes.status,
         durationMs: dur,
         attempt,
-        error: upstreamRes.ok || upstreamRes.status === 206 ? undefined : `HTTP ${upstreamRes.status} ${safe}`,
+        error: upstreamRes.ok || upstreamRes.status === 206 ? undefined : `HTTP ${upstreamRes.status} ${safeUrl(usedUpstream)}`,
       });
       if (!transient || attempt === maxAttempts) break;
     } catch (e) {
       lastErr = e;
       const msg = e instanceof Error ? e.message : String(e);
-      console.error(`[stream] ${kind}/${id}.${ext} → ${safe} :: fetch failed (attempt ${attempt}): ${msg}`);
+      console.error(`[stream] ${kind}/${id}.${ext} → ${safeUrl(usedUpstream)} :: fetch failed (attempt ${attempt}): ${msg}`);
       record({
         ts: Date.now(),
         action: `stream:${kind}`,
@@ -140,7 +181,7 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   // Surface upstream error codes clearly so the player can display them.
   const status = upstreamRes.status;
   if (status !== 200 && status !== 206) {
-    const body = await upstreamRes.text().catch(() => "");
+    const body = lastErrorBody || (await upstreamRes.text().catch(() => ""));
     const trimmed = body.slice(0, 300).replace(/<[^>]+>/g, "").trim();
     const label =
       status === 401 || status === 403
