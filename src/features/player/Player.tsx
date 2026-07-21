@@ -256,13 +256,12 @@ export function Player({
     const err = v.error;
     console.error("[player] video error", { code: err?.code, message: err?.message, src: v.currentSrc });
 
-    if (err && (err.code === 3 || err.code === 4) && /\.m3u8($|\?)/i.test(currentSrc) && retryWithTsSource()) {
-      return;
-    }
-
     const canPlayNativeHls = Boolean(v.canPlayType("application/vnd.apple.mpegurl")) || prefersNativeHls();
     if (err && (err.code === 3 || err.code === 4) && /\.m3u8($|\?)/i.test(currentSrc) && canPlayNativeHls) {
       setError("تعذر الوصول للبث — الحساب قد يكون مستخدماً حالياً أو الخادم رفض الاتصال");
+      return;
+    }
+    if (err && (err.code === 3 || err.code === 4) && /\.m3u8($|\?)/i.test(currentSrc) && !prefersNativeHls() && retryWithTsSource()) {
       return;
     }
     if (err && (err.code === 3 || err.code === 4) && /\.ts($|\?)/i.test(currentSrc) && canPlayNativeHls && retryWithHlsSource()) {
