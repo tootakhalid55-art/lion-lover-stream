@@ -28,6 +28,12 @@ export function Player({
   const triedHlsFallback = useRef(false);
   const mpegtsSupported = useRef<boolean | null>(null);
 
+  const prefersNativeHls = () => {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent;
+    return /iP(hone|ad|od)/i.test(ua) || (/Safari/i.test(ua) && !/Chrome|Chromium|CriOS|FxiOS|Edg/i.test(ua));
+  };
+
   useEffect(() => {
     triedTsFallback.current = false;
     triedHlsFallback.current = false;
@@ -96,12 +102,11 @@ export function Player({
     const isHls = /\.m3u8($|\?)/i.test(activeSrc);
     const isTs = /\.ts($|\?)/i.test(activeSrc);
     const isLive = /\/live\//i.test(activeSrc);
-    const ua = navigator.userAgent;
-    const isAppleNativeHls = /iP(hone|ad|od)/i.test(ua) || (/Safari/i.test(ua) && !/Chrome|Chromium|CriOS|FxiOS|Edg/i.test(ua));
-    const canPlayNativeHls = Boolean(video.canPlayType("application/vnd.apple.mpegurl")) || isAppleNativeHls;
+    const canPlayNativeHls = Boolean(video.canPlayType("application/vnd.apple.mpegurl")) || prefersNativeHls();
     let hls: import("hls.js").default | null = null;
     let tsPlayer: { destroy: () => void; unload?: () => void; detachMediaElement?: () => void } | null = null;
     let cancelled = false;
+    let attachTimer: number | undefined;
 
     async function attachMpegTs(media: HTMLVideoElement) {
       try {
@@ -116,6 +121,7 @@ export function Player({
           { type: "mpegts", isLive, cors: true, url: activeSrc },
           {
             enableWorker: false,
+            enableWorkerForMSE: true,
             enableStashBuffer: !isLive,
             stashInitialSize: 384 * 1024,
             seekType: "range",
@@ -157,13 +163,9 @@ export function Player({
       if (!video) return;
 
       if (isTs) {
-        if (canPlayNativeHls) {
-          // Safari/iOS cannot consume raw TS as a normal video src, but it can
-          // play the same bytes through our one-segment HLS manifest.
-          if (retryWithHlsSource()) return;
-        }
         const attached = await attachMpegTs(video);
         if (cancelled || attached) return;
+        if (canPlayNativeHls && retryWithHlsSource()) return;
         setError("هذا المتصفح لا يدعم مشغل MPEG-TS المطلوب لهذا الملف");
         return;
       }
@@ -193,7 +195,7 @@ export function Player({
                 const code = data.response?.code;
                 if (code === 401 || code === 403) {
                   setError("غير مصرح — الحساب مستخدم على جهاز آخر أو انتهت صلاحيته. أغلق أي جلسة مفتوحة وحاول مجدداً.");
-                } else if (retryWithTsSource()) {
+                } else if (!prefersNativeHls() && retryWithTsSource()) {
                   return;
                 } else {
                   setError(code ? `تعذر تشغيل البث (HTTP ${code})` : "تعذر تشغيل هذا الملف من الخادم");
@@ -215,10 +217,17 @@ export function Player({
         video.load();
       }
     }
-    void attach();
+    // React StrictMode in preview mounts/unmounts effects once before the real
+    // mount. Starting media immediately opens two upstream connections, which
+    // single-connection IPTV accounts reject as Unauthorized. Deferring the
+    // attach lets the throwaway mount cancel before any network request starts.
+    attachTimer = window.setTimeout(() => {
+      void attach();
+    }, 120);
 
     return () => {
       cancelled = true;
+      if (attachTimer) window.clearTimeout(attachTimer);
       hls?.destroy();
       try { tsPlayer?.unload?.(); } catch { /* ignore */ }
       try { tsPlayer?.detachMediaElement?.(); } catch { /* ignore */ }
@@ -252,11 +261,14 @@ export function Player({
     const err = v.error;
     console.error("[player] video error", { code: err?.code, message: err?.message, src: v.currentSrc });
 
-    if (err && (err.code === 3 || err.code === 4) && /\.m3u8($|\?)/i.test(currentSrc) && retryWithTsSource()) {
+    const canPlayNativeHls = Boolean(v.canPlayType("application/vnd.apple.mpegurl")) || prefersNativeHls();
+    if (err && (err.code === 3 || err.code === 4) && /\.m3u8($|\?)/i.test(currentSrc) && canPlayNativeHls) {
+      setError("تعذر الوصول للبث — الحساب قد يكون مستخدماً حالياً أو الخادم رفض الاتصال");
       return;
     }
-
-    const canPlayNativeHls = Boolean(v.canPlayType("application/vnd.apple.mpegurl"));
+    if (err && (err.code === 3 || err.code === 4) && /\.m3u8($|\?)/i.test(currentSrc) && !prefersNativeHls() && retryWithTsSource()) {
+      return;
+    }
     if (err && (err.code === 3 || err.code === 4) && /\.ts($|\?)/i.test(currentSrc) && canPlayNativeHls && retryWithHlsSource()) {
       return;
     }

@@ -16,6 +16,61 @@ const HOP_BY_HOP = new Set([
   "upgrade",
 ]);
 
+const streamLocks = new Map<string, Promise<void>>();
+
+async function acquireStreamSlot(key: string): Promise<() => void> {
+  const previous = streamLocks.get(key) ?? Promise.resolve();
+  let releaseCurrent!: () => void;
+  const current = new Promise<void>((resolve) => {
+    releaseCurrent = resolve;
+  });
+  const next = previous.catch(() => undefined).then(() => current);
+  streamLocks.set(key, next);
+  await previous.catch(() => undefined);
+
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    releaseCurrent();
+    queueMicrotask(() => {
+      if (streamLocks.get(key) === next) streamLocks.delete(key);
+    });
+  };
+}
+
+function releaseWhenStreamEnds(body: ReadableStream<Uint8Array> | null, release: () => void) {
+  if (!body) {
+    release();
+    return null;
+  }
+
+  const reader = body.getReader();
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          release();
+          controller.close();
+          return;
+        }
+        controller.enqueue(value);
+      } catch (error) {
+        release();
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      try {
+        await reader.cancel(reason);
+      } finally {
+        release();
+      }
+    },
+  });
+}
+
 function maskUsername(u: string): string {
   if (!u) return "";
   if (u.length <= 4) return "*".repeat(u.length);
@@ -58,20 +113,81 @@ function isValidHlsManifest(text: string): boolean {
   return text.trimStart().startsWith("#EXTM3U");
 }
 
-function syntheticVodManifest(kind: "movie" | "series", id: string, sourceExt: string): string {
+function parseContentRangeTotal(value: string | null): number | null {
+  const total = value?.match(/\/(\d+)\s*$/)?.[1];
+  const n = total ? Number(total) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+async function detectContentLength(candidates: string[]): Promise<number | null> {
+  for (const candidate of candidates) {
+    try {
+      const res = await fetch(candidate, {
+        method: "GET",
+        headers: {
+          range: "bytes=0-0",
+          "user-agent": "VLC/3.0.20 LibVLC/3.0.20",
+          accept: "*/*",
+        },
+        redirect: "follow",
+      });
+      const total = parseContentRangeTotal(res.headers.get("content-range"));
+      await res.body?.cancel().catch(() => undefined);
+      if (total) return total;
+      const len = Number(res.headers.get("content-length") || "");
+      if (Number.isFinite(len) && len > 1) return len;
+    } catch {
+      /* try next origin */
+    }
+  }
+  return null;
+}
+
+async function syntheticVodManifest(
+  kind: "movie" | "series",
+  id: string,
+  sourceExt: string,
+  candidates: string[],
+): Promise<string> {
   const segment = `/api/public/stream/${kind}/${encodeURIComponent(id)}.ts?sourceExt=${encodeURIComponent(sourceExt)}`;
-  return [
+  const totalBytes = await detectContentLength(candidates);
+  if (!totalBytes) {
+    return [
+      "#EXTM3U",
+      "#EXT-X-VERSION:3",
+      "#EXT-X-PLAYLIST-TYPE:VOD",
+      "#EXT-X-INDEPENDENT-SEGMENTS",
+      "#EXT-X-TARGETDURATION:12",
+      "#EXT-X-MEDIA-SEQUENCE:0",
+      "#EXTINF:12.000,",
+      segment,
+      "#EXT-X-ENDLIST",
+      "",
+    ].join("\n");
+  }
+
+  // MPEG-TS packets are 188 bytes. Keep HLS byte-range segments aligned to
+  // packet boundaries so Safari/iOS can open every segment reliably.
+  const chunkBytes = 188 * 12_000;
+  const estimatedDuration = Math.max(1, Math.ceil(totalBytes / 375_000));
+  const segmentCount = Math.ceil(totalBytes / chunkBytes);
+  const secondsPerSegment = Math.max(2, estimatedDuration / segmentCount);
+  const lines = [
     "#EXTM3U",
-    "#EXT-X-VERSION:3",
+    "#EXT-X-VERSION:4",
     "#EXT-X-PLAYLIST-TYPE:VOD",
     "#EXT-X-INDEPENDENT-SEGMENTS",
-    "#EXT-X-TARGETDURATION:21600",
+    `#EXT-X-TARGETDURATION:${Math.ceil(secondsPerSegment)}`,
     "#EXT-X-MEDIA-SEQUENCE:0",
-    "#EXTINF:21600.000,",
-    segment,
-    "#EXT-X-ENDLIST",
-    "",
-  ].join("\n");
+  ];
+  for (let offset = 0; offset < totalBytes; offset += chunkBytes) {
+    const size = Math.min(chunkBytes, totalBytes - offset);
+    lines.push(`#EXTINF:${secondsPerSegment.toFixed(3)},`);
+    lines.push(`#EXT-X-BYTERANGE:${size}@${offset}`);
+    lines.push(segment);
+  }
+  lines.push("#EXT-X-ENDLIST", "");
+  return lines.join("\n");
 }
 
 function rewriteManifestUrls(text: string, kind: "movie" | "series" | "live", id: string, sourceExt: string): string {
@@ -125,7 +241,8 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
     // Safari has a native fallback while desktop browsers use MPEG-TS/MSE.
     if (kind === "movie" || kind === "series") {
       console.log(`[stream:hls] generated local VOD manifest ${kind}/${id}.m3u8 sourceExt=${sourceExt}`);
-      return new Response(syntheticVodManifest(kind, id, sourceExt), {
+      const manifest = await syntheticVodManifest(kind, id, sourceExt, buildStreamCandidates(creds, kind, id, sourceExt));
+      return new Response(manifest, {
         status: 200,
         headers: {
           "content-type": "application/vnd.apple.mpegurl; charset=utf-8",
@@ -169,35 +286,30 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   const maskedUser = maskUsername(creds.username);
   const accountLabel = isOverride ? "user-override" : "default";
 
-  // ─── Auth + bouquet diagnostics (per playback request) ────────────────
-  console.log(
-    `[stream:auth] server=${creds.serverUrl} user=${maskedUser} account=${accountLabel} media=${kind}:${id}.${ext} upstreamExt=${upstreamExt}`,
-  );
-  try {
-    const authInfo = await authenticate(creds);
+  if (requestUrl.searchParams.get("debug") === "1") {
     console.log(
-      `[stream:auth] ok status=${authInfo.user_info.status} exp=${authInfo.user_info.exp_date ?? "-"}`,
+      `[stream:auth] server=${creds.serverUrl} user=${maskedUser} account=${accountLabel} media=${kind}:${id}.${ext} upstreamExt=${upstreamExt}`,
     );
-  } catch (e) {
-    console.warn(
-      `[stream:auth] FAIL user=${maskedUser} account=${accountLabel} err=${e instanceof Error ? e.message : String(e)}`,
-    );
-  }
-  // Bouquet membership check (best-effort, cheap on cache miss only)
-  try {
-    const numId = Number(id);
-    let inBouquet: boolean | "unknown" = "unknown";
-    if (kind === "movie") {
-      const list = await xtream.getVodStreams(creds).catch(() => []);
-      inBouquet = list.some((v) => v.stream_id === numId);
-    } else if (kind === "live") {
-      const list = await xtream.getLiveStreams(creds).catch(() => []);
-      inBouquet = list.some((v) => v.stream_id === numId);
+    try {
+      const authInfo = await authenticate(creds);
+      console.log(`[stream:auth] ok status=${authInfo.user_info.status} exp=${authInfo.user_info.exp_date ?? "-"}`);
+    } catch (e) {
+      console.warn(`[stream:auth] FAIL user=${maskedUser} account=${accountLabel} err=${e instanceof Error ? e.message : String(e)}`);
     }
-    // For series episodes, id is an episode id, not a series_id — skip.
-    console.log(`[stream:bouquet] media=${kind}:${id} inBouquet=${inBouquet} url=${safe}`);
-  } catch {
-    /* ignore diagnostics failures */
+    try {
+      const numId = Number(id);
+      let inBouquet: boolean | "unknown" = "unknown";
+      if (kind === "movie") {
+        const list = await xtream.getVodStreams(creds).catch(() => []);
+        inBouquet = list.some((v) => v.stream_id === numId);
+      } else if (kind === "live") {
+        const list = await xtream.getLiveStreams(creds).catch(() => []);
+        inBouquet = list.some((v) => v.stream_id === numId);
+      }
+      console.log(`[stream:bouquet] media=${kind}:${id} inBouquet=${inBouquet} url=${safe}`);
+    } catch {
+      /* ignore diagnostics failures */
+    }
   }
 
   const forwardHeaders = new Headers();
@@ -206,6 +318,8 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   forwardHeaders.set("user-agent", "VLC/3.0.20 LibVLC/3.0.20");
   forwardHeaders.set("accept", "*/*");
   forwardHeaders.set("icy-metadata", "1");
+
+  const releaseStreamSlot = await acquireStreamSlot(`${accountLabel}:${kind}:${id}`);
 
   // Retry transient failures on non-Range initial requests only. Range
   // requests support natural resume — the player retries the offset.
@@ -268,6 +382,7 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   }
 
   if (!upstreamRes) {
+    releaseStreamSlot();
     return new Response(`Upstream unreachable: ${lastErr instanceof Error ? lastErr.message : "network error"}`, {
       status: 502,
       headers: { "content-type": "text/plain; charset=utf-8" },
@@ -278,6 +393,7 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   const status = upstreamRes.status;
   if (status !== 200 && status !== 206) {
     const body = lastErrorBody || (await upstreamRes.text().catch(() => ""));
+    releaseStreamSlot();
     const trimmed = body.slice(0, 300).replace(/<[^>]+>/g, "").trim();
     const label =
       status === 401 || status === 403
@@ -313,7 +429,7 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   if (ext === "ts") respHeaders.set("content-type", "video/mp2t");
   respHeaders.set("access-control-allow-origin", "*");
 
-  return new Response(upstreamRes.body, {
+  return new Response(releaseWhenStreamEnds(upstreamRes.body, releaseStreamSlot), {
     status,
     statusText: upstreamRes.statusText,
     headers: respHeaders,
