@@ -28,6 +28,12 @@ export function Player({
   const triedHlsFallback = useRef(false);
   const mpegtsSupported = useRef<boolean | null>(null);
 
+  const prefersNativeHls = () => {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent;
+    return /iP(hone|ad|od)/i.test(ua) || (/Safari/i.test(ua) && !/Chrome|Chromium|CriOS|FxiOS|Edg/i.test(ua));
+  };
+
   useEffect(() => {
     triedTsFallback.current = false;
     triedHlsFallback.current = false;
@@ -96,9 +102,7 @@ export function Player({
     const isHls = /\.m3u8($|\?)/i.test(activeSrc);
     const isTs = /\.ts($|\?)/i.test(activeSrc);
     const isLive = /\/live\//i.test(activeSrc);
-    const ua = navigator.userAgent;
-    const isAppleNativeHls = /iP(hone|ad|od)/i.test(ua) || (/Safari/i.test(ua) && !/Chrome|Chromium|CriOS|FxiOS|Edg/i.test(ua));
-    const canPlayNativeHls = Boolean(video.canPlayType("application/vnd.apple.mpegurl")) || isAppleNativeHls;
+    const canPlayNativeHls = Boolean(video.canPlayType("application/vnd.apple.mpegurl")) || prefersNativeHls();
     let hls: import("hls.js").default | null = null;
     let tsPlayer: { destroy: () => void; unload?: () => void; detachMediaElement?: () => void } | null = null;
     let cancelled = false;
@@ -193,7 +197,7 @@ export function Player({
                 const code = data.response?.code;
                 if (code === 401 || code === 403) {
                   setError("غير مصرح — الحساب مستخدم على جهاز آخر أو انتهت صلاحيته. أغلق أي جلسة مفتوحة وحاول مجدداً.");
-                } else if (retryWithTsSource()) {
+                } else if (!prefersNativeHls() && retryWithTsSource()) {
                   return;
                 } else {
                   setError(code ? `تعذر تشغيل البث (HTTP ${code})` : "تعذر تشغيل هذا الملف من الخادم");
@@ -256,7 +260,11 @@ export function Player({
       return;
     }
 
-    const canPlayNativeHls = Boolean(v.canPlayType("application/vnd.apple.mpegurl"));
+    const canPlayNativeHls = Boolean(v.canPlayType("application/vnd.apple.mpegurl")) || prefersNativeHls();
+    if (err && (err.code === 3 || err.code === 4) && /\.m3u8($|\?)/i.test(currentSrc) && canPlayNativeHls) {
+      setError("تعذر الوصول للبث — الحساب قد يكون مستخدماً حالياً أو الخادم رفض الاتصال");
+      return;
+    }
     if (err && (err.code === 3 || err.code === 4) && /\.ts($|\?)/i.test(currentSrc) && canPlayNativeHls && retryWithHlsSource()) {
       return;
     }
