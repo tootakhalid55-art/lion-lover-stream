@@ -16,8 +16,14 @@ const HOP_BY_HOP = new Set([
   "upgrade",
 ]);
 
+function maskUsername(u: string): string {
+  if (!u) return "";
+  if (u.length <= 4) return "*".repeat(u.length);
+  return `${u.slice(0, 1)}${"*".repeat(u.length - 3)}${u.slice(-2)}`;
+}
+
 async function proxy(request: Request, kind: "movie" | "series" | "live", fileName: string) {
-  const { buildStreamUrl } = await import("@/lib/xtream.server");
+  const { buildStreamUrl, xtream, authenticate } = await import("@/lib/xtream.server");
   const { resolveCreds } = await import("@/lib/xtream-session.server");
   const { rateLimit, clientKey } = await import("@/lib/rate-limit.server");
   const { record, safeUrl } = await import("@/lib/xtream-log.server");
@@ -36,9 +42,42 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   const ext = dot > 0 ? fileName.slice(dot + 1) : "mp4";
   if (!/^\d+$/.test(id)) return new Response("Bad id", { status: 400 });
 
-  const { creds } = await resolveCreds();
+  const { creds, isOverride } = await resolveCreds();
   const upstream = buildStreamUrl(creds, kind, id, ext);
   const safe = safeUrl(upstream);
+  const maskedUser = maskUsername(creds.username);
+  const accountLabel = isOverride ? "user-override" : "default";
+
+  // ─── Auth + bouquet diagnostics (per playback request) ────────────────
+  console.log(
+    `[stream:auth] server=${creds.serverUrl} user=${maskedUser} account=${accountLabel} media=${kind}:${id}.${ext}`,
+  );
+  try {
+    const authInfo = await authenticate(creds);
+    console.log(
+      `[stream:auth] ok status=${authInfo.user_info.status} exp=${authInfo.user_info.exp_date ?? "-"}`,
+    );
+  } catch (e) {
+    console.warn(
+      `[stream:auth] FAIL user=${maskedUser} account=${accountLabel} err=${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+  // Bouquet membership check (best-effort, cheap on cache miss only)
+  try {
+    const numId = Number(id);
+    let inBouquet: boolean | "unknown" = "unknown";
+    if (kind === "movie") {
+      const list = await xtream.getVodStreams(creds).catch(() => []);
+      inBouquet = list.some((v) => v.stream_id === numId);
+    } else if (kind === "live") {
+      const list = await xtream.getLiveStreams(creds).catch(() => []);
+      inBouquet = list.some((v) => v.stream_id === numId);
+    }
+    // For series episodes, id is an episode id, not a series_id — skip.
+    console.log(`[stream:bouquet] media=${kind}:${id} inBouquet=${inBouquet} url=${safe}`);
+  } catch {
+    /* ignore diagnostics failures */
+  }
 
   const forwardHeaders = new Headers();
   const range = request.headers.get("range");
