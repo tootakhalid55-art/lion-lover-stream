@@ -141,17 +141,19 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
         );
         if (!hasFallback) break;
       }
+      if (!upstreamRes) throw new Error("No upstream response");
+      const response = upstreamRes;
       const dur = Date.now() - start;
-      const transient = upstreamRes.status >= 500 || upstreamRes.status === 429;
-      console.log(`[stream] ${kind}/${id}.${ext} → ${safeUrl(usedUpstream)} :: ${upstreamRes.status} (${dur}ms, attempt ${attempt})`);
+      const transient = response.status >= 500 || response.status === 429;
+      console.log(`[stream] ${kind}/${id}.${ext} → ${safeUrl(usedUpstream)} :: ${response.status} (${dur}ms, attempt ${attempt})`);
       record({
         ts: Date.now(),
         action: `stream:${kind}`,
-        ok: upstreamRes.ok || upstreamRes.status === 206,
-        status: upstreamRes.status,
+        ok: response.ok || response.status === 206,
+        status: response.status,
         durationMs: dur,
         attempt,
-        error: upstreamRes.ok || upstreamRes.status === 206 ? undefined : `HTTP ${upstreamRes.status} ${safeUrl(usedUpstream)}`,
+        error: response.ok || response.status === 206 ? undefined : `HTTP ${response.status} ${safeUrl(usedUpstream)}`,
       });
       if (!transient || attempt === maxAttempts) break;
     } catch (e) {
