@@ -5,6 +5,7 @@
  */
 import { useEffect, useState } from "react";
 import { api } from "@/services/api";
+import { requestClientReload } from "@/lib/recoverable-errors";
 
 const POLL_MS = 30_000;
 
@@ -22,8 +23,9 @@ export function HealthBanner() {
         setState({ ok: r.ok, message: "message" in r ? r.message : undefined });
         backoff = r.ok ? POLL_MS : Math.min(120_000, backoff * 1.5);
 
-      } catch {
+      } catch (error) {
         if (cancelled) return;
+        if (requestClientReload(error, window.location.pathname)) return;
         setState({ ok: false, message: "تعذّر الاتصال بالخادم" });
         backoff = Math.min(120_000, backoff * 1.5);
       } finally {

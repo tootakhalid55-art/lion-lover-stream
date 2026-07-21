@@ -2,6 +2,7 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { buildRuntimeDiagnostic, logRuntimeDiagnostic } from "@/lib/runtime-diagnostics";
+import { requestClientReload } from "@/lib/recoverable-errors";
 
 export function RouteError({
   error,
@@ -20,6 +21,7 @@ export function RouteError({
   const diagnostic = buildRuntimeDiagnostic({ filename, functionName, lineNumber, error });
 
   useEffect(() => {
+    if (requestClientReload(error, window.location.pathname)) return;
     logRuntimeDiagnostic({ filename, functionName, lineNumber, error });
   }, [error, filename, functionName, lineNumber]);
 

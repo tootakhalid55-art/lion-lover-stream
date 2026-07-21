@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { buildRuntimeDiagnostic, logRuntimeDiagnostic } from "../lib/runtime-diagnostics";
+import { isRecoverableClientLoadError, requestClientReload } from "../lib/recoverable-errors";
 
 function NotFoundComponent() {
   return (
@@ -45,20 +46,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    const msg = error?.message ?? "";
-    if (
-      /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|ChunkLoadError|Unable to preload CSS/i.test(
-        msg,
-      )
-    ) {
-      const key = `__chunk_reload_at:${window.location.pathname}`;
-      const last = Number(sessionStorage.getItem(key) ?? 0);
-      if (Date.now() - last > 30_000) {
-        sessionStorage.setItem(key, String(Date.now()));
-        window.location.reload();
-        return;
-      }
-    }
+    if (requestClientReload(error, window.location.pathname)) return;
     logRuntimeDiagnostic({
       filename: "src/routes/__root.tsx",
       functionName: "ErrorComponent",
@@ -166,23 +154,12 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
-    const RELOAD_KEY = "__chunk_reload_at";
-    const isChunkError = (msg: string) =>
-      /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|ChunkLoadError|Unable to preload CSS/i.test(
-        msg,
-      );
-    const maybeReload = (msg: string) => {
-      if (!isChunkError(msg)) return;
-      // Key by pathname so each failing route gets one fresh reload attempt.
-      const key = `${RELOAD_KEY}:${window.location.pathname}`;
-      const last = Number(sessionStorage.getItem(key) ?? 0);
-      if (Date.now() - last < 30_000) return;
-      sessionStorage.setItem(key, String(Date.now()));
-      window.location.reload();
+    const maybeReload = (error: unknown) => {
+      if (isRecoverableClientLoadError(error)) requestClientReload(error, window.location.pathname);
     };
-    const onError = (e: ErrorEvent) => maybeReload(e.message || String(e.error ?? ""));
+    const onError = (e: ErrorEvent) => maybeReload(e.error ?? e.message);
     const onRejection = (e: PromiseRejectionEvent) =>
-      maybeReload(String((e.reason as { message?: string })?.message ?? e.reason ?? ""));
+      maybeReload(e.reason);
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onRejection);
     return () => {
