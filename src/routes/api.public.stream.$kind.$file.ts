@@ -49,6 +49,51 @@ function buildStreamCandidates(
   );
 }
 
+function sanitizeExt(value: string | null | undefined, fallback: string): string {
+  const ext = String(value || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+  return ext || fallback;
+}
+
+function isValidHlsManifest(text: string): boolean {
+  return text.trimStart().startsWith("#EXTM3U");
+}
+
+function syntheticVodManifest(kind: "movie" | "series", id: string, sourceExt: string): string {
+  const segment = `/api/public/stream/${kind}/${encodeURIComponent(id)}.ts?sourceExt=${encodeURIComponent(sourceExt)}`;
+  return [
+    "#EXTM3U",
+    "#EXT-X-VERSION:3",
+    "#EXT-X-PLAYLIST-TYPE:VOD",
+    "#EXT-X-INDEPENDENT-SEGMENTS",
+    "#EXT-X-TARGETDURATION:21600",
+    "#EXT-X-MEDIA-SEQUENCE:0",
+    "#EXTINF:21600.000,",
+    segment,
+    "#EXT-X-ENDLIST",
+    "",
+  ].join("\n");
+}
+
+function rewriteManifestUrls(text: string, kind: "movie" | "series" | "live", id: string, sourceExt: string): string {
+  return text
+    .split(/\r?\n/)
+    .map((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) return line;
+      try {
+        const url = new URL(trimmed);
+        const file = url.pathname.split("/").filter(Boolean).pop() || `${id}.ts`;
+        const dot = file.lastIndexOf(".");
+        const ext = dot > -1 ? file.slice(dot + 1) : "ts";
+        const safeFile = /^\d+\.[a-z0-9]+$/i.test(file) ? file : `${id}.${ext}`;
+        return `/api/public/stream/${kind}/${safeFile}?sourceExt=${encodeURIComponent(sourceExt)}`;
+      } catch {
+        return `/api/public/stream/${kind}/${encodeURIComponent(id)}.ts?sourceExt=${encodeURIComponent(sourceExt)}`;
+      }
+    })
+    .join("\n");
+}
+
 async function proxy(request: Request, kind: "movie" | "series" | "live", fileName: string) {
   const { xtream, authenticate } = await import("@/lib/xtream.server");
   const { resolveCreds } = await import("@/lib/xtream-session.server");
@@ -64,20 +109,64 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
     });
   }
 
+  const requestUrl = new URL(request.url);
   const dot = fileName.lastIndexOf(".");
   const id = dot > 0 ? fileName.slice(0, dot) : fileName;
-  const ext = dot > 0 ? fileName.slice(dot + 1) : "mp4";
+  const ext = sanitizeExt(dot > 0 ? fileName.slice(dot + 1) : undefined, "mp4");
   if (!/^\d+$/.test(id)) return new Response("Bad id", { status: 400 });
 
+  const sourceExt = sanitizeExt(requestUrl.searchParams.get("sourceExt"), kind === "live" ? "ts" : "mp4");
+
   const { creds, isOverride } = await resolveCreds();
-  const upstreamCandidates = buildStreamCandidates(creds, kind, id, ext);
+  if (ext === "m3u8") {
+    const manifestCandidates = buildStreamCandidates(creds, kind, id, "m3u8");
+    for (const candidate of manifestCandidates) {
+      try {
+        const res = await fetch(candidate, {
+          method: "GET",
+          headers: { "user-agent": "VLC/3.0.20 LibVLC/3.0.20", accept: "application/vnd.apple.mpegurl,*/*" },
+          redirect: "follow",
+        });
+        const body = await res.text().catch(() => "");
+        if ((res.ok || res.status === 206) && isValidHlsManifest(body)) {
+          console.log(`[stream:hls] upstream manifest ok ${kind}/${id}.m3u8 via ${safeUrl(candidate)}`);
+          return new Response(rewriteManifestUrls(body, kind, id, sourceExt), {
+            status: 200,
+            headers: {
+              "content-type": "application/vnd.apple.mpegurl; charset=utf-8",
+              "cache-control": "no-store",
+              "access-control-allow-origin": "*",
+            },
+          });
+        }
+        console.warn(`[stream:hls] upstream manifest invalid ${kind}/${id}.m3u8 status=${res.status} bytes=${body.length}`);
+      } catch (e) {
+        console.warn(`[stream:hls] upstream manifest failed ${kind}/${id}.m3u8 err=${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+
+    if (kind === "movie" || kind === "series") {
+      console.log(`[stream:hls] generated safe VOD manifest ${kind}/${id}.m3u8 sourceExt=${sourceExt}`);
+      return new Response(syntheticVodManifest(kind, id, sourceExt), {
+        status: 200,
+        headers: {
+          "content-type": "application/vnd.apple.mpegurl; charset=utf-8",
+          "cache-control": "no-store",
+          "access-control-allow-origin": "*",
+        },
+      });
+    }
+  }
+
+  const upstreamExt = ext === "ts" ? sourceExt : ext;
+  const upstreamCandidates = buildStreamCandidates(creds, kind, id, upstreamExt);
   const safe = safeUrl(upstreamCandidates[0]);
   const maskedUser = maskUsername(creds.username);
   const accountLabel = isOverride ? "user-override" : "default";
 
   // ─── Auth + bouquet diagnostics (per playback request) ────────────────
   console.log(
-    `[stream:auth] server=${creds.serverUrl} user=${maskedUser} account=${accountLabel} media=${kind}:${id}.${ext}`,
+    `[stream:auth] server=${creds.serverUrl} user=${maskedUser} account=${accountLabel} media=${kind}:${id}.${ext} upstreamExt=${upstreamExt}`,
   );
   try {
     const authInfo = await authenticate(creds);
@@ -216,6 +305,7 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
     else if (ext === "mp4") respHeaders.set("content-type", "video/mp4");
     else if (ext === "mkv") respHeaders.set("content-type", "video/x-matroska");
   }
+  if (ext === "ts") respHeaders.set("content-type", "video/mp2t");
   respHeaders.set("access-control-allow-origin", "*");
 
   return new Response(upstreamRes.body, {
