@@ -5,11 +5,6 @@ import { useRowScrollMemory } from "@/hooks/use-row-scroll-memory";
 import { PosterCard } from "./PosterCard";
 import { ContinueCard } from "./ContinueCard";
 
-/**
- * Horizontal, snap-scrolling row of cards.
- * Remembers scroll position across mounts and shows desktop scroll buttons
- * with hidden-at-edge affordances.
- */
 export function Row({
   id,
   title,
@@ -32,9 +27,7 @@ export function Row({
     setEdges({ start: distance < 4, end: distance >= max - 4 });
   }, [scrollerRef]);
 
-  useEffect(() => {
-    updateEdges();
-  }, [updateEdges]);
+  useEffect(() => { updateEdges(); }, [updateEdges]);
 
   const scrollBy = (dir: 1 | -1) => {
     const el = scrollerRef.current;
@@ -46,14 +39,17 @@ export function Row({
   const isContinue = variant === "continue";
 
   return (
-    <section aria-labelledby={`row-${id}`} className="space-y-3 group/row motion-safe:animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h2 id={`row-${id}`} className="text-lg sm:text-xl lg:text-2xl font-extrabold">
-          {title}
-        </h2>
-        <button className="inline-flex items-center gap-0.5 text-xs text-muted-foreground transition hover:text-foreground focus:outline-none focus-visible:text-foreground">
+    <section aria-labelledby={`row-${id}`} className="space-y-4 group/row motion-safe:animate-fade-up">
+      <div className="flex items-end justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <span aria-hidden className="h-6 w-1 rounded-full bg-gradient-to-b from-lime to-brand" />
+          <h2 id={`row-${id}`} className="truncate text-lg sm:text-xl lg:text-2xl font-black tracking-tight">
+            {title}
+          </h2>
+        </div>
+        <button className="group/btn inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground transition hover:text-lime focus:outline-none focus-visible:text-lime">
           عرض الكل
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4 transition-transform group-hover/btn:-translate-x-0.5" />
         </button>
       </div>
       <div className="relative">
@@ -62,18 +58,18 @@ export function Row({
           aria-label="السابق"
           onClick={() => scrollBy(-1)}
           disabled={edges.start}
-          className="hidden lg:grid absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-2 h-11 w-11 place-items-center rounded-full bg-neutral-900/80 text-foreground ring-1 ring-white/10 backdrop-blur opacity-0 group-hover/row:opacity-100 transition disabled:opacity-0 hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-nav-active"
+          className="hidden lg:grid absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-3 h-12 w-12 place-items-center rounded-full glass-strong text-foreground opacity-0 group-hover/row:opacity-100 transition-all duration-300 disabled:opacity-0 hover:scale-110 hover:ring-lime-glow focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-lime"
         >
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
         </button>
         <button
           type="button"
           aria-label="التالي"
           onClick={() => scrollBy(1)}
           disabled={edges.end}
-          className="hidden lg:grid absolute left-0 top-1/2 z-10 -translate-y-1/2 -translate-x-2 h-11 w-11 place-items-center rounded-full bg-neutral-900/80 text-foreground ring-1 ring-white/10 backdrop-blur opacity-0 group-hover/row:opacity-100 transition disabled:opacity-0 hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-nav-active"
+          className="hidden lg:grid absolute left-0 top-1/2 z-10 -translate-y-1/2 -translate-x-3 h-12 w-12 place-items-center rounded-full glass-strong text-foreground opacity-0 group-hover/row:opacity-100 transition-all duration-300 disabled:opacity-0 hover:scale-110 hover:ring-lime-glow focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-lime"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
         </button>
 
         <div className="-mx-4 sm:-mx-6 lg:-mx-10 px-4 sm:px-6 lg:px-10 overflow-x-auto scrollbar-hide snap-row momentum">
@@ -82,7 +78,7 @@ export function Row({
               <li
                 key={p.id}
                 className={`shrink-0 snap-start ${
-                  isContinue ? "w-56 sm:w-64 md:w-72" : "w-32 sm:w-40 md:w-44 lg:w-48"
+                  isContinue ? "w-60 sm:w-72 md:w-80" : "w-32 sm:w-40 md:w-44 lg:w-48"
                 }`}
               >
                 {isContinue ? (

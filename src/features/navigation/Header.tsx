@@ -10,7 +10,7 @@ import { ProfilePanel } from "@/features/profile/ProfilePanel";
 
 type Menu = null | "search" | "notif" | "profile";
 
-/** Sticky glass header with the LionTV mark and three action popovers. */
+/** Premium floating glass header with dynamic transparency. */
 export function Header() {
   const { scrolled } = useScrollState();
   const [openMenu, setOpenMenu] = useState<Menu>(null);
@@ -19,36 +19,42 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-30 border-b transition-colors duration-300 backdrop-blur-xl ${
+      className={`sticky top-0 z-40 transition-all duration-500 ${
         scrolled
-          ? "bg-background/85 border-white/10 shadow-[0_6px_20px_-12px_rgba(0,0,0,0.7)]"
-          : "bg-background/40 border-transparent"
+          ? "backdrop-blur-2xl bg-background/70 border-b border-white/[0.08] shadow-[0_8px_32px_-16px_rgba(0,0,0,0.7)]"
+          : "backdrop-blur-md bg-gradient-to-b from-background/60 via-background/20 to-transparent border-b border-transparent"
       }`}
     >
-      <div className="mx-auto max-w-6xl grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 sm:px-6 lg:px-10 py-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <img
-            src={lionLogo}
-            alt="LionTV"
-            width={40}
-            height={40}
-            className="h-10 w-10 shrink-0 object-contain drop-shadow-[0_0_16px_color-mix(in_oklab,var(--color-brand)_55%,transparent)]"
-          />
-          <span className="text-sm font-extrabold tracking-widest">
-            <span className="text-brand">Lion</span>
-            <span className="text-foreground/90">TV</span>
+      <div className="mx-auto max-w-7xl grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 sm:px-6 lg:px-10 py-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="relative">
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-full bg-brand/50 blur-xl motion-safe:animate-pulse-glow"
+            />
+            <img
+              src={lionLogo}
+              alt="LionTV"
+              width={40}
+              height={40}
+              className="relative h-10 w-10 shrink-0 object-contain"
+            />
+          </div>
+          <span className="text-base font-extrabold tracking-wide">
+            <span className="text-gradient-brand">Lion</span>
+            <span className="text-foreground/95">TV</span>
           </span>
         </div>
         <div />
         <div ref={wrapRef} className="relative flex items-center gap-1">
           <IconBtn label="بحث" active={openMenu === "search"} onClick={() => setOpenMenu(openMenu === "search" ? null : "search")}>
-            <Search className="h-5 w-5" />
+            <Search className="h-[18px] w-[18px]" strokeWidth={2.2} />
           </IconBtn>
           <IconBtn label="الإشعارات" badge active={openMenu === "notif"} onClick={() => setOpenMenu(openMenu === "notif" ? null : "notif")}>
-            <Bell className="h-5 w-5" />
+            <Bell className="h-[18px] w-[18px]" strokeWidth={2.2} />
           </IconBtn>
           <IconBtn label="الحساب" active={openMenu === "profile"} onClick={() => setOpenMenu(openMenu === "profile" ? null : "profile")}>
-            <UserRound className="h-5 w-5" />
+            <UserRound className="h-[18px] w-[18px]" strokeWidth={2.2} />
           </IconBtn>
 
           {openMenu === "search" && <SearchPanel onClose={close} />}

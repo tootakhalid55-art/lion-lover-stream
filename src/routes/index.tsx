@@ -16,13 +16,22 @@ import { RouteError } from "@/components/RouteError";
  * the home_viewed analytics event.
  */
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "LionTV — بث الأفلام والمسلسلات بجودة عالية" },
+      { name: "description", content: "استمتع بأحدث الأفلام والمسلسلات والقنوات المباشرة بجودة 4K وHDR على LionTV." },
+      { property: "og:title", content: "LionTV — منصة البث الأولى" },
+      { property: "og:description", content: "أفلام ومسلسلات وقنوات مباشرة. تجربة مشاهدة سينمائية." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: LionTV,
   errorComponent: ({ error, reset }) => (
     <RouteError error={error} reset={reset} filename="src/routes/index.tsx" functionName="LionTV" lineNumber={25} />
   ),
 });
 
-// Ensure the dev-mode analytics logger is only wired once per session.
 let analyticsBooted = false;
 
 function LionTV() {
@@ -33,23 +42,26 @@ function LionTV() {
   });
 
   useEffect(() => {
-    if (!analyticsBooted) {
-      bootstrap();
-      analyticsBooted = true;
-    }
+    if (!analyticsBooted) { bootstrap(); analyticsBooted = true; }
     track({ name: "home_viewed" });
   }, []);
 
   return (
-    <div className="min-h-dvh bg-background text-foreground pb-32">
+    <div className="relative min-h-dvh text-foreground pb-32 overflow-x-clip">
+      {/* Ambient gradient orbs */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute -top-32 -right-32 h-[420px] w-[420px] rounded-full bg-brand/25 blur-[120px] motion-safe:animate-pulse-glow" />
+        <div className="absolute top-1/3 -left-40 h-[380px] w-[380px] rounded-full bg-lime/10 blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 h-[300px] w-[300px] rounded-full bg-brand/15 blur-[120px]" />
+      </div>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:right-3 focus:z-50 focus:rounded-md focus:bg-nav-active focus:px-3 focus:py-1.5 focus:text-neutral-900"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:right-3 focus:z-50 focus:rounded-md focus:bg-lime focus:px-3 focus:py-1.5 focus:text-neutral-900"
       >
         تخطي إلى المحتوى
       </a>
       <Header />
-      <main id="main" className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-10 space-y-10 lg:space-y-14">
+      <main id="main" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 space-y-12 lg:space-y-16">
         <Greeting />
         {feed && <Hero heroes={feed.heroes} />}
         {feed && feed.continueWatching.length > 0 && (
