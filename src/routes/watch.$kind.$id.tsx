@@ -24,14 +24,6 @@ function WatchPage() {
   const [meta, setMeta] = useState<{ title: string; imageUrl?: string; gradient: string; year: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const shouldUseMobileHls = () => {
-    if (typeof navigator === "undefined") return false;
-    const ua = navigator.userAgent;
-    const touchDevice = navigator.maxTouchPoints > 1;
-    const mobileUa = /iP(hone|ad|od)|Android|Mobile|CriOS|FxiOS|EdgiOS/i.test(ua);
-    return touchDevice || mobileUa;
-  };
-
   const normalizePlayableSrc = (value: string) => {
     if (kind === "live") return value;
     try {
@@ -39,7 +31,7 @@ function WatchPage() {
       const match = url.pathname.match(/\.([a-z0-9]+)$/i);
       const currentExt = match?.[1]?.toLowerCase() || ext || "mp4";
       if (!url.searchParams.get("sourceExt")) url.searchParams.set("sourceExt", currentExt === "m3u8" || currentExt === "ts" ? ext || "mp4" : currentExt);
-      url.pathname = url.pathname.replace(/\.[a-z0-9]+$/i, shouldUseMobileHls() ? ".m3u8" : ".ts");
+      url.pathname = url.pathname.replace(/\.[a-z0-9]+$/i, ".ts");
       return `${url.pathname}${url.search}`;
     } catch {
       return value;
