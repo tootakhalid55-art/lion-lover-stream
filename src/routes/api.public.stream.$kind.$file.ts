@@ -111,7 +111,9 @@ async function syntheticVodManifest(
     ].join("\n");
   }
 
-  const chunkBytes = 2 * 1024 * 1024;
+  // MPEG-TS packets are 188 bytes. Keep HLS byte-range segments aligned to
+  // packet boundaries so Safari/iOS can open every segment reliably.
+  const chunkBytes = 188 * 12_000;
   const estimatedDuration = Math.max(1, Math.ceil(totalBytes / 375_000));
   const segmentCount = Math.ceil(totalBytes / chunkBytes);
   const secondsPerSegment = Math.max(2, estimatedDuration / segmentCount);
