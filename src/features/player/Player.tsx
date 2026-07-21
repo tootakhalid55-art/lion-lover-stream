@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, RotateCcw } from "lucide-react";
 
 /**
  * Video player. Uses native playback for MP4/HLS-on-Safari and hls.js
@@ -25,14 +25,32 @@ export function Player({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  // Effective src (may be swapped to an .m3u8 fallback after codec failure).
   const [currentSrc, setCurrentSrc] = useState(src);
-  const triedHlsFallback = useRef(false);
+  const triedDirectFallback = useRef(false);
 
   useEffect(() => {
-    triedHlsFallback.current = false;
+    triedDirectFallback.current = false;
     setCurrentSrc(src);
   }, [src]);
+
+  const retryWithDirectSource = () => {
+    if (triedDirectFallback.current) return false;
+    try {
+      const url = new URL(currentSrc, window.location.origin);
+      if (!url.pathname.endsWith(".m3u8")) return false;
+      const sourceExt = url.searchParams.get("sourceExt") || "mp4";
+      url.pathname = url.pathname.replace(/\.m3u8$/i, `.${sourceExt.replace(/[^a-z0-9]/gi, "") || "mp4"}`);
+      url.search = "";
+      triedDirectFallback.current = true;
+      console.log("[player] HLS unavailable — retrying direct proxy source", url.pathname);
+      setError(null);
+      setLoading(true);
+      setCurrentSrc(url.pathname);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   useEffect(() => {
     const video = videoRef.current;
@@ -65,8 +83,10 @@ export function Player({
                 const code = data.response?.code;
                 if (code === 401 || code === 403) {
                   setError("غير مصرح — الحساب مستخدم على جهاز آخر أو انتهت صلاحيته. أغلق أي جلسة مفتوحة وحاول مجدداً.");
+                } else if (retryWithDirectSource()) {
+                  return;
                 } else {
-                  setError(code ? `تعذر تشغيل البث (HTTP ${code})` : `تعذر تشغيل البث — ${data.details}`);
+                  setError(code ? `تعذر تشغيل البث (HTTP ${code})` : "تعذر تشغيل هذا الملف من الخادم");
                 }
               }
             });
@@ -119,30 +139,15 @@ export function Player({
     const err = v.error;
     console.error("[player] video error", { code: err?.code, message: err?.message, src: v.currentSrc });
 
-    // Auto-fallback: if the browser can't decode the direct MP4/MKV,
-    // ask the Xtream server for a transcoded HLS variant.
-    if (
-      err &&
-      (err.code === 3 || err.code === 4) &&
-      !triedHlsFallback.current &&
-      !/\.m3u8($|\?)/i.test(currentSrc)
-    ) {
-      triedHlsFallback.current = true;
-      const hlsSrc = currentSrc.replace(/\.(mp4|mkv|avi|m4v)(\?|$)/i, ".m3u8$2");
-      if (hlsSrc !== currentSrc) {
-        console.log("[player] codec unsupported — retrying via HLS transcode", hlsSrc);
-        setError(null);
-        setLoading(true);
-        setCurrentSrc(hlsSrc);
-        return;
-      }
+    if (err && (err.code === 3 || err.code === 4) && /\.m3u8($|\?)/i.test(currentSrc) && retryWithDirectSource()) {
+      return;
     }
 
     const codes: Record<number, string> = {
       1: "تم إلغاء التحميل",
       2: "خطأ في الشبكة — قد يكون الحساب مستخدماً على جهاز آخر أو تم رفض الوصول",
-      3: "تعذر فك ترميز الفيديو — قد يكون الترميز غير مدعوم على هذا الجهاز",
-      4: "التنسيق غير مدعوم من المتصفح — جرّب فتحه على جهاز آخر أو استخدم تطبيقاً مثل VLC",
+      3: "تعذر تشغيل هذا الملف من الخادم — جارٍ تحسين التوافق لهذا النوع من الملفات",
+      4: "تعذر تشغيل هذا الملف من الخادم — تم إخفاء خطأ المتصفح ومحاولة المسارات البديلة تلقائياً",
     };
     const msg = err ? codes[err.code] || `خطأ ${err.code}` : "تعذر تشغيل الفيديو";
     setError(msg);
@@ -174,6 +179,18 @@ export function Player({
           <div>
             <p className="text-sm font-bold text-foreground">{error}</p>
             <p className="mt-1 text-xs text-foreground/70">جرّب مرة أخرى بعد قليل</p>
+            <button
+              type="button"
+              onClick={() => {
+                triedDirectFallback.current = false;
+                setCurrentSrc(src);
+                setError(null);
+                setLoading(true);
+              }}
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-pill px-4 py-2 text-xs font-extrabold text-pill-foreground"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> إعادة المحاولة
+            </button>
           </div>
         </div>
       )}
