@@ -96,7 +96,9 @@ export function Player({
     const isHls = /\.m3u8($|\?)/i.test(activeSrc);
     const isTs = /\.ts($|\?)/i.test(activeSrc);
     const isLive = /\/live\//i.test(activeSrc);
-    const canPlayNativeHls = Boolean(video.canPlayType("application/vnd.apple.mpegurl"));
+    const ua = navigator.userAgent;
+    const isAppleNativeHls = /iP(hone|ad|od)/i.test(ua) || (/Safari/i.test(ua) && !/Chrome|Chromium|CriOS|FxiOS|Edg/i.test(ua));
+    const canPlayNativeHls = Boolean(video.canPlayType("application/vnd.apple.mpegurl")) || isAppleNativeHls;
     let hls: import("hls.js").default | null = null;
     let tsPlayer: { destroy: () => void; unload?: () => void; detachMediaElement?: () => void } | null = null;
     let cancelled = false;
