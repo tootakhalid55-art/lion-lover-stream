@@ -151,6 +151,30 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    const RELOAD_KEY = "__chunk_reload_at";
+    const isChunkError = (msg: string) =>
+      /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|ChunkLoadError/i.test(
+        msg,
+      );
+    const maybeReload = (msg: string) => {
+      if (!isChunkError(msg)) return;
+      const last = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0);
+      if (Date.now() - last < 10_000) return;
+      sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+      window.location.reload();
+    };
+    const onError = (e: ErrorEvent) => maybeReload(e.message || String(e.error ?? ""));
+    const onRejection = (e: PromiseRejectionEvent) =>
+      maybeReload(String((e.reason as { message?: string })?.message ?? e.reason ?? ""));
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <HealthBannerLazy />
