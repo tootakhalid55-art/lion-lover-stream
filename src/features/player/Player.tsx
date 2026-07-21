@@ -106,7 +106,7 @@ export function Player({
     let hls: import("hls.js").default | null = null;
     let tsPlayer: { destroy: () => void; unload?: () => void; detachMediaElement?: () => void } | null = null;
     let cancelled = false;
-    let attachTimer: ReturnType<typeof window.setTimeout> | undefined;
+    let attachTimer: number | undefined;
 
     async function attachMpegTs(media: HTMLVideoElement) {
       try {
