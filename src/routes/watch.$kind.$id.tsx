@@ -24,13 +24,27 @@ function WatchPage() {
   const [meta, setMeta] = useState<{ title: string; imageUrl?: string; gradient: string; year: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const normalizePlayableSrc = (value: string) => {
+    if (kind === "live") return value;
+    try {
+      const url = new URL(value, window.location.origin);
+      const match = url.pathname.match(/\.([a-z0-9]+)$/i);
+      const currentExt = match?.[1]?.toLowerCase() || ext || "mp4";
+      if (!url.searchParams.get("sourceExt")) url.searchParams.set("sourceExt", currentExt === "m3u8" || currentExt === "ts" ? ext || "mp4" : currentExt);
+      url.pathname = url.pathname.replace(/\.[a-z0-9]+$/i, ".ts");
+      return `${url.pathname}${url.search}`;
+    } catch {
+      return value;
+    }
+  };
+
   useEffect(() => {
     let alive = true;
     async function load() {
       try {
         const r = await resolveStream({ data: { id: fullId, ext } });
         if (!alive) return;
-        setSrc(r.manifestUrl);
+        setSrc(normalizePlayableSrc(r.manifestUrl));
         track({ name: "playback_started", titleId: fullId });
         if (kind === "movie") {
           const m = await getMovieDetail({ data: { id: fullId } });

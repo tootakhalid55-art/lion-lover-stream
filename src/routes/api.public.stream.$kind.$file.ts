@@ -119,6 +119,22 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
 
   const { creds, isOverride } = await resolveCreds();
   if (ext === "m3u8") {
+    // VOD/episode `.m3u8` endpoints on many Xtream panels either return an
+    // empty manifest or consume one of the account's limited stream slots. Do
+    // not probe upstream for VOD. Generate a local HLS wrapper directly so iOS
+    // Safari has a native fallback while desktop browsers use MPEG-TS/MSE.
+    if (kind === "movie" || kind === "series") {
+      console.log(`[stream:hls] generated local VOD manifest ${kind}/${id}.m3u8 sourceExt=${sourceExt}`);
+      return new Response(syntheticVodManifest(kind, id, sourceExt), {
+        status: 200,
+        headers: {
+          "content-type": "application/vnd.apple.mpegurl; charset=utf-8",
+          "cache-control": "no-store",
+          "access-control-allow-origin": "*",
+        },
+      });
+    }
+
     const manifestCandidates = buildStreamCandidates(creds, kind, id, "m3u8");
     for (const candidate of manifestCandidates) {
       try {
@@ -145,17 +161,6 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
       }
     }
 
-    if (kind === "movie" || kind === "series") {
-      console.log(`[stream:hls] generated safe VOD manifest ${kind}/${id}.m3u8 sourceExt=${sourceExt}`);
-      return new Response(syntheticVodManifest(kind, id, sourceExt), {
-        status: 200,
-        headers: {
-          "content-type": "application/vnd.apple.mpegurl; charset=utf-8",
-          "cache-control": "no-store",
-          "access-control-allow-origin": "*",
-        },
-      });
-    }
   }
 
   const upstreamExt = ext === "ts" ? sourceExt : ext;
@@ -331,7 +336,18 @@ export const Route = createFileRoute("/api/public/stream/$kind/$file")({
         if (kind !== "movie" && kind !== "series" && kind !== "live") {
           return new Response(null, { status: 404 });
         }
-        return proxy(request, kind, params.file);
+        const dot = params.file.lastIndexOf(".");
+        const ext = sanitizeExt(dot > 0 ? params.file.slice(dot + 1) : undefined, "mp4");
+        const headers = new Headers({
+          "accept-ranges": "bytes",
+          "cache-control": "no-store",
+          "access-control-allow-origin": "*",
+        });
+        if (ext === "m3u8") headers.set("content-type", "application/vnd.apple.mpegurl");
+        else if (ext === "ts") headers.set("content-type", "video/mp2t");
+        else if (ext === "mp4") headers.set("content-type", "video/mp4");
+        else if (ext === "mkv") headers.set("content-type", "video/x-matroska");
+        return new Response(null, { status: 200, headers });
       },
     },
   },

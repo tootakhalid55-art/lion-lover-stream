@@ -252,18 +252,18 @@ export const resolveStream = createServerFn({ method: "POST" })
     try {
       const [kind, rawId] = data.id.split(":");
       if (!kind || !rawId) throw new Error("Invalid stream id");
-      // Always start playback through our smart HLS endpoint. Some Xtream
-      // servers return an empty `.m3u8` for VOD/episodes, so the proxy can
-      // generate a browser-safe HLS wrapper around the real source instead of
-      // exposing the browser to a direct MP4/MKV/TS file.
+      // VOD/episodes from this Xtream server are frequently MPEG-TS bytes even
+      // when the advertised extension is mp4. Start those with the MPEG-TS
+      // transport endpoint so the browser player can transmux through MSE in a
+      // single upstream connection. Live streams stay on HLS.
       const sourceExt = (data.ext || "mp4").replace(/[^a-z0-9]/gi, "").toLowerCase() || "mp4";
       const query = kind === "live" ? "" : `?sourceExt=${encodeURIComponent(sourceExt)}`;
       const proxyPath =
         kind === "live"
           ? `/api/public/stream/live/${encodeURIComponent(rawId)}.m3u8`
           : kind === "series"
-            ? `/api/public/stream/series/${encodeURIComponent(rawId)}.m3u8${query}`
-            : `/api/public/stream/movie/${encodeURIComponent(rawId)}.m3u8${query}`;
+            ? `/api/public/stream/series/${encodeURIComponent(rawId)}.ts${query}`
+            : `/api/public/stream/movie/${encodeURIComponent(rawId)}.ts${query}`;
       return {
         manifestUrl: proxyPath,
         protocol: "hls",
