@@ -96,6 +96,7 @@ export function Player({
     const isHls = /\.m3u8($|\?)/i.test(activeSrc);
     const isTs = /\.ts($|\?)/i.test(activeSrc);
     const isLive = /\/live\//i.test(activeSrc);
+    const canPlayNativeHls = Boolean(video.canPlayType("application/vnd.apple.mpegurl"));
     let hls: import("hls.js").default | null = null;
     let tsPlayer: { destroy: () => void; unload?: () => void; detachMediaElement?: () => void } | null = null;
     let cancelled = false;
@@ -154,12 +155,18 @@ export function Player({
       if (!video) return;
 
       if (isTs) {
+        if (canPlayNativeHls) {
+          // Safari/iOS cannot consume raw TS as a normal video src, but it can
+          // play the same bytes through our one-segment HLS manifest.
+          if (retryWithHlsSource()) return;
+        }
         const attached = await attachMpegTs(video);
         if (cancelled || attached) return;
-        if (retryWithHlsSource()) return;
+        setError("هذا المتصفح لا يدعم مشغل MPEG-TS المطلوب لهذا الملف");
+        return;
       }
 
-      if (isHls && !video.canPlayType("application/vnd.apple.mpegurl")) {
+      if (isHls && !canPlayNativeHls) {
         try {
           const HlsMod = (await import("hls.js")).default;
           if (cancelled) return;
