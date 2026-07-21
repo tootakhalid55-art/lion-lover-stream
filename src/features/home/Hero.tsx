@@ -17,16 +17,32 @@ const ROTATION_MS = 7000;
  * - Swipe gestures (RTL-aware) and hover/touch pause
  */
 export function Hero({ heroes }: { heroes: HeroData[] }) {
+  // Normalize incoming data — Xtream feeds can omit fields; keep UI resilient.
+  const safeHeroes: HeroData[] = (Array.isArray(heroes) ? heroes : [])
+    .filter((s): s is HeroData => !!s && typeof s === "object" && !!s.id)
+    .map((s) => ({
+      ...s,
+      title: s.title ?? "",
+      subtitle: s.subtitle ?? "",
+      badge: s.badge ?? "",
+      gradient: s.gradient ?? "from-neutral-800 to-neutral-950",
+      imdb: typeof s.imdb === "number" && Number.isFinite(s.imdb) ? s.imdb : 0,
+      genres: Array.isArray(s.genres) ? s.genres : [],
+      year: s.year ?? "",
+      ageRating: s.ageRating ?? "",
+    }));
+
+  const total = safeHeroes.length;
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
   const [progress, setProgress] = useState(0);
   const reduced = usePrefersReducedMotion();
-  const total = heroes.length;
   const touchStartX = useRef<number | null>(null);
+  const favs = useFavorites();
 
   useEffect(() => {
-    if (paused || reduced) return;
+    if (paused || reduced || total < 2) return;
     const t = setInterval(() => setI((v) => (v + 1) % total), ROTATION_MS);
     return () => clearInterval(t);
   }, [paused, total, reduced]);
@@ -45,6 +61,9 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
     return () => cancelAnimationFrame(raf);
   }, [i, paused, reduced]);
 
+  if (total === 0) return null;
+  const safeIndex = Math.min(i, total - 1);
+
   const goTo = (idx: number) => setI(((idx % total) + total) % total);
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -58,17 +77,17 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
       const end = e.changedTouches[0]?.clientX ?? start;
       const dx = end - start;
       if (Math.abs(dx) > 40) {
-        goTo(dx < 0 ? i + 1 : i - 1);
-        track({ name: "hero_interacted", heroId: heroes[i].id, action: "swipe" });
+        goTo(dx < 0 ? safeIndex + 1 : safeIndex - 1);
+        const swiped = safeHeroes[safeIndex];
+        if (swiped) track({ name: "hero_interacted", heroId: swiped.id, action: "swipe" });
       }
     }
     setTimeout(() => setPaused(false), 3000);
   };
 
-  const h = heroes[i];
-  const favs = useFavorites();
-  const heroInner = h?.id?.startsWith("hero-") ? h.id.slice(5) : h?.id;
-  const favBookmarked = !!heroInner && favs.some((f) => f.id === heroInner);
+  const h = safeHeroes[safeIndex]!;
+  const heroInner = h.id.startsWith("hero-") ? h.id.slice(5) : h.id;
+  const favBookmarked = favs.some((f) => f.id === heroInner);
 
   return (
     <section
