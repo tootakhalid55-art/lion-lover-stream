@@ -90,9 +90,9 @@ export const getHomeFeed = createServerFn({ method: "GET" }).handler(async (): P
     const { creds, isOverride } = await resolveCreds();
     const scope = isOverride ? `u:${creds.username}` : "default";
     const [movies, series, live] = await Promise.all([
-      cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)).catch(() => []),
-      cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)).catch(() => []),
-      cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds)).catch(() => []),
+      cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)),
+      cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)),
+      cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds)),
     ]);
 
     const recentMovies = [...movies]
@@ -214,19 +214,19 @@ export const searchAll = createServerFn({ method: "POST" })
       const scope = isOverride ? `u:${creds.username}` : "default";
       const results: Poster[] = [];
       if (data.scope !== "series") {
-        const movies = await cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)).catch(() => []);
+        const movies = await cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds));
         results.push(
           ...movies.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 20).map(vodToPoster),
         );
       }
       if (data.scope !== "movies") {
-        const series = await cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)).catch(() => []);
+        const series = await cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds));
         results.push(
           ...series.filter((s) => s.name.toLowerCase().includes(q)).slice(0, 20).map(seriesToPoster),
         );
       }
       if (data.scope === "all") {
-        const live = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds)).catch(() => []);
+        const live = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds));
         results.push(
           ...live.filter((l) => l.name.toLowerCase().includes(q)).slice(0, 10).map(liveToPoster),
         );
@@ -371,8 +371,8 @@ export const getMovieDetail = createServerFn({ method: "POST" })
       const scope = isOverride ? `u:${creds.username}` : "default";
       const streamId = Number(raw);
       const [info, list] = await Promise.all([
-        cached(`${scope}:vod-info:${streamId}`, TTL.lists, () => xtream.getVodInfo(creds, streamId)).catch(() => null),
-        cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)).catch(() => []),
+        cached(`${scope}:vod-info:${streamId}`, TTL.lists, () => xtream.getVodInfo(creds, streamId)),
+        cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds)),
       ]);
       const listItem = list.find((v) => v.stream_id === streamId);
       const md = (info?.movie_data ?? {}) as Record<string, unknown>;
@@ -441,8 +441,8 @@ export const getSeriesDetail = createServerFn({ method: "POST" })
       const scope = isOverride ? `u:${creds.username}` : "default";
       const seriesId = Number(raw);
       const [info, list] = await Promise.all([
-        cached(`${scope}:series-info:${seriesId}`, TTL.lists, () => xtream.getSeriesInfo(creds, seriesId)).catch(() => null),
-        cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)).catch(() => []),
+        cached(`${scope}:series-info:${seriesId}`, TTL.lists, () => xtream.getSeriesInfo(creds, seriesId)),
+        cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds)),
       ]);
       const listItem = list.find((s) => s.series_id === seriesId);
       const meta = (info?.info ?? {}) as Record<string, unknown>;
