@@ -32,35 +32,8 @@ export function Player({
     let hls: import("hls.js").default | null = null;
     let cancelled = false;
 
-    // Pre-flight the proxy so we can report the real HTTP status.
-    async function preflight(): Promise<string | null> {
-      try {
-        const r = await fetch(src, { method: "GET", headers: { range: "bytes=0-1" } });
-        console.log("[player] preflight", { url: src, status: r.status, type: r.headers.get("content-type") });
-        if (r.status === 401 || r.status === 403) return "غير مصرح — انتهت صلاحية الحساب أو تم رفض الوصول";
-        if (r.status === 404) return "الملف غير موجود على الخادم";
-        if (r.status === 429) return "تم تجاوز الحد المسموح، حاول لاحقًا";
-        if (r.status === 502 || r.status === 503 || r.status === 504) return "الخادم غير متاح حالياً";
-        if (r.status >= 400 && r.status !== 206 && r.status !== 200) {
-          const body = await r.text().catch(() => "");
-          return `تعذر جلب البث (HTTP ${r.status})${body ? ` — ${body.slice(0, 120)}` : ""}`;
-        }
-        return null;
-      } catch (e) {
-        console.error("[player] preflight failed", e);
-        return "تعذر الاتصال بخادم البث";
-      }
-    }
-
     async function attach() {
       if (!video) return;
-      const preErr = await preflight();
-      if (cancelled) return;
-      if (preErr) {
-        setError(preErr);
-        setLoading(false);
-        return;
-      }
 
       if (isHls && !video.canPlayType("application/vnd.apple.mpegurl")) {
         try {
@@ -77,7 +50,11 @@ export function Player({
               });
               if (data.fatal) {
                 const code = data.response?.code;
-                setError(code ? `تعذر تشغيل البث (HTTP ${code})` : `تعذر تشغيل البث — ${data.details}`);
+                if (code === 401 || code === 403) {
+                  setError("غير مصرح — الحساب مستخدم على جهاز آخر أو انتهت صلاحيته. أغلق أي جلسة مفتوحة وحاول مجدداً.");
+                } else {
+                  setError(code ? `تعذر تشغيل البث (HTTP ${code})` : `تعذر تشغيل البث — ${data.details}`);
+                }
               }
             });
             hls.loadSource(src);
