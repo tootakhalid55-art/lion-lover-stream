@@ -27,80 +27,75 @@ function MoviePage() {
     setLoadError(null);
     setDetail(undefined);
     void getMovieDetail({ data: { id: fullId } })
-      .then((d) => {
-        if (alive) setDetail(d);
-      })
+      .then((d) => { if (alive) setDetail(d); })
       .catch((err) => {
         const error = err instanceof Error ? err : new Error(String(err));
-        console.error("[runtime:exception]", {
-          filename: "src/routes/movie.$id.tsx",
-          functionName: "MoviePage.useEffect:getMovieDetail",
-          lineNumber: 24,
-          message: error.message,
-          stack: error.stack ?? null,
-          requestUrl: window.location.href,
-          httpStatus: null,
-        });
+        console.error("[runtime:exception]", { filename: "src/routes/movie.$id.tsx", functionName: "MoviePage.useEffect:getMovieDetail", lineNumber: 24, message: error.message, stack: error.stack ?? null, requestUrl: window.location.href, httpStatus: null });
         if (alive) setLoadError(error);
       });
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [fullId]);
 
   if (loadError) return <RouteError error={loadError} filename="src/routes/movie.$id.tsx" functionName="MoviePage.useEffect:getMovieDetail" lineNumber={24} />;
-  if (detail === undefined) return <PageShell><p className="p-6 text-foreground/70">جاري التحميل…</p></PageShell>;
-  if (detail === null) return <PageShell><p className="p-6 text-foreground/70">لم يتم العثور على الفيلم</p></PageShell>;
+  if (detail === undefined) return <PageShell><div className="mx-auto max-w-6xl px-4 pt-28"><div className="aspect-[21/9] w-full skeleton rounded-3xl" /></div></PageShell>;
+  if (detail === null) return <PageShell><p className="p-6 pt-28 text-center text-foreground/70">لم يتم العثور على الفيلم</p></PageShell>;
 
   return (
     <PageShell>
       <div className="relative">
-        <div className={`absolute inset-x-0 top-0 h-[60vh] bg-gradient-to-br ${detail.gradient}`}>
+        {/* Cinematic backdrop */}
+        <div className={`absolute inset-x-0 top-0 h-[75vh] bg-gradient-to-br ${detail.gradient} overflow-hidden`}>
           {(detail.backdropUrl || detail.imageUrl) && (
-            <img src={detail.backdropUrl || detail.imageUrl} alt="" aria-hidden className="h-full w-full object-cover opacity-60" />
+            <img src={detail.backdropUrl || detail.imageUrl} alt="" aria-hidden className="h-full w-full object-cover opacity-70 motion-safe:animate-kenburns" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
+          <div className="absolute inset-0 bg-gradient-to-l from-background/50 via-transparent to-transparent" />
         </div>
-        <div className="relative mx-auto max-w-5xl px-4 pt-28">
-          <Link to="/" className="inline-flex items-center gap-1 text-sm text-foreground/70 hover:text-foreground">
-            <ArrowRight className="h-4 w-4" /> رجوع
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-10 pt-24">
+          <Link to="/" className="inline-flex items-center gap-1.5 rounded-full glass px-3 py-1.5 text-xs font-bold text-foreground/90 hover:bg-white/15 transition">
+            <ArrowRight className="h-3.5 w-3.5" /> رجوع
           </Link>
-          <div className="mt-6 grid gap-6 md:grid-cols-[220px_1fr]">
-            <div className="mx-auto w-40 md:w-full aspect-[2/3] overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-2xl">
+          <div className="mt-8 grid gap-8 md:grid-cols-[260px_1fr]">
+            <div className="relative mx-auto w-44 md:w-full aspect-[2/3] overflow-hidden rounded-3xl ring-1 ring-white/15 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] motion-safe:animate-spring-in">
               {detail.imageUrl && <img src={detail.imageUrl} alt={detail.title} className="h-full w-full object-cover" />}
+              <div className="absolute inset-x-0 -bottom-3 h-6 bg-brand/40 blur-2xl -z-10" />
             </div>
-            <div>
-              <h1 className="text-2xl font-black text-foreground md:text-3xl">{detail.title}</h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-foreground/70">
-                {detail.year && <span>{detail.year}</span>}
-                {detail.duration && <><span>·</span><span>{detail.duration}</span></>}
-                {detail.genre && <><span>·</span><span>{detail.genre}</span></>}
+            <div className="motion-safe:animate-fade-up">
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight text-foreground drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]">{detail.title}</h1>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-foreground/80">
+                {detail.year && <span className="rounded bg-white/10 px-2 py-0.5 ring-1 ring-white/10 backdrop-blur">{detail.year}</span>}
+                {detail.duration && <span className="rounded bg-white/10 px-2 py-0.5 ring-1 ring-white/10 backdrop-blur">{detail.duration}</span>}
+                {detail.genre && <span className="rounded bg-white/10 px-2 py-0.5 ring-1 ring-white/10 backdrop-blur">{detail.genre}</span>}
                 {detail.rating !== undefined && (
-                  <span className="inline-flex items-center gap-1 rounded bg-white/10 px-1.5 py-0.5">
-                    <Star className="h-3 w-3 fill-nav-active text-nav-active" />{detail.rating.toFixed(1)}
+                  <span className="inline-flex items-center gap-1 rounded bg-[#F5C518]/95 px-2 py-0.5 text-black">
+                    <Star className="h-3 w-3 fill-current" />{detail.rating.toFixed(1)}
                   </span>
                 )}
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   to={watchPath(fullId) as "/"}
                   search={{ ext: detail.ext } as never}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-pill px-5 py-2.5 text-sm font-extrabold text-pill-foreground shadow-lg hover:brightness-110"
+                  className="group inline-flex items-center gap-2 rounded-full bg-lime px-7 py-3.5 text-sm font-black text-neutral-900 shadow-[0_15px_40px_-10px_color-mix(in_oklab,var(--lime)_65%,transparent)] transition-all hover:scale-[1.03] active:scale-95"
+                  style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" }}
                 >
-                  <Play className="h-4 w-4 fill-current" /> تشغيل الآن
+                  <Play className="h-4 w-4 fill-current transition-transform group-hover:scale-110" /> تشغيل الآن
                 </Link>
                 <button
                   onClick={() => toggleFavorite({ id: fullId, title: detail.title, imageUrl: detail.imageUrl, gradient: detail.gradient, year: detail.year, rating: detail.rating })}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-5 py-2.5 text-sm font-extrabold text-foreground ring-1 ring-white/15 hover:bg-white/20"
+                  className={`inline-flex items-center gap-2 rounded-full glass px-7 py-3.5 text-sm font-black transition-all hover:scale-[1.03] active:scale-95 ${isFav ? "text-lime ring-1 ring-lime/40" : "text-foreground hover:bg-white/15"}`}
+                  style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" }}
                 >
                   <Plus className="h-4 w-4" /> {isFav ? "في قائمتي" : "أضف إلى قائمتي"}
                 </button>
               </div>
-              {detail.plot && <p className="mt-6 text-sm leading-relaxed text-foreground/85">{detail.plot}</p>}
+              {detail.plot && (
+                <p className="mt-8 text-sm md:text-base leading-relaxed text-foreground/90 max-w-2xl">{detail.plot}</p>
+              )}
               {(detail.director || detail.cast) && (
-                <dl className="mt-4 space-y-1 text-xs text-foreground/70">
-                  {detail.director && <div><dt className="inline font-bold text-foreground/85">المخرج: </dt><dd className="inline">{detail.director}</dd></div>}
-                  {detail.cast && <div><dt className="inline font-bold text-foreground/85">الأبطال: </dt><dd className="inline">{detail.cast}</dd></div>}
+                <dl className="mt-6 space-y-2 text-xs text-foreground/70 max-w-2xl">
+                  {detail.director && <div><dt className="inline font-bold text-lime/90">المخرج: </dt><dd className="inline">{detail.director}</dd></div>}
+                  {detail.cast && <div><dt className="inline font-bold text-lime/90">الأبطال: </dt><dd className="inline">{detail.cast}</dd></div>}
                 </dl>
               )}
             </div>
@@ -113,7 +108,7 @@ function MoviePage() {
 
 function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-dvh bg-background pb-32">
+    <div className="min-h-dvh pb-32">
       <Header />
       <main>{children}</main>
       <BottomNav />

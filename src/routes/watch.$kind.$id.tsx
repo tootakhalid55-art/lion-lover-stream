@@ -33,9 +33,7 @@ function WatchPage() {
       if (!url.searchParams.get("sourceExt")) url.searchParams.set("sourceExt", currentExt === "m3u8" || currentExt === "ts" ? ext || "mp4" : currentExt);
       url.pathname = url.pathname.replace(/\.[a-z0-9]+$/i, ".ts");
       return `${url.pathname}${url.search}`;
-    } catch {
-      return value;
-    }
+    } catch { return value; }
   };
 
   useEffect(() => {
@@ -57,15 +55,7 @@ function WatchPage() {
         }
       } catch (e) {
         const err = e instanceof Error ? e : new Error(String(e));
-        console.error("[runtime:exception]", {
-          filename: "src/routes/watch.$kind.$id.tsx",
-          functionName: "WatchPage.useEffect:resolveStream",
-          lineNumber: 27,
-          message: err.message,
-          stack: err.stack ?? null,
-          requestUrl: window.location.href,
-          httpStatus: null,
-        });
+        console.error("[runtime:exception]", { filename: "src/routes/watch.$kind.$id.tsx", functionName: "WatchPage.useEffect:resolveStream", lineNumber: 27, message: err.message, stack: err.stack ?? null, requestUrl: window.location.href, httpStatus: null });
         if (alive) setError(err.message);
       }
     }
@@ -77,46 +67,51 @@ function WatchPage() {
     if (!meta || kind === "live" || !duration) return;
     const progress = position / duration;
     if (progress < 0.02 || progress > 0.98) return;
-    saveProgress({
-      id: fullId,
-      title: meta.title,
-      imageUrl: meta.imageUrl,
-      gradient: meta.gradient,
-      year: meta.year,
-      progress,
-      positionSec: position,
-      durationSec: duration,
-    } as never);
+    saveProgress({ id: fullId, title: meta.title, imageUrl: meta.imageUrl, gradient: meta.gradient, year: meta.year, progress, positionSec: position, durationSec: duration } as never);
   };
 
   return (
-    <div className="min-h-dvh bg-background">
-      <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="min-h-dvh bg-black">
+      <div className="mx-auto max-w-7xl px-4 py-5">
         <button
-          onClick={() => {
-            if (window.history.length > 1) router.history.back();
-            else router.navigate({ to: "/" });
-          }}
-          className="inline-flex items-center gap-1 text-sm text-foreground/70 hover:text-foreground"
+          onClick={() => { if (window.history.length > 1) router.history.back(); else router.navigate({ to: "/" }); }}
+          className="inline-flex items-center gap-1.5 rounded-full glass px-3 py-1.5 text-xs font-bold text-foreground/90 hover:bg-white/15 transition"
         >
-          <ArrowRight className="h-4 w-4" /> رجوع
+          <ArrowRight className="h-3.5 w-3.5" /> رجوع
         </button>
         <div className="mt-4">
-          {error && <p className="rounded-xl bg-red-500/10 p-4 text-sm text-red-300 ring-1 ring-red-500/30">{error}</p>}
+          {error && (
+            <div className="rounded-2xl bg-red-500/10 p-5 text-sm text-red-200 ring-1 ring-red-500/40 backdrop-blur-xl">
+              <p className="font-bold">تعذّر تشغيل المحتوى</p>
+              <p className="mt-1 text-red-300/90 text-xs">{error}</p>
+            </div>
+          )}
           {!error && !src && (
-            <div className="aspect-video w-full animate-pulse rounded-2xl bg-white/5" />
+            <div className="relative aspect-video w-full overflow-hidden rounded-3xl bg-black ring-1 ring-white/10">
+              <div className="absolute inset-0 skeleton" />
+              <div className="absolute inset-0 grid place-items-center">
+                <div className="flex items-center gap-3 rounded-full glass px-4 py-2 text-xs text-foreground/80">
+                  <span className="h-2 w-2 rounded-full bg-lime motion-safe:animate-pulse" />
+                  جاري تجهيز البث…
+                </div>
+              </div>
+            </div>
           )}
           {src && (
-            <Player
-              src={src}
-              poster={meta?.imageUrl}
-              onProgress={handleProgress}
-              onEnded={() => track({ name: "playback_completed", titleId: fullId })}
-            />
+            <div className="overflow-hidden rounded-3xl ring-1 ring-white/10 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]">
+              <Player src={src} poster={meta?.imageUrl} onProgress={handleProgress} onEnded={() => track({ name: "playback_completed", titleId: fullId })} />
+            </div>
           )}
         </div>
-        {meta && <h1 className="mt-4 text-xl font-black text-foreground">{meta.title}</h1>}
-        <Link to="/" className="mt-6 inline-block text-sm text-foreground/60 hover:text-foreground">العودة إلى الرئيسية</Link>
+        {meta && (
+          <div className="mt-6 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-black text-foreground">{meta.title}</h1>
+              {meta.year && <p className="text-xs text-foreground/60">{meta.year}</p>}
+            </div>
+            <Link to="/" className="shrink-0 text-xs text-foreground/60 hover:text-lime transition">العودة إلى الرئيسية</Link>
+          </div>
+        )}
       </div>
     </div>
   );
