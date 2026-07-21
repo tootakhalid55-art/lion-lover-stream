@@ -1,32 +1,59 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight, Play, Plus, Star } from "lucide-react";
-import { getSeriesDetail, type SeriesDetail, resolveStream } from "@/lib/xtream.functions";
+import { getSeriesDetail, type SeriesDetail } from "@/lib/xtream.functions";
 import { Header } from "@/features/navigation/Header";
 import { BottomNav } from "@/features/navigation/BottomNav";
 import { toggleFavorite, useFavorites } from "@/lib/user-data";
 import { useNavigate } from "@tanstack/react-router";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/series/$id")({
   component: SeriesPage,
+  errorComponent: ({ error, reset }) => (
+    <RouteError error={error} reset={reset} filename="src/routes/series.$id.tsx" functionName="SeriesPage" lineNumber={23} />
+  ),
 });
 
 function SeriesPage() {
   const { id } = Route.useParams();
   const fullId = `series:${id}`;
   const [detail, setDetail] = useState<SeriesDetail | null | undefined>(undefined);
+  const [loadError, setLoadError] = useState<Error | null>(null);
   const [activeSeason, setActiveSeason] = useState<number>(0);
   const favs = useFavorites();
   const isFav = favs.some((f) => f.id === fullId);
   const navigate = useNavigate();
 
   useEffect(() => {
-    void getSeriesDetail({ data: { id: fullId } }).then((d) => {
-      setDetail(d);
-      if (d?.seasons.length) setActiveSeason(d.seasons[0].season);
-    });
+    let alive = true;
+    setLoadError(null);
+    setDetail(undefined);
+    void getSeriesDetail({ data: { id: fullId } })
+      .then((d) => {
+        if (!alive) return;
+        setDetail(d);
+        if (d?.seasons.length) setActiveSeason(d.seasons[0].season);
+      })
+      .catch((err) => {
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.error("[runtime:exception]", {
+          filename: "src/routes/series.$id.tsx",
+          functionName: "SeriesPage.useEffect:getSeriesDetail",
+          lineNumber: 27,
+          message: error.message,
+          stack: error.stack ?? null,
+          requestUrl: window.location.href,
+          httpStatus: null,
+        });
+        if (alive) setLoadError(error);
+      });
+    return () => {
+      alive = false;
+    };
   }, [fullId]);
 
+  if (loadError) return <RouteError error={loadError} filename="src/routes/series.$id.tsx" functionName="SeriesPage.useEffect:getSeriesDetail" lineNumber={27} />;
   if (detail === undefined)
     return <Shell><p className="p-6 text-foreground/70">جاري التحميل…</p></Shell>;
   if (detail === null)

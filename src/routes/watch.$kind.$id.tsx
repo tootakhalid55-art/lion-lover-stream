@@ -5,10 +5,14 @@ import { Player } from "@/features/player/Player";
 import { resolveStream, getMovieDetail, getLiveChannel } from "@/lib/xtream.functions";
 import { saveProgress } from "@/lib/user-data";
 import { track } from "@/lib/analytics";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/watch/$kind/$id")({
   validateSearch: (s: Record<string, unknown>) => ({ ext: typeof s.ext === "string" ? s.ext : undefined }),
   component: WatchPage,
+  errorComponent: ({ error, reset }) => (
+    <RouteError error={error} reset={reset} filename="src/routes/watch.$kind.$id.tsx" functionName="WatchPage" lineNumber={23} />
+  ),
 });
 
 function WatchPage() {
@@ -38,8 +42,17 @@ function WatchPage() {
           setMeta({ title: "حلقة", gradient: "from-neutral-800 to-black", year: "" });
         }
       } catch (e) {
-        console.error("[watch] resolve failed", e);
-        if (alive) setError("تعذر تحميل البث");
+        const err = e instanceof Error ? e : new Error(String(e));
+        console.error("[runtime:exception]", {
+          filename: "src/routes/watch.$kind.$id.tsx",
+          functionName: "WatchPage.useEffect:resolveStream",
+          lineNumber: 27,
+          message: err.message,
+          stack: err.stack ?? null,
+          requestUrl: window.location.href,
+          httpStatus: null,
+        });
+        if (alive) setError(err.message);
       }
     }
     void load();

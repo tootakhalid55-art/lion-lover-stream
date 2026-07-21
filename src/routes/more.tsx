@@ -2,10 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Settings, Download, Bookmark, Info, HelpCircle } from "lucide-react";
 import { Header } from "@/features/navigation/Header";
 import { BottomNav } from "@/features/navigation/BottomNav";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/more")({
   head: () => ({ meta: [{ title: "المزيد — LionTV" }] }),
   component: MorePage,
+  errorComponent: ({ error, reset }) => (
+    <RouteError error={error} reset={reset} filename="src/routes/more.tsx" functionName="MorePage" lineNumber={19} />
+  ),
 });
 
 const LINKS = [

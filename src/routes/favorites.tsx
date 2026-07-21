@@ -4,10 +4,14 @@ import { Header } from "@/features/navigation/Header";
 import { BottomNav } from "@/features/navigation/BottomNav";
 import { PosterCard } from "@/features/catalog/PosterCard";
 import { useFavorites, toggleFavorite } from "@/lib/user-data";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/favorites")({
   head: () => ({ meta: [{ title: "قائمتي — LionTV" }] }),
   component: FavoritesPage,
+  errorComponent: ({ error, reset }) => (
+    <RouteError error={error} reset={reset} filename="src/routes/favorites.tsx" functionName="FavoritesPage" lineNumber={14} />
+  ),
 });
 
 function FavoritesPage() {

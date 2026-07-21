@@ -9,6 +9,7 @@ import {
   signInWithOwnAccount,
   useDefaultAccount,
 } from "@/lib/xtream.functions";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -18,6 +19,9 @@ export const Route = createFileRoute("/settings")({
     ],
   }),
   component: SettingsPage,
+  errorComponent: ({ error, reset }) => (
+    <RouteError error={error} reset={reset} filename="src/routes/settings.tsx" functionName="SettingsPage" lineNumber={29} />
+  ),
 });
 
 function SettingsPage() {
@@ -30,6 +34,7 @@ function SettingsPage() {
     queryKey: ["xtream", "account"],
     queryFn: () => accountFn(),
     staleTime: 30_000,
+    throwOnError: true,
   });
 
   const [username, setUsername] = useState("");
