@@ -17,16 +17,32 @@ const ROTATION_MS = 7000;
  * - Swipe gestures (RTL-aware) and hover/touch pause
  */
 export function Hero({ heroes }: { heroes: HeroData[] }) {
+  // Normalize incoming data — Xtream feeds can omit fields; keep UI resilient.
+  const safeHeroes: HeroData[] = (Array.isArray(heroes) ? heroes : [])
+    .filter((s): s is HeroData => !!s && typeof s === "object" && !!s.id)
+    .map((s) => ({
+      ...s,
+      title: s.title ?? "",
+      subtitle: s.subtitle ?? "",
+      badge: s.badge ?? "",
+      gradient: s.gradient ?? "from-neutral-800 to-neutral-950",
+      imdb: typeof s.imdb === "number" && Number.isFinite(s.imdb) ? s.imdb : 0,
+      genres: Array.isArray(s.genres) ? s.genres : [],
+      year: s.year ?? "",
+      ageRating: s.ageRating ?? "",
+    }));
+
+  const total = safeHeroes.length;
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
   const [progress, setProgress] = useState(0);
   const reduced = usePrefersReducedMotion();
-  const total = heroes.length;
   const touchStartX = useRef<number | null>(null);
+  const favs = useFavorites();
 
   useEffect(() => {
-    if (paused || reduced) return;
+    if (paused || reduced || total < 2) return;
     const t = setInterval(() => setI((v) => (v + 1) % total), ROTATION_MS);
     return () => clearInterval(t);
   }, [paused, total, reduced]);
@@ -45,6 +61,9 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
     return () => cancelAnimationFrame(raf);
   }, [i, paused, reduced]);
 
+  if (total === 0) return null;
+  const safeIndex = Math.min(i, total - 1);
+
   const goTo = (idx: number) => setI(((idx % total) + total) % total);
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -58,17 +77,17 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
       const end = e.changedTouches[0]?.clientX ?? start;
       const dx = end - start;
       if (Math.abs(dx) > 40) {
-        goTo(dx < 0 ? i + 1 : i - 1);
-        track({ name: "hero_interacted", heroId: heroes[i].id, action: "swipe" });
+        goTo(dx < 0 ? safeIndex + 1 : safeIndex - 1);
+        const swiped = safeHeroes[safeIndex];
+        if (swiped) track({ name: "hero_interacted", heroId: swiped.id, action: "swipe" });
       }
     }
     setTimeout(() => setPaused(false), 3000);
   };
 
-  const h = heroes[i];
-  const favs = useFavorites();
-  const heroInner = h?.id?.startsWith("hero-") ? h.id.slice(5) : h?.id;
-  const favBookmarked = !!heroInner && favs.some((f) => f.id === heroInner);
+  const h = safeHeroes[safeIndex]!;
+  const heroInner = h.id.startsWith("hero-") ? h.id.slice(5) : h.id;
+  const favBookmarked = favs.some((f) => f.id === heroInner);
 
   return (
     <section
@@ -80,28 +99,28 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
       onTouchEnd={onTouchEnd}
     >
       <div className="relative overflow-hidden rounded-3xl ring-1 ring-white/10 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] aspect-[16/10] sm:aspect-[21/9] lg:aspect-[24/9] motion-safe:animate-fade-in">
-        {heroes.map((slide, idx) => (
+        {safeHeroes.map((slide, idx) => (
           <div
             key={slide.id}
-            aria-hidden={idx !== i}
-            className={`absolute inset-0 transition-opacity duration-[900ms] ease-out ${idx === i ? "opacity-100" : "opacity-0"}`}
+            aria-hidden={idx !== safeIndex}
+            className={`absolute inset-0 transition-opacity duration-[900ms] ease-out ${idx === safeIndex ? "opacity-100" : "opacity-0"}`}
           >
             <div
-              className={`absolute inset-0 bg-gradient-to-br ${slide.gradient} ${idx === i && !reduced ? "motion-safe:animate-kenburns" : ""}`}
+              className={`absolute inset-0 bg-gradient-to-br ${slide.gradient} ${idx === safeIndex && !reduced ? "motion-safe:animate-kenburns" : ""}`}
             />
             {slide.imageUrl && (
               <img
                 src={slide.imageUrl}
                 alt=""
                 aria-hidden
-                loading={idx === i ? "eager" : "lazy"}
+                loading={idx === safeIndex ? "eager" : "lazy"}
                 decoding="async"
                 className="absolute inset-0 h-full w-full object-cover"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
             )}
             <div className="absolute inset-0 opacity-40 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklab,var(--color-brand)_60%,transparent),transparent_60%)]" />
-            {idx === i && slide.previewUrl && (
+            {idx === safeIndex && slide.previewUrl && (
               <video
                 key={slide.previewUrl}
                 src={slide.previewUrl}
@@ -137,24 +156,30 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
         )}
 
         <div
-          key={i}
+          key={safeIndex}
           className="relative z-10 flex h-full flex-col justify-end p-5 sm:p-8 lg:p-12 motion-safe:animate-hero-in"
         >
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-foreground/90 backdrop-blur ring-1 ring-white/15">
-              {h.badge}
-            </span>
-            <span
-              className="inline-flex items-center gap-1 rounded-md bg-[#F5C518] px-1.5 py-0.5 text-[10px] font-black text-black"
-              aria-label={`تقييم IMDb ${h.imdb}`}
-            >
-              IMDb
-              <span className="text-black">{h.imdb.toFixed(1)}</span>
-            </span>
-            <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-foreground/90 ring-1 ring-white/15">
-              {h.ageRating}
-            </span>
-            <span className="text-[11px] font-medium text-foreground/70">{h.year}</span>
+            {h.badge && (
+              <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-foreground/90 backdrop-blur ring-1 ring-white/15">
+                {h.badge}
+              </span>
+            )}
+            {h.imdb > 0 && (
+              <span
+                className="inline-flex items-center gap-1 rounded-md bg-[#F5C518] px-1.5 py-0.5 text-[10px] font-black text-black"
+                aria-label={`تقييم IMDb ${h.imdb}`}
+              >
+                IMDb
+                <span className="text-black">{h.imdb.toFixed(1)}</span>
+              </span>
+            )}
+            {h.ageRating && (
+              <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-foreground/90 ring-1 ring-white/15">
+                {h.ageRating}
+              </span>
+            )}
+            {h.year && <span className="text-[11px] font-medium text-foreground/70">{h.year}</span>}
           </div>
           <h1 className="mt-2 text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight">{h.title}</h1>
           <p className="mt-1 max-w-md text-xs sm:text-sm lg:text-base text-foreground/80">{h.subtitle}</p>
@@ -199,9 +224,9 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
         </div>
 
         <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 flex items-center gap-1.5">
-          {heroes.map((slide, idx) => {
-            const isActive = idx === i;
-            const isPast = idx < i;
+          {safeHeroes.map((slide, idx) => {
+            const isActive = idx === safeIndex;
+            const isPast = idx < safeIndex;
             const fill = isActive ? progress : isPast ? 1 : 0;
             return (
               <button
