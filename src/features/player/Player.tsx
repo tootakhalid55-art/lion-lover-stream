@@ -110,14 +110,15 @@ export function Player({
         }
         mpegtsSupported.current = true;
         const player = Mpegts.createPlayer(
-          { type: "mse", isLive, cors: true, url: activeSrc },
+          { type: "mpegts", isLive, cors: true, url: activeSrc },
           {
-            enableWorker: true,
+            enableWorker: false,
             enableStashBuffer: !isLive,
-            stashInitialSize: 1024 * 1024,
+            stashInitialSize: 384 * 1024,
             seekType: "range",
             rangeLoadZeroStart: true,
-            lazyLoad: !isLive,
+            lazyLoad: false,
+            deferLoadAfterSourceOpen: false,
             autoCleanupSourceBuffer: true,
             autoCleanupMaxBackwardDuration: 60,
             autoCleanupMinBackwardDuration: 20,
