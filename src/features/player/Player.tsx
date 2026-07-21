@@ -4,6 +4,10 @@ import { Loader2 } from "lucide-react";
 /**
  * Video player. Uses native playback for MP4/HLS-on-Safari and hls.js
  * elsewhere for HLS manifests. Emits progress updates via `onProgress`.
+ *
+ * If the browser reports an unsupported codec (MediaError.code = 4) for a
+ * direct MP4/MKV stream, we automatically retry with an `.m3u8` variant so
+ * the Xtream server can transcode to a browser-friendly HLS stream.
  */
 export function Player({
   src,
@@ -21,6 +25,14 @@ export function Player({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Effective src (may be swapped to an .m3u8 fallback after codec failure).
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const triedHlsFallback = useRef(false);
+
+  useEffect(() => {
+    triedHlsFallback.current = false;
+    setCurrentSrc(src);
+  }, [src]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -28,7 +40,8 @@ export function Player({
     setError(null);
     setLoading(true);
 
-    const isHls = /\.m3u8($|\?)/i.test(src);
+    const activeSrc = currentSrc;
+    const isHls = /\.m3u8($|\?)/i.test(activeSrc);
     let hls: import("hls.js").default | null = null;
     let cancelled = false;
 
@@ -57,7 +70,7 @@ export function Player({
                 }
               }
             });
-            hls.loadSource(src);
+            hls.loadSource(activeSrc);
             hls.attachMedia(video);
           } else {
             setError("المتصفح لا يدعم HLS");
@@ -67,8 +80,8 @@ export function Player({
           setError("فشل تحميل مشغل HLS");
         }
       } else {
-        console.log("[player] native src", src);
-        video.src = src;
+        console.log("[player] native src", activeSrc);
+        video.src = activeSrc;
         video.load();
       }
     }
@@ -83,7 +96,7 @@ export function Player({
         try { video.load(); } catch { /* ignore */ }
       }
     };
-  }, [src]);
+  }, [currentSrc]);
 
   const handleLoaded = () => {
     setLoading(false);
@@ -104,15 +117,34 @@ export function Player({
     // Ignore errors from cleanup (src removed).
     if (!v || !v.currentSrc) return;
     const err = v.error;
+    console.error("[player] video error", { code: err?.code, message: err?.message, src: v.currentSrc });
+
+    // Auto-fallback: if the browser can't decode the direct MP4/MKV,
+    // ask the Xtream server for a transcoded HLS variant.
+    if (
+      err &&
+      (err.code === 3 || err.code === 4) &&
+      !triedHlsFallback.current &&
+      !/\.m3u8($|\?)/i.test(currentSrc)
+    ) {
+      triedHlsFallback.current = true;
+      const hlsSrc = currentSrc.replace(/\.(mp4|mkv|avi|m4v)(\?|$)/i, ".m3u8$2");
+      if (hlsSrc !== currentSrc) {
+        console.log("[player] codec unsupported — retrying via HLS transcode", hlsSrc);
+        setError(null);
+        setLoading(true);
+        setCurrentSrc(hlsSrc);
+        return;
+      }
+    }
+
     const codes: Record<number, string> = {
       1: "تم إلغاء التحميل",
       2: "خطأ في الشبكة — قد يكون الحساب مستخدماً على جهاز آخر أو تم رفض الوصول",
-
-      3: "تعذر فك ترميز الفيديو",
-      4: "التنسيق غير مدعوم من المتصفح",
+      3: "تعذر فك ترميز الفيديو — قد يكون الترميز غير مدعوم على هذا الجهاز",
+      4: "التنسيق غير مدعوم من المتصفح — جرّب فتحه على جهاز آخر أو استخدم تطبيقاً مثل VLC",
     };
     const msg = err ? codes[err.code] || `خطأ ${err.code}` : "تعذر تشغيل الفيديو";
-    console.error("[player] video error", { code: err?.code, message: err?.message, src: v.currentSrc });
     setError(msg);
   };
 
