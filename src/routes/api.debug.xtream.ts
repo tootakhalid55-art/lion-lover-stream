@@ -68,6 +68,36 @@ export const Route = createFileRoute("/api/debug/xtream")({
             ? new Date(Number(expRaw) * 1000).toISOString()
             : null;
 
+          // Probe a specific movie stream if requested
+          let probe: Record<string, unknown> | undefined;
+          if (probeMovie && /^\d+$/.test(probeMovie)) {
+            probe = {};
+            try {
+              const info = await xtream.getVodInfo(creds, Number(probeMovie));
+              const container = (info?.movie_data as Record<string, unknown>)?.container_extension
+                ?? (info?.info as Record<string, unknown>)?.container_extension;
+              probe.container_extension = container ?? null;
+              probe.movie_data_keys = Object.keys(info?.movie_data ?? {});
+            } catch (e) {
+              probe.vodInfoError = e instanceof Error ? e.message : String(e);
+            }
+            for (const ext of ["mp4", "mkv", "avi"]) {
+              const streamUrl = `${creds.serverUrl}/movie/${encodeURIComponent(creds.username)}/${encodeURIComponent(creds.password)}/${probeMovie}.${ext}`;
+              try {
+                const r = await fetch(streamUrl, {
+                  method: "GET",
+                  headers: { range: "bytes=0-1", "user-agent": "VLC/3.0.20 LibVLC/3.0.20" },
+                  redirect: "follow",
+                });
+                const body = r.status >= 400 ? (await r.text().catch(() => "")).slice(0, 200) : "";
+                probe[`try_${ext}`] = { status: r.status, contentType: r.headers.get("content-type"), body };
+                if (r.status === 200 || r.status === 206) break;
+              } catch (e) {
+                probe[`try_${ext}`] = { error: e instanceof Error ? e.message : String(e) };
+              }
+            }
+          }
+
           return Response.json({
             warning: "DEV-ONLY endpoint — remove before production",
             serverUrl,
@@ -86,6 +116,7 @@ export const Route = createFileRoute("/api/debug/xtream")({
             serverInfo,
             counts: { live: liveCount, movies: movieCount, series: seriesCount },
             sampleIds: { live: sampleLive, movie: sampleMovie, series: sampleSeries },
+            probe,
           });
         } catch (e) {
           return Response.json(
