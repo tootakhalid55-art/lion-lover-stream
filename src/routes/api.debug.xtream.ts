@@ -14,7 +14,9 @@ function maskUser(u: string): string {
 export const Route = createFileRoute("/api/debug/xtream")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
+        const url = new URL(request.url);
+        const probeMovie = url.searchParams.get("probeMovie");
         const { xtream, authenticate, callApi } = await import("@/lib/xtream.server");
         const { resolveCreds } = await import("@/lib/xtream-session.server");
         try {
