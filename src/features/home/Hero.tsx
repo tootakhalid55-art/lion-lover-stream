@@ -99,28 +99,28 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
       onTouchEnd={onTouchEnd}
     >
       <div className="relative overflow-hidden rounded-3xl ring-1 ring-white/10 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] aspect-[16/10] sm:aspect-[21/9] lg:aspect-[24/9] motion-safe:animate-fade-in">
-        {heroes.map((slide, idx) => (
+        {safeHeroes.map((slide, idx) => (
           <div
             key={slide.id}
-            aria-hidden={idx !== i}
-            className={`absolute inset-0 transition-opacity duration-[900ms] ease-out ${idx === i ? "opacity-100" : "opacity-0"}`}
+            aria-hidden={idx !== safeIndex}
+            className={`absolute inset-0 transition-opacity duration-[900ms] ease-out ${idx === safeIndex ? "opacity-100" : "opacity-0"}`}
           >
             <div
-              className={`absolute inset-0 bg-gradient-to-br ${slide.gradient} ${idx === i && !reduced ? "motion-safe:animate-kenburns" : ""}`}
+              className={`absolute inset-0 bg-gradient-to-br ${slide.gradient} ${idx === safeIndex && !reduced ? "motion-safe:animate-kenburns" : ""}`}
             />
             {slide.imageUrl && (
               <img
                 src={slide.imageUrl}
                 alt=""
                 aria-hidden
-                loading={idx === i ? "eager" : "lazy"}
+                loading={idx === safeIndex ? "eager" : "lazy"}
                 decoding="async"
                 className="absolute inset-0 h-full w-full object-cover"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
             )}
             <div className="absolute inset-0 opacity-40 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklab,var(--color-brand)_60%,transparent),transparent_60%)]" />
-            {idx === i && slide.previewUrl && (
+            {idx === safeIndex && slide.previewUrl && (
               <video
                 key={slide.previewUrl}
                 src={slide.previewUrl}
@@ -156,7 +156,7 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
         )}
 
         <div
-          key={i}
+          key={safeIndex}
           className="relative z-10 flex h-full flex-col justify-end p-5 sm:p-8 lg:p-12 motion-safe:animate-hero-in"
         >
           <div className="flex flex-wrap items-center gap-2">
@@ -218,9 +218,9 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
         </div>
 
         <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 flex items-center gap-1.5">
-          {heroes.map((slide, idx) => {
-            const isActive = idx === i;
-            const isPast = idx < i;
+          {safeHeroes.map((slide, idx) => {
+            const isActive = idx === safeIndex;
+            const isPast = idx < safeIndex;
             const fill = isActive ? progress : isPast ? 1 : 0;
             return (
               <button
