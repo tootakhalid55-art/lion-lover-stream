@@ -7,6 +7,17 @@
 const DEFAULT_TIMEOUT_MS = 15_000;
 const MAX_ATTEMPTS = 3;
 
+async function logXtreamServerError(functionName: string, lineNumber: number, error: unknown, httpStatus?: number) {
+  const { logServerDiagnostic } = await import("./runtime-diagnostics.server");
+  logServerDiagnostic({
+    filename: "src/lib/xtream.server.ts",
+    functionName,
+    lineNumber,
+    error,
+    httpStatus,
+  });
+}
+
 export interface XtreamCreds {
   serverUrl: string; // no trailing slash
   username: string;
@@ -18,7 +29,17 @@ export function getDefaultCreds(): XtreamCreds {
   const username = process.env.XTREAM_DEFAULT_USERNAME;
   const password = process.env.XTREAM_DEFAULT_PASSWORD;
   if (!serverUrl || !username || !password) {
-    throw new Error("Xtream default credentials are not configured");
+    const error = new Error("Xtream default credentials are not configured");
+    console.error("[runtime:exception]", {
+      filename: "src/lib/xtream.server.ts",
+      functionName: "getDefaultCreds",
+      lineNumber: 20,
+      message: error.message,
+      stack: error.stack ?? null,
+      requestUrl: "unknown",
+      httpStatus: null,
+    });
+    throw error;
   }
   return { serverUrl, username, password };
 }
@@ -52,13 +73,19 @@ async function fetchWithRetry(url: string, action: string, opts?: { timeoutMs?: 
       }
       const retryable = res.status >= 500 || res.status === 429;
       record({ ts: Date.now(), action, ok: false, status: res.status, durationMs: dur, attempt, error: `HTTP ${res.status} ${safeUrl(url)}` });
-      if (!retryable || attempt === MAX_ATTEMPTS) return res;
+      if (!retryable || attempt === MAX_ATTEMPTS) {
+        await logXtreamServerError("fetchWithRetry", 55, new Error(`Xtream upstream returned ${res.status}`), res.status);
+        return res;
+      }
     } catch (e) {
       const dur = Date.now() - start;
       lastErr = e;
       const msg = e instanceof Error ? e.message : String(e);
       record({ ts: Date.now(), action, ok: false, durationMs: dur, attempt, error: msg });
-      if (attempt === MAX_ATTEMPTS) throw e;
+      if (attempt === MAX_ATTEMPTS) {
+        await logXtreamServerError("fetchWithRetry", 61, e);
+        throw e;
+      }
     }
     // Exponential backoff with jitter
     const backoff = Math.min(2000, 250 * 2 ** (attempt - 1)) + Math.random() * 150;
@@ -81,14 +108,18 @@ export async function callApi<T = unknown>(
   const action = String(params.action ?? "auth");
   const res = await fetchWithRetry(url.toString(), `api:${action}`);
   if (!res.ok) {
-    throw new Error(`Xtream upstream returned ${res.status}`);
+    const error = new Error(`Xtream upstream returned ${res.status}`);
+    await logXtreamServerError("callApi", 83, error, res.status);
+    throw error;
   }
   const text = await res.text();
   if (!text) return [] as unknown as T;
   try {
     return JSON.parse(text) as T;
-  } catch {
-    throw new Error("Xtream returned invalid JSON");
+  } catch (err) {
+    const error = new Error("Xtream returned invalid JSON", { cause: err });
+    await logXtreamServerError("callApi", 90, error, res.status);
+    throw error;
   }
 }
 
@@ -116,7 +147,9 @@ export async function authenticate(creds: XtreamCreds): Promise<{
     server_info?: { url?: string; port?: string; server_protocol?: string };
   }>(creds);
   if (!data || !data.user_info || data.user_info.auth !== 1) {
-    throw new Error("Invalid credentials");
+    const error = new Error("Invalid credentials");
+    await logXtreamServerError("authenticate", 118, error, 401);
+    throw error;
   }
   return data as never;
 }
