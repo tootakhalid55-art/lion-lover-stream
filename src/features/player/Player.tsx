@@ -100,7 +100,7 @@ export function Player({
     let tsPlayer: { destroy: () => void; unload?: () => void; detachMediaElement?: () => void } | null = null;
     let cancelled = false;
 
-    async function attachMpegTs() {
+    async function attachMpegTs(media: HTMLVideoElement) {
       try {
         const Mpegts = (await import("mpegts.js")).default;
         if (cancelled) return true;
@@ -133,7 +133,7 @@ export function Player({
           if (retryWithHlsSource()) return;
           setError("تعذر تشغيل ترميز هذا الملف داخل المتصفح");
         });
-        player.attachMediaElement(video);
+        player.attachMediaElement(media);
         player.load();
         const playResult = player.play();
         if (playResult && typeof playResult.catch === "function") playResult.catch(() => undefined);
@@ -149,7 +149,7 @@ export function Player({
       if (!video) return;
 
       if (isTs) {
-        const attached = await attachMpegTs();
+        const attached = await attachMpegTs(video);
         if (cancelled || attached) return;
         if (retryWithHlsSource()) return;
       }
