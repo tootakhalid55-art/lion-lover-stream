@@ -16,6 +16,61 @@ const HOP_BY_HOP = new Set([
   "upgrade",
 ]);
 
+const streamLocks = new Map<string, Promise<void>>();
+
+async function acquireStreamSlot(key: string): Promise<() => void> {
+  const previous = streamLocks.get(key) ?? Promise.resolve();
+  let releaseCurrent!: () => void;
+  const current = new Promise<void>((resolve) => {
+    releaseCurrent = resolve;
+  });
+  const next = previous.catch(() => undefined).then(() => current);
+  streamLocks.set(key, next);
+  await previous.catch(() => undefined);
+
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    releaseCurrent();
+    queueMicrotask(() => {
+      if (streamLocks.get(key) === next) streamLocks.delete(key);
+    });
+  };
+}
+
+function releaseWhenStreamEnds(body: ReadableStream<Uint8Array> | null, release: () => void) {
+  if (!body) {
+    release();
+    return null;
+  }
+
+  const reader = body.getReader();
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          release();
+          controller.close();
+          return;
+        }
+        controller.enqueue(value);
+      } catch (error) {
+        release();
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      try {
+        await reader.cancel(reason);
+      } finally {
+        release();
+      }
+    },
+  });
+}
+
 function maskUsername(u: string): string {
   if (!u) return "";
   if (u.length <= 4) return "*".repeat(u.length);
@@ -264,6 +319,8 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   forwardHeaders.set("accept", "*/*");
   forwardHeaders.set("icy-metadata", "1");
 
+  const releaseStreamSlot = await acquireStreamSlot(`${accountLabel}:${kind}:${id}`);
+
   // Retry transient failures on non-Range initial requests only. Range
   // requests support natural resume — the player retries the offset.
   const maxAttempts = range ? 1 : 3;
@@ -325,6 +382,7 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   }
 
   if (!upstreamRes) {
+    releaseStreamSlot();
     return new Response(`Upstream unreachable: ${lastErr instanceof Error ? lastErr.message : "network error"}`, {
       status: 502,
       headers: { "content-type": "text/plain; charset=utf-8" },
@@ -335,6 +393,7 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   const status = upstreamRes.status;
   if (status !== 200 && status !== 206) {
     const body = lastErrorBody || (await upstreamRes.text().catch(() => ""));
+    releaseStreamSlot();
     const trimmed = body.slice(0, 300).replace(/<[^>]+>/g, "").trim();
     const label =
       status === 401 || status === 403
@@ -370,7 +429,7 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   if (ext === "ts") respHeaders.set("content-type", "video/mp2t");
   respHeaders.set("access-control-allow-origin", "*");
 
-  return new Response(upstreamRes.body, {
+  return new Response(releaseWhenStreamEnds(upstreamRes.body, releaseStreamSlot), {
     status,
     statusText: upstreamRes.statusText,
     headers: respHeaders,
