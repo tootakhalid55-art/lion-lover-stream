@@ -132,7 +132,7 @@ export function Player({
             setError("تعذر الوصول للبث — الحساب قد يكون مستخدماً حالياً أو الخادم رفض الاتصال");
             return;
           }
-          if (retryWithHlsSource()) return;
+          if (canPlayNativeHls && retryWithHlsSource()) return;
           setError("تعذر تشغيل ترميز هذا الملف داخل المتصفح");
         });
         player.attachMediaElement(media);
@@ -254,7 +254,8 @@ export function Player({
       return;
     }
 
-    if (err && (err.code === 3 || err.code === 4) && /\.ts($|\?)/i.test(currentSrc) && retryWithHlsSource()) {
+    const canPlayNativeHls = Boolean(v.canPlayType("application/vnd.apple.mpegurl"));
+    if (err && (err.code === 3 || err.code === 4) && /\.ts($|\?)/i.test(currentSrc) && canPlayNativeHls && retryWithHlsSource()) {
       return;
     }
 
