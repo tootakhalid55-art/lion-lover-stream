@@ -84,6 +84,7 @@ function MoviePage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link
                   to={watchPath(fullId) as "/"}
+                  search={{ ext: detail.ext } as never}
                   className="inline-flex items-center gap-1.5 rounded-full bg-pill px-5 py-2.5 text-sm font-extrabold text-pill-foreground shadow-lg hover:brightness-110"
                 >
                   <Play className="h-4 w-4 fill-current" /> تشغيل الآن

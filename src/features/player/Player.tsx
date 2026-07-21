@@ -2,12 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, RotateCcw } from "lucide-react";
 
 /**
- * Video player. Uses native playback for MP4/HLS-on-Safari and hls.js
- * elsewhere for HLS manifests. Emits progress updates via `onProgress`.
- *
- * If the browser reports an unsupported codec (MediaError.code = 4) for a
- * direct MP4/MKV stream, we automatically retry with an `.m3u8` variant so
- * the Xtream server can transcode to a browser-friendly HLS stream.
+ * Video player. Uses a three-layer strategy:
+ * 1) MPEG-TS transmuxing through mpegts.js for Xtream VOD/episodes.
+ * 2) Native HLS on Safari/iOS.
+ * 3) hls.js/native video fallback for standard HLS/MP4 streams.
  */
 export function Player({
   src,
@@ -26,30 +24,66 @@ export function Player({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentSrc, setCurrentSrc] = useState(src);
-  const triedDirectFallback = useRef(false);
+  const triedTsFallback = useRef(false);
+  const triedHlsFallback = useRef(false);
+  const mpegtsSupported = useRef<boolean | null>(null);
 
   useEffect(() => {
-    triedDirectFallback.current = false;
+    triedTsFallback.current = false;
+    triedHlsFallback.current = false;
     setCurrentSrc(src);
   }, [src]);
 
-  const retryWithDirectSource = () => {
-    if (triedDirectFallback.current) return false;
+  const deriveTsSource = (value: string) => {
     try {
-      const url = new URL(currentSrc, window.location.origin);
-      if (!url.pathname.endsWith(".m3u8")) return false;
-      const sourceExt = url.searchParams.get("sourceExt") || "mp4";
-      url.pathname = url.pathname.replace(/\.m3u8$/i, `.${sourceExt.replace(/[^a-z0-9]/gi, "") || "mp4"}`);
-      url.search = "";
-      triedDirectFallback.current = true;
-      console.log("[player] HLS unavailable — retrying direct proxy source", url.pathname);
-      setError(null);
-      setLoading(true);
-      setCurrentSrc(url.pathname);
-      return true;
+      const url = new URL(value, window.location.origin);
+      const match = url.pathname.match(/\.([a-z0-9]+)$/i);
+      const ext = match?.[1]?.toLowerCase() || url.searchParams.get("sourceExt") || "mp4";
+      if (!url.searchParams.get("sourceExt") && ext !== "ts" && ext !== "m3u8") {
+        url.searchParams.set("sourceExt", ext);
+      }
+      url.pathname = url.pathname.replace(/\.[a-z0-9]+$/i, ".ts");
+      return `${url.pathname}${url.search}`;
     } catch {
-      return false;
+      return value;
     }
+  };
+
+  const deriveHlsSource = (value: string) => {
+    try {
+      const url = new URL(value, window.location.origin);
+      const match = url.pathname.match(/\.([a-z0-9]+)$/i);
+      const ext = match?.[1]?.toLowerCase() || "mp4";
+      if (!url.searchParams.get("sourceExt") && ext !== "m3u8") url.searchParams.set("sourceExt", ext === "ts" ? "mp4" : ext);
+      url.pathname = url.pathname.replace(/\.[a-z0-9]+$/i, ".m3u8");
+      return `${url.pathname}${url.search}`;
+    } catch {
+      return value;
+    }
+  };
+
+  const retryWithTsSource = () => {
+    if (triedTsFallback.current || mpegtsSupported.current === false) return false;
+    const next = deriveTsSource(currentSrc);
+    if (next === currentSrc) return false;
+    triedTsFallback.current = true;
+    console.log("[player] retrying through MPEG-TS transmuxer", next);
+    setError(null);
+    setLoading(true);
+    setCurrentSrc(next);
+    return true;
+  };
+
+  const retryWithHlsSource = () => {
+    if (triedHlsFallback.current) return false;
+    const next = deriveHlsSource(currentSrc);
+    if (next === currentSrc) return false;
+    triedHlsFallback.current = true;
+    console.log("[player] retrying through HLS fallback", next);
+    setError(null);
+    setLoading(true);
+    setCurrentSrc(next);
+    return true;
   };
 
   useEffect(() => {
@@ -60,18 +94,80 @@ export function Player({
 
     const activeSrc = currentSrc;
     const isHls = /\.m3u8($|\?)/i.test(activeSrc);
+    const isTs = /\.ts($|\?)/i.test(activeSrc);
+    const isLive = /\/live\//i.test(activeSrc);
     let hls: import("hls.js").default | null = null;
+    let tsPlayer: { destroy: () => void; unload?: () => void; detachMediaElement?: () => void } | null = null;
     let cancelled = false;
+
+    async function attachMpegTs() {
+      try {
+        const Mpegts = (await import("mpegts.js")).default;
+        if (cancelled) return true;
+        if (!Mpegts.isSupported()) {
+          mpegtsSupported.current = false;
+          return false;
+        }
+        mpegtsSupported.current = true;
+        const player = Mpegts.createPlayer(
+          { type: "mpegts", isLive, cors: true, url: activeSrc },
+          {
+            enableWorker: true,
+            enableStashBuffer: !isLive,
+            stashInitialSize: 1024 * 1024,
+            seekType: "range",
+            rangeLoadZeroStart: true,
+            lazyLoad: !isLive,
+            autoCleanupSourceBuffer: true,
+            autoCleanupMaxBackwardDuration: 60,
+            autoCleanupMinBackwardDuration: 20,
+          },
+        );
+        tsPlayer = player;
+        player.on(Mpegts.Events.ERROR, (type: string, detail: string, info: unknown) => {
+          console.error("[player] mpegts error", { type, detail, info });
+          if (type === Mpegts.ErrorTypes.NETWORK_ERROR) {
+            setError("تعذر الوصول للبث — الحساب قد يكون مستخدماً حالياً أو الخادم رفض الاتصال");
+            return;
+          }
+          if (retryWithHlsSource()) return;
+          setError("تعذر تشغيل ترميز هذا الملف داخل المتصفح");
+        });
+        player.attachMediaElement(video);
+        player.load();
+        const playResult = player.play();
+        if (playResult && typeof playResult.catch === "function") playResult.catch(() => undefined);
+        console.log("[player] mpegts src", activeSrc);
+        return true;
+      } catch (e) {
+        console.error("[player] mpegts load failed", e);
+        return false;
+      }
+    }
 
     async function attach() {
       if (!video) return;
+
+      if (isTs) {
+        const attached = await attachMpegTs();
+        if (cancelled || attached) return;
+        if (retryWithHlsSource()) return;
+      }
 
       if (isHls && !video.canPlayType("application/vnd.apple.mpegurl")) {
         try {
           const HlsMod = (await import("hls.js")).default;
           if (cancelled) return;
           if (HlsMod.isSupported()) {
-            hls = new HlsMod({ enableWorker: true, lowLatencyMode: false });
+            hls = new HlsMod({
+              enableWorker: true,
+              lowLatencyMode: false,
+              manifestLoadingMaxRetry: 1,
+              fragLoadingMaxRetry: 1,
+              levelLoadingMaxRetry: 1,
+              startFragPrefetch: false,
+              maxBufferLength: 30,
+            });
             hls.on(HlsMod.Events.ERROR, (_e, data) => {
               console.error("[player] hls error", {
                 type: data.type,
@@ -83,7 +179,7 @@ export function Player({
                 const code = data.response?.code;
                 if (code === 401 || code === 403) {
                   setError("غير مصرح — الحساب مستخدم على جهاز آخر أو انتهت صلاحيته. أغلق أي جلسة مفتوحة وحاول مجدداً.");
-                } else if (retryWithDirectSource()) {
+                } else if (retryWithTsSource()) {
                   return;
                 } else {
                   setError(code ? `تعذر تشغيل البث (HTTP ${code})` : "تعذر تشغيل هذا الملف من الخادم");
@@ -110,6 +206,9 @@ export function Player({
     return () => {
       cancelled = true;
       hls?.destroy();
+      try { tsPlayer?.unload?.(); } catch { /* ignore */ }
+      try { tsPlayer?.detachMediaElement?.(); } catch { /* ignore */ }
+      try { tsPlayer?.destroy(); } catch { /* ignore */ }
       if (video) {
         // Detach without firing an error event.
         video.removeAttribute("src");
@@ -139,7 +238,11 @@ export function Player({
     const err = v.error;
     console.error("[player] video error", { code: err?.code, message: err?.message, src: v.currentSrc });
 
-    if (err && (err.code === 3 || err.code === 4) && /\.m3u8($|\?)/i.test(currentSrc) && retryWithDirectSource()) {
+    if (err && (err.code === 3 || err.code === 4) && /\.m3u8($|\?)/i.test(currentSrc) && retryWithTsSource()) {
+      return;
+    }
+
+    if (err && (err.code === 3 || err.code === 4) && /\.ts($|\?)/i.test(currentSrc) && retryWithHlsSource()) {
       return;
     }
 
@@ -182,7 +285,8 @@ export function Player({
             <button
               type="button"
               onClick={() => {
-                triedDirectFallback.current = false;
+                triedTsFallback.current = false;
+                triedHlsFallback.current = false;
                 setCurrentSrc(src);
                 setError(null);
                 setLoading(true);
