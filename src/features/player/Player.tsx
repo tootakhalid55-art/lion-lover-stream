@@ -110,7 +110,7 @@ export function Player({
         }
         mpegtsSupported.current = true;
         const player = Mpegts.createPlayer(
-          { type: "mpegts", isLive, cors: true, url: activeSrc },
+          { type: "mse", isLive, cors: true, url: activeSrc },
           {
             enableWorker: true,
             enableStashBuffer: !isLive,
@@ -136,7 +136,11 @@ export function Player({
         player.attachMediaElement(media);
         player.load();
         const playResult = player.play();
-        if (playResult && typeof playResult.catch === "function") playResult.catch(() => undefined);
+        if (playResult && typeof playResult.catch === "function") {
+          playResult.catch((playError: unknown) => {
+            console.warn("[player] autoplay deferred", playError);
+          });
+        }
         console.log("[player] mpegts src", activeSrc);
         return true;
       } catch (e) {
