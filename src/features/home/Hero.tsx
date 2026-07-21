@@ -160,20 +160,26 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
           className="relative z-10 flex h-full flex-col justify-end p-5 sm:p-8 lg:p-12 motion-safe:animate-hero-in"
         >
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-foreground/90 backdrop-blur ring-1 ring-white/15">
-              {h.badge}
-            </span>
-            <span
-              className="inline-flex items-center gap-1 rounded-md bg-[#F5C518] px-1.5 py-0.5 text-[10px] font-black text-black"
-              aria-label={`تقييم IMDb ${h.imdb}`}
-            >
-              IMDb
-              <span className="text-black">{h.imdb.toFixed(1)}</span>
-            </span>
-            <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-foreground/90 ring-1 ring-white/15">
-              {h.ageRating}
-            </span>
-            <span className="text-[11px] font-medium text-foreground/70">{h.year}</span>
+            {h.badge && (
+              <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-foreground/90 backdrop-blur ring-1 ring-white/15">
+                {h.badge}
+              </span>
+            )}
+            {h.imdb > 0 && (
+              <span
+                className="inline-flex items-center gap-1 rounded-md bg-[#F5C518] px-1.5 py-0.5 text-[10px] font-black text-black"
+                aria-label={`تقييم IMDb ${h.imdb}`}
+              >
+                IMDb
+                <span className="text-black">{h.imdb.toFixed(1)}</span>
+              </span>
+            )}
+            {h.ageRating && (
+              <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-foreground/90 ring-1 ring-white/15">
+                {h.ageRating}
+              </span>
+            )}
+            {h.year && <span className="text-[11px] font-medium text-foreground/70">{h.year}</span>}
           </div>
           <h1 className="mt-2 text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight">{h.title}</h1>
           <p className="mt-1 max-w-md text-xs sm:text-sm lg:text-base text-foreground/80">{h.subtitle}</p>
