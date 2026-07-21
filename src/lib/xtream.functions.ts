@@ -6,6 +6,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { Hero, HomeFeed, Notification, Poster } from "@/services/api/types";
 
+async function logServerFunctionError(
+  functionName: string,
+  lineNumber: number,
+  error: unknown,
+  httpStatus?: number,
+) {
+  const { logServerDiagnostic } = await import("./runtime-diagnostics.server");
+  logServerDiagnostic({
+    filename: "src/lib/xtream.functions.ts",
+    functionName,
+    lineNumber,
+    error,
+    httpStatus,
+  });
+}
+
 // ─── Mapping helpers ─────────────────────────────────────────────────────
 
 const GRADIENTS = [
@@ -113,7 +129,7 @@ export const getHomeFeed = createServerFn({ method: "GET" }).handler(async (): P
       ],
     };
   } catch (err) {
-    console.error("[xtream] getHomeFeed failed:", err);
+    await logServerFunctionError("getHomeFeed", 115, err);
     return { heroes: [], continueWatching: [], rows: [] };
   }
 });
@@ -127,7 +143,8 @@ export const getMovies = createServerFn({ method: "GET" }).handler(async (): Pro
     const scope = isOverride ? `u:${creds.username}` : "default";
     const list = await cached(`${scope}:vod`, TTL.lists, () => xtream.getVodStreams(creds));
     return list.slice(0, 200).map(vodToPoster);
-  } catch {
+  } catch (err) {
+    await logServerFunctionError("getMovies", 130, err);
     return [];
   }
 });
@@ -141,7 +158,8 @@ export const getSeries = createServerFn({ method: "GET" }).handler(async (): Pro
     const scope = isOverride ? `u:${creds.username}` : "default";
     const list = await cached(`${scope}:series`, TTL.lists, () => xtream.getSeriesList(creds));
     return list.slice(0, 200).map(seriesToPoster);
-  } catch {
+  } catch (err) {
+    await logServerFunctionError("getSeries", 144, err);
     return [];
   }
 });
@@ -155,7 +173,8 @@ export const getLive = createServerFn({ method: "GET" }).handler(async (): Promi
     const scope = isOverride ? `u:${creds.username}` : "default";
     const list = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds));
     return list.slice(0, 200).map(liveToPoster);
-  } catch {
+  } catch (err) {
+    await logServerFunctionError("getLive", 158, err);
     return [];
   }
 });
@@ -166,14 +185,19 @@ export const getHealth = createServerFn({ method: "GET" }).handler(async (): Pro
   latencyMs: number;
   message?: string;
 }> => {
-  const { healthCheck } = await import("./xtream.server");
-  const { cached, TTL } = await import("./xtream-cache.server");
-  const r = await cached("health", TTL.health, healthCheck);
-  return {
-    ok: r.ok,
-    latencyMs: r.latencyMs,
-    message: r.ok ? undefined : "الخادم غير متاح حالياً. جارٍ إعادة المحاولة…",
-  };
+  try {
+    const { healthCheck } = await import("./xtream.server");
+    const { cached, TTL } = await import("./xtream-cache.server");
+    const r = await cached("health", TTL.health, healthCheck);
+    return {
+      ok: r.ok,
+      latencyMs: r.latencyMs,
+      message: r.ok ? undefined : "الخادم غير متاح حالياً. جارٍ إعادة المحاولة…",
+    };
+  } catch (err) {
+    await logServerFunctionError("getHealth", 164, err);
+    return { ok: false, latencyMs: 0, message: err instanceof Error ? err.message : "تعذّر الاتصال بالخادم" };
+  }
 });
 
 
@@ -208,7 +232,8 @@ export const searchAll = createServerFn({ method: "POST" })
         );
       }
       return results.slice(0, 30);
-    } catch {
+    } catch (err) {
+      await logServerFunctionError("searchAll", 211, err);
       return [];
     }
   });
@@ -224,21 +249,26 @@ export const resolveStream = createServerFn({ method: "POST" })
     audioLanguages: string[];
     subtitleLanguages: string[];
   }> => {
-    const [kind, rawId] = data.id.split(":");
-    if (!kind || !rawId) throw new Error("Invalid stream id");
-    const ext = data.ext || (kind === "live" ? "m3u8" : "mp4");
-    const proxyPath =
-      kind === "live"
-        ? `/api/public/stream/live/${encodeURIComponent(rawId)}.${ext}`
-        : kind === "series"
-          ? `/api/public/stream/series/${encodeURIComponent(rawId)}.${ext}`
-          : `/api/public/stream/movie/${encodeURIComponent(rawId)}.${ext}`;
-    return {
-      manifestUrl: proxyPath,
-      protocol: kind === "live" ? "hls" : ext === "m3u8" ? "hls" : "hls",
-      audioLanguages: ["ar", "en"],
-      subtitleLanguages: ["ar", "en"],
-    };
+    try {
+      const [kind, rawId] = data.id.split(":");
+      if (!kind || !rawId) throw new Error("Invalid stream id");
+      const ext = data.ext || (kind === "live" ? "m3u8" : "mp4");
+      const proxyPath =
+        kind === "live"
+          ? `/api/public/stream/live/${encodeURIComponent(rawId)}.${ext}`
+          : kind === "series"
+            ? `/api/public/stream/series/${encodeURIComponent(rawId)}.${ext}`
+            : `/api/public/stream/movie/${encodeURIComponent(rawId)}.${ext}`;
+      return {
+        manifestUrl: proxyPath,
+        protocol: kind === "live" ? "hls" : ext === "m3u8" ? "hls" : "hls",
+        audioLanguages: ["ar", "en"],
+        subtitleLanguages: ["ar", "en"],
+      };
+    } catch (err) {
+      await logServerFunctionError("resolveStream", 227, err);
+      throw err;
+    }
   });
 
 // ─── Auth (per-user override) ────────────────────────────────────────────
@@ -262,7 +292,8 @@ export const getAccountInfo = createServerFn({ method: "GET" }).handler(async ()
         ? new Date(Number(info.user_info.exp_date) * 1000).toISOString()
         : null,
     };
-  } catch {
+  } catch (err) {
+    await logServerFunctionError("getAccountInfo", 265, err);
     return { isOverride: false, username: null, status: null, expiresAt: null };
   }
 });
@@ -279,21 +310,34 @@ export const signInWithOwnAccount = createServerFn({ method: "POST" })
       await authenticate({ serverUrl, username: data.username, password: data.password });
       await setOverride(data.username, data.password, serverUrl);
       return { ok: true };
-    } catch {
+    } catch (err) {
+      await logServerFunctionError("signInWithOwnAccount", 282, err, 401);
       return { ok: false, error: "بيانات الدخول غير صحيحة" };
     }
   });
 
 export const useDefaultAccount = createServerFn({ method: "POST" }).handler(async () => {
-  const { clearOverride } = await import("./xtream-session.server");
-  await clearOverride();
-  return { ok: true };
+  try {
+    const { clearOverride } = await import("./xtream-session.server");
+    await clearOverride();
+    return { ok: true };
+  } catch (err) {
+    await logServerFunctionError("useDefaultAccount", 287, err);
+    return { ok: false };
+  }
 });
 
 // ─── Notifications / Continue Watching stubs (no upstream equivalent) ───
 
 export const getNotifications = createServerFn({ method: "GET" }).handler(
-  async (): Promise<Notification[]> => [],
+  async (): Promise<Notification[]> => {
+    try {
+      return [];
+    } catch (err) {
+      await logServerFunctionError("getNotifications", 295, err);
+      return [];
+    }
+  },
 );
 
 // ─── Detail views ────────────────────────────────────────────────────────
@@ -353,7 +397,7 @@ export const getMovieDetail = createServerFn({ method: "POST" })
         ext: str(md.container_extension) || listItem?.container_extension || "mp4",
       };
     } catch (err) {
-      console.error("[xtream] getMovieDetail failed:", err);
+      await logServerFunctionError("getMovieDetail", 355, err);
       return null;
     }
   });
@@ -443,7 +487,7 @@ export const getSeriesDetail = createServerFn({ method: "POST" })
         seasons,
       };
     } catch (err) {
-      console.error("[xtream] getSeriesDetail failed:", err);
+      await logServerFunctionError("getSeriesDetail", 445, err);
       return null;
     }
   });
@@ -462,7 +506,8 @@ export const getLiveChannel = createServerFn({ method: "POST" })
       const list = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds));
       const item = list.find((l) => l.stream_id === Number(raw));
       return item ? liveToPoster(item) : null;
-    } catch {
+    } catch (err) {
+      await logServerFunctionError("getLiveChannel", 465, err);
       return null;
     }
   });
