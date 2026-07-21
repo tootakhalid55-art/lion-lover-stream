@@ -130,7 +130,7 @@ export const getHomeFeed = createServerFn({ method: "GET" }).handler(async (): P
     };
   } catch (err) {
     await logServerFunctionError("getHomeFeed", 115, err);
-    return { heroes: [], continueWatching: [], rows: [] };
+    throw err;
   }
 });
 
@@ -145,7 +145,7 @@ export const getMovies = createServerFn({ method: "GET" }).handler(async (): Pro
     return list.slice(0, 200).map(vodToPoster);
   } catch (err) {
     await logServerFunctionError("getMovies", 130, err);
-    return [];
+    throw err;
   }
 });
 
@@ -160,7 +160,7 @@ export const getSeries = createServerFn({ method: "GET" }).handler(async (): Pro
     return list.slice(0, 200).map(seriesToPoster);
   } catch (err) {
     await logServerFunctionError("getSeries", 144, err);
-    return [];
+    throw err;
   }
 });
 
@@ -175,7 +175,7 @@ export const getLive = createServerFn({ method: "GET" }).handler(async (): Promi
     return list.slice(0, 200).map(liveToPoster);
   } catch (err) {
     await logServerFunctionError("getLive", 158, err);
-    return [];
+    throw err;
   }
 });
 
@@ -234,7 +234,7 @@ export const searchAll = createServerFn({ method: "POST" })
       return results.slice(0, 30);
     } catch (err) {
       await logServerFunctionError("searchAll", 211, err);
-      return [];
+      throw err;
     }
   });
 
@@ -294,7 +294,7 @@ export const getAccountInfo = createServerFn({ method: "GET" }).handler(async ()
     };
   } catch (err) {
     await logServerFunctionError("getAccountInfo", 265, err);
-    return { isOverride: false, username: null, status: null, expiresAt: null };
+    throw err;
   }
 });
 
@@ -398,7 +398,7 @@ export const getMovieDetail = createServerFn({ method: "POST" })
       };
     } catch (err) {
       await logServerFunctionError("getMovieDetail", 355, err);
-      return null;
+      throw err;
     }
   });
 
@@ -488,7 +488,7 @@ export const getSeriesDetail = createServerFn({ method: "POST" })
       };
     } catch (err) {
       await logServerFunctionError("getSeriesDetail", 445, err);
-      return null;
+      throw err;
     }
   });
 
@@ -508,6 +508,6 @@ export const getLiveChannel = createServerFn({ method: "POST" })
       return item ? liveToPoster(item) : null;
     } catch (err) {
       await logServerFunctionError("getLiveChannel", 465, err);
-      return null;
+      throw err;
     }
   });
