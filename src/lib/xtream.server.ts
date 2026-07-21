@@ -129,12 +129,16 @@ export async function healthCheck(): Promise<{ ok: boolean; latencyMs: number; e
   try {
     const serverUrl = process.env.XTREAM_SERVER_URL?.replace(/\/+$/, "");
     if (!serverUrl) return { ok: false, latencyMs: 0, error: "server-not-configured" };
-    const res = await xtreamFetch(`${serverUrl}/player_api.php`, { timeoutMs: 5000, method: "HEAD" });
-    return { ok: res.ok || res.status < 500, latencyMs: Date.now() - start };
+    // Some Xtream upstreams reject HEAD with 403/405. Use a short GET to the
+    // player_api endpoint (without credentials) — any HTTP response < 500
+    // means the server is reachable.
+    const res = await xtreamFetch(`${serverUrl}/player_api.php`, { timeoutMs: 6000, method: "GET" });
+    return { ok: res.status < 500, latencyMs: Date.now() - start };
   } catch (e) {
     return { ok: false, latencyMs: Date.now() - start, error: e instanceof Error ? e.message : "unknown" };
   }
 }
+
 
 
 /** Verify credentials. Returns account/server info when valid. */
