@@ -106,6 +106,7 @@ export function Player({
     let hls: import("hls.js").default | null = null;
     let tsPlayer: { destroy: () => void; unload?: () => void; detachMediaElement?: () => void } | null = null;
     let cancelled = false;
+    let attachTimer: ReturnType<typeof window.setTimeout> | undefined;
 
     async function attachMpegTs(media: HTMLVideoElement) {
       try {
@@ -219,10 +220,17 @@ export function Player({
         video.load();
       }
     }
-    void attach();
+    // React StrictMode in preview mounts/unmounts effects once before the real
+    // mount. Starting media immediately opens two upstream connections, which
+    // single-connection IPTV accounts reject as Unauthorized. Deferring the
+    // attach lets the throwaway mount cancel before any network request starts.
+    attachTimer = window.setTimeout(() => {
+      void attach();
+    }, 120);
 
     return () => {
       cancelled = true;
+      if (attachTimer) window.clearTimeout(attachTimer);
       hls?.destroy();
       try { tsPlayer?.unload?.(); } catch { /* ignore */ }
       try { tsPlayer?.detachMediaElement?.(); } catch { /* ignore */ }
