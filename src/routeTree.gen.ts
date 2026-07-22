@@ -16,6 +16,7 @@ import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SeriesIdRouteImport } from './routes/series.$id'
 import { Route as MovieIdRouteImport } from './routes/movie.$id'
+import { Route as BrowseKindRouteImport } from './routes/browse.$kind'
 import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
 import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
 import { Route as ApiPublicStreamKindFileRouteImport } from './routes/api.public.stream.$kind.$file'
@@ -55,6 +56,11 @@ const MovieIdRoute = MovieIdRouteImport.update({
   path: '/movie/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BrowseKindRoute = BrowseKindRouteImport.update({
+  id: '/browse/$kind',
+  path: '/browse/$kind',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WatchKindIdRoute = WatchKindIdRouteImport.update({
   id: '/watch/$kind/$id',
   path: '/watch/$kind/$id',
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/more': typeof MoreRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/more': typeof MoreRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/more': typeof MoreRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/more'
     | '/search'
     | '/settings'
+    | '/browse/$kind'
     | '/movie/$id'
     | '/series/$id'
     | '/api/debug/xtream'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/more'
     | '/search'
     | '/settings'
+    | '/browse/$kind'
     | '/movie/$id'
     | '/series/$id'
     | '/api/debug/xtream'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/more'
     | '/search'
     | '/settings'
+    | '/browse/$kind'
     | '/movie/$id'
     | '/series/$id'
     | '/api/debug/xtream'
@@ -153,6 +165,7 @@ export interface RootRouteChildren {
   MoreRoute: typeof MoreRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
+  BrowseKindRoute: typeof BrowseKindRoute
   MovieIdRoute: typeof MovieIdRoute
   SeriesIdRoute: typeof SeriesIdRoute
   ApiDebugXtreamRoute: typeof ApiDebugXtreamRoute
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MovieIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/browse/$kind': {
+      id: '/browse/$kind'
+      path: '/browse/$kind'
+      fullPath: '/browse/$kind'
+      preLoaderRoute: typeof BrowseKindRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/watch/$kind/$id': {
       id: '/watch/$kind/$id'
       path: '/watch/$kind/$id'
@@ -241,6 +261,7 @@ const rootRouteChildren: RootRouteChildren = {
   MoreRoute: MoreRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
+  BrowseKindRoute: BrowseKindRoute,
   MovieIdRoute: MovieIdRoute,
   SeriesIdRoute: SeriesIdRoute,
   ApiDebugXtreamRoute: ApiDebugXtreamRoute,
