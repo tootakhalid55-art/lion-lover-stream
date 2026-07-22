@@ -12,11 +12,13 @@ export function Row({
   title,
   items,
   variant = "poster",
+  viewAllTo = "/more",
 }: {
   id: string;
   title: string;
   items: Poster[];
   variant?: "poster" | "continue";
+  viewAllTo?: string;
 }) {
   const scrollerRef = useRowScrollMemory<HTMLUListElement>(id);
   const [edges, setEdges] = useState<{ start: boolean; end: boolean }>({ start: true, end: false });
@@ -49,11 +51,15 @@ export function Row({
             {title}
           </h2>
         </div>
-        <button className="group/btn inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground transition hover:text-lime focus:outline-none focus-visible:text-lime">
+        <Link
+          to={viewAllTo}
+          className="group/btn inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground transition hover:text-lime focus:outline-none focus-visible:text-lime"
+        >
           عرض الكل
           <ChevronLeft className="h-4 w-4 transition-transform group-hover/btn:-translate-x-0.5" />
-        </button>
+        </Link>
       </div>
+
       <div className="relative">
         <button
           type="button"
