@@ -106,7 +106,7 @@ function BrowsePage() {
             <select
               value={sort}
               onChange={(e) =>
-                navigate({ search: (prev) => ({ ...prev, sort: e.target.value }), replace: true })
+                navigate({ search: (prev: { q: string; sort: string }) => ({ ...prev, sort: e.target.value }), replace: true })
               }
               className="rounded-2xl glass px-3 py-3 text-sm text-foreground outline-none ring-1 ring-white/10 focus:ring-lime/50 transition"
             >
