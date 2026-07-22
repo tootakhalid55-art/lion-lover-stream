@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Poster } from "@/services/api/types";
 import { useRowScrollMemory } from "@/hooks/use-row-scroll-memory";
 import { PosterCard } from "./PosterCard";
 import { ContinueCard } from "./ContinueCard";
+import { browseQueryOptions, type BrowseKind } from "./browse-query";
 
 
 export function Row({
@@ -13,13 +15,20 @@ export function Row({
   items,
   variant = "poster",
   viewAllTo = "/more",
+  prefetchKind,
 }: {
   id: string;
   title: string;
   items: Poster[];
   variant?: "poster" | "continue";
   viewAllTo?: string;
+  prefetchKind?: BrowseKind;
 }) {
+  const qc = useQueryClient();
+  const prefetch = () => {
+    if (prefetchKind) qc.prefetchQuery(browseQueryOptions(prefetchKind));
+  };
+
   const scrollerRef = useRowScrollMemory<HTMLUListElement>(id);
   const [edges, setEdges] = useState<{ start: boolean; end: boolean }>({ start: true, end: false });
 
@@ -52,12 +61,17 @@ export function Row({
           </h2>
         </div>
         <Link
-          to={viewAllTo}
+          to={viewAllTo as "/"}
+          onMouseEnter={prefetch}
+          onFocus={prefetch}
+          onTouchStart={prefetch}
+          preload="intent"
           className="group/btn inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground transition hover:text-lime focus:outline-none focus-visible:text-lime"
         >
           عرض الكل
           <ChevronLeft className="h-4 w-4 transition-transform group-hover/btn:-translate-x-0.5" />
         </Link>
+
       </div>
 
       <div className="relative">
