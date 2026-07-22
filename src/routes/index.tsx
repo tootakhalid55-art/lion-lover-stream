@@ -67,15 +67,21 @@ function LionTV() {
         {feed && feed.continueWatching.length > 0 && (
           <Row id="row-continue" title="متابعة المشاهدة" items={feed.continueWatching} variant="continue" viewAllTo="/favorites" />
         )}
-        {feed?.rows.map((r) => (
-          <Row
-            key={r.id}
-            id={r.id}
-            title={r.title}
-            items={r.items}
-            viewAllTo={r.id === "row-new-movies" ? "/search" : r.id === "row-new-series" ? "/search" : "/more"}
-          />
-        ))}
+        {feed?.rows.map((r) => {
+          const kind = r.id === "row-new-movies" ? "movies" : r.id === "row-new-series" ? "series" : r.id === "row-live" ? "live" : undefined;
+          const viewAllTo = kind ? `/browse/${kind}` : "/more";
+          return (
+            <Row
+              key={r.id}
+              id={r.id}
+              title={r.title}
+              items={r.items}
+              viewAllTo={viewAllTo}
+              prefetchKind={kind}
+            />
+          );
+        })}
+
 
       </main>
       <BottomNav />
