@@ -65,11 +65,18 @@ function LionTV() {
         <Greeting />
         {feed && <Hero heroes={feed.heroes} />}
         {feed && feed.continueWatching.length > 0 && (
-          <Row id="row-continue" title="متابعة المشاهدة" items={feed.continueWatching} variant="continue" />
+          <Row id="row-continue" title="متابعة المشاهدة" items={feed.continueWatching} variant="continue" viewAllTo="/favorites" />
         )}
         {feed?.rows.map((r) => (
-          <Row key={r.id} id={r.id} title={r.title} items={r.items} />
+          <Row
+            key={r.id}
+            id={r.id}
+            title={r.title}
+            items={r.items}
+            viewAllTo={r.id === "row-new-movies" ? "/search" : r.id === "row-new-series" ? "/search" : "/more"}
+          />
         ))}
+
       </main>
       <BottomNav />
     </div>
