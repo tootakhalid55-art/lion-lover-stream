@@ -96,7 +96,7 @@ function BrowsePage() {
               placeholder="ابحث ضمن هذا القسم"
               value={q}
               onChange={(e) =>
-                navigate({ search: (prev) => ({ ...prev, q: e.target.value }), replace: true })
+                navigate({ search: (prev: { q: string; sort: string }) => ({ ...prev, q: e.target.value }), replace: true })
               }
               className="w-full rounded-2xl glass px-4 pr-10 py-3 text-sm text-foreground placeholder:text-foreground/40 outline-none ring-1 ring-white/10 focus:ring-lime/50 transition"
             />
