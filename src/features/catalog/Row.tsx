@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import type { Poster } from "@/services/api/types";
 import { useRowScrollMemory } from "@/hooks/use-row-scroll-memory";
 import { PosterCard } from "./PosterCard";
 import { ContinueCard } from "./ContinueCard";
+
 
 export function Row({
   id,
