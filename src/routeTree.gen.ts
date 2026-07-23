@@ -40,6 +40,7 @@ import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
 import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
 import { Route as ApiAdminExportFileRouteImport } from './routes/api.admin.export.$file'
 import { Route as ApiPublicStreamKindFileRouteImport } from './routes/api.public.stream.$kind.$file'
+import { Route as ApiBillingInvoicesIdPdfRouteImport } from './routes/api.billing.invoices.$id.pdf'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -195,6 +196,11 @@ const ApiPublicStreamKindFileRoute = ApiPublicStreamKindFileRouteImport.update({
   path: '/api/public/stream/$kind/$file',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiBillingInvoicesIdPdfRoute = ApiBillingInvoicesIdPdfRouteImport.update({
+  id: '/api/billing/invoices/$id/pdf',
+  path: '/api/billing/invoices/$id/pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/billing/invoices/$id/pdf': typeof ApiBillingInvoicesIdPdfRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRoutesByTo {
@@ -257,6 +264,7 @@ export interface FileRoutesByTo {
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/billing/invoices/$id/pdf': typeof ApiBillingInvoicesIdPdfRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRoutesById {
@@ -291,6 +299,7 @@ export interface FileRoutesById {
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/billing/invoices/$id/pdf': typeof ApiBillingInvoicesIdPdfRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRouteTypes {
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/billing/invoices/$id/pdf'
     | '/api/public/stream/$kind/$file'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -356,6 +366,7 @@ export interface FileRouteTypes {
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/billing/invoices/$id/pdf'
     | '/api/public/stream/$kind/$file'
   id:
     | '__root__'
@@ -389,6 +400,7 @@ export interface FileRouteTypes {
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/billing/invoices/$id/pdf'
     | '/api/public/stream/$kind/$file'
   fileRoutesById: FileRoutesById
 }
@@ -409,6 +421,7 @@ export interface RootRouteChildren {
   ApiDebugXtreamRoute: typeof ApiDebugXtreamRoute
   WatchKindIdRoute: typeof WatchKindIdRoute
   ApiAdminExportFileRoute: typeof ApiAdminExportFileRoute
+  ApiBillingInvoicesIdPdfRoute: typeof ApiBillingInvoicesIdPdfRoute
   ApiPublicStreamKindFileRoute: typeof ApiPublicStreamKindFileRoute
 }
 
@@ -631,6 +644,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicStreamKindFileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/billing/invoices/$id/pdf': {
+      id: '/api/billing/invoices/$id/pdf'
+      path: '/api/billing/invoices/$id/pdf'
+      fullPath: '/api/billing/invoices/$id/pdf'
+      preLoaderRoute: typeof ApiBillingInvoicesIdPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -696,6 +716,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDebugXtreamRoute: ApiDebugXtreamRoute,
   WatchKindIdRoute: WatchKindIdRoute,
   ApiAdminExportFileRoute: ApiAdminExportFileRoute,
+  ApiBillingInvoicesIdPdfRoute: ApiBillingInvoicesIdPdfRoute,
   ApiPublicStreamKindFileRoute: ApiPublicStreamKindFileRoute,
 }
 export const routeTree = rootRouteImport
