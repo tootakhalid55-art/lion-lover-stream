@@ -10,6 +10,7 @@ import {
   adminCreateUser, adminDeleteUser, adminForceLogout, adminListUsers,
   adminResetDevice, adminResetPassword, adminUpdateUser,
 } from "@/lib/auth.functions";
+import { listPackages } from "@/lib/licensing.functions";
 import { DURATION_OPTIONS, STATUS_LABEL, type AccountStatus } from "@/lib/auth-utils";
 import { RouteError } from "@/components/RouteError";
 
