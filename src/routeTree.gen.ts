@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as BootstrapRouteImport } from './routes/bootstrap'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as SeriesIdRouteImport } from './routes/series.$id'
@@ -78,6 +79,10 @@ const BootstrapRoute = BootstrapRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -166,9 +171,9 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
   getParentRoute: () => AdminRoute,
 } as any)
 const AuthenticatedResellerRoute = AuthenticatedResellerRouteImport.update({
-  id: '/_authenticated/reseller',
+  id: '/reseller',
   path: '/reseller',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const WatchKindIdRoute = WatchKindIdRouteImport.update({
   id: '/watch/$kind/$id',
@@ -257,6 +262,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/bootstrap': typeof BootstrapRoute
   '/favorites': typeof FavoritesRoute
@@ -354,6 +360,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/admin'
     | '/bootstrap'
     | '/favorites'
@@ -387,6 +394,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
   BootstrapRoute: typeof BootstrapRoute
   FavoritesRoute: typeof FavoritesRoute
@@ -395,7 +403,6 @@ export interface RootRouteChildren {
   RedeemRoute: typeof RedeemRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
-  AuthenticatedResellerRoute: typeof AuthenticatedResellerRoute
   BrowseKindRoute: typeof BrowseKindRoute
   MovieIdRoute: typeof MovieIdRoute
   SeriesIdRoute: typeof SeriesIdRoute
@@ -461,6 +468,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -587,7 +601,7 @@ declare module '@tanstack/react-router' {
       path: '/reseller'
       fullPath: '/reseller'
       preLoaderRoute: typeof AuthenticatedResellerRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/watch/$kind/$id': {
       id: '/watch/$kind/$id'
@@ -619,6 +633,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedResellerRoute: typeof AuthenticatedResellerRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedResellerRoute: AuthenticatedResellerRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface AdminRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
@@ -656,6 +681,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
   BootstrapRoute: BootstrapRoute,
   FavoritesRoute: FavoritesRoute,
@@ -664,7 +690,6 @@ const rootRouteChildren: RootRouteChildren = {
   RedeemRoute: RedeemRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
-  AuthenticatedResellerRoute: AuthenticatedResellerRoute,
   BrowseKindRoute: BrowseKindRoute,
   MovieIdRoute: MovieIdRoute,
   SeriesIdRoute: SeriesIdRoute,
