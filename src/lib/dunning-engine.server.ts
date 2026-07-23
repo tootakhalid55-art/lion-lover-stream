@@ -15,7 +15,7 @@ import { withAdvisoryLock } from "./advisory-lock.server";
 import { withIdempotency } from "./billing-idempotency.server";
 import { writeBillingAudit } from "./billing-audit.server";
 import { enqueueOutbox } from "./outbox.server";
-import { currentCorrelationId, newCorrelationId, withCorrelation } from "./correlation.server";
+import { currentCorrelationId, newCorrelationId, runWithCorrelation } from "./correlation.server";
 
 export type DunningAction =
   | "friendly_reminder"

@@ -91,7 +91,7 @@ async function loadPaymentMethod(id: string | null): Promise<PaymentMethodRow | 
  */
 export async function runRenewal(ctx: RenewalContext): Promise<RenewalOutcome> {
   const cid = ctx.correlationId ?? currentCorrelationId() ?? newCorrelationId();
-  return withCorrelation(cid, async () => {
+  return runWithCorrelation(cid, async () => {
     const lock = await withAdvisoryLock("subscription.renew", ctx.subscriptionId, async () => {
       return await withIdempotency<RenewalOutcome>(
         {
