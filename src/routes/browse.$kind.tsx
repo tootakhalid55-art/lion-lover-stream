@@ -33,10 +33,10 @@ export const Route = createFileRoute("/browse/$kind")({
     const t = browseTitle(params.kind as BrowseKind);
     return {
       meta: [
-        { title: `${t} — LionTV` },
-        { name: "description", content: `تصفح ${t} على LionTV.` },
-        { property: "og:title", content: `${t} — LionTV` },
-        { property: "og:description", content: `تصفح ${t} على LionTV.` },
+        { title: `${t} — Nova TV` },
+        { name: "description", content: `تصفح ${t} على Nova TV.` },
+        { property: "og:title", content: `${t} — Nova TV` },
+        { property: "og:description", content: `تصفح ${t} على Nova TV.` },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary" },
       ],

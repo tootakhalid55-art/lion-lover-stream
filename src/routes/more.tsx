@@ -7,9 +7,9 @@ import { RouteError } from "@/components/RouteError";
 export const Route = createFileRoute("/more")({
   head: () => ({
     meta: [
-      { title: "المزيد — LionTV" },
-      { name: "description", content: "الإعدادات، التنزيلات، والدعم على LionTV." },
-      { property: "og:title", content: "المزيد — LionTV" },
+      { title: "المزيد — Nova TV" },
+      { name: "description", content: "الإعدادات، التنزيلات، والدعم على Nova TV." },
+      { property: "og:title", content: "المزيد — Nova TV" },
       { property: "og:description", content: "إدارة الحساب والدعم." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

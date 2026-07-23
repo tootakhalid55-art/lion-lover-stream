@@ -5,7 +5,7 @@ export const heroes: Hero[] = [
   {
     id: "h-1",
     title: "أسطورة الأسد",
-    subtitle: "رحلة ملحمية عبر ممالك منسية — حصريًا على ليون تي في.",
+    subtitle: "رحلة ملحمية عبر ممالك منسية — حصريًا على Nova TV.",
     badge: "مميز اليوم",
     gradient: "from-fuchsia-900 via-neutral-900 to-black",
     imdb: 8.9,

@@ -11,9 +11,9 @@ import { RouteError } from "@/components/RouteError";
 export const Route = createFileRoute("/search")({
   head: () => ({
     meta: [
-      { title: "البحث — LionTV" },
-      { name: "description", content: "ابحث عن الأفلام والمسلسلات والقنوات في LionTV." },
-      { property: "og:title", content: "البحث — LionTV" },
+      { title: "البحث — Nova TV" },
+      { name: "description", content: "ابحث عن الأفلام والمسلسلات والقنوات في Nova TV." },
+      { property: "og:title", content: "البحث — Nova TV" },
       { property: "og:description", content: "اكتشف كل ما تريد مشاهدته." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

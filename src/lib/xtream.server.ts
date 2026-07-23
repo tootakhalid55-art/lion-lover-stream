@@ -51,7 +51,7 @@ async function xtreamFetch(url: string, opts?: { timeoutMs?: number; method?: st
     return await fetch(url, {
       method: opts?.method ?? "GET",
       signal: controller.signal,
-      headers: { "User-Agent": "LionTV/1.0", ...(opts?.headers ?? {}) },
+      headers: { "User-Agent": "NovaTV/1.0", ...(opts?.headers ?? {}) },
     });
   } finally {
     clearTimeout(timeout);

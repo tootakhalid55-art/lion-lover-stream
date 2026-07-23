@@ -18,23 +18,23 @@ import { RouteError } from "@/components/RouteError";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "LionTV — بث الأفلام والمسلسلات بجودة عالية" },
-      { name: "description", content: "استمتع بأحدث الأفلام والمسلسلات والقنوات المباشرة بجودة 4K وHDR على LionTV." },
-      { property: "og:title", content: "LionTV — منصة البث الأولى" },
+      { title: "Nova TV — بث الأفلام والمسلسلات بجودة عالية" },
+      { name: "description", content: "استمتع بأحدث الأفلام والمسلسلات والقنوات المباشرة بجودة 4K وHDR على Nova TV." },
+      { property: "og:title", content: "Nova TV — منصة البث الأولى" },
       { property: "og:description", content: "أفلام ومسلسلات وقنوات مباشرة. تجربة مشاهدة سينمائية." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: LionTV,
+  component: Nova TV,
   errorComponent: ({ error, reset }) => (
-    <RouteError error={error} reset={reset} filename="src/routes/index.tsx" functionName="LionTV" lineNumber={25} />
+    <RouteError error={error} reset={reset} filename="src/routes/index.tsx" functionName="Nova TV" lineNumber={25} />
   ),
 });
 
 let analyticsBooted = false;
 
-function LionTV() {
+function Nova TV() {
   const { data: feed } = useQuery({
     queryKey: ["home-feed"],
     queryFn: () => api.home.getFeed(),

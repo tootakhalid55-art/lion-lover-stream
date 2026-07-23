@@ -109,7 +109,7 @@ export const getHomeFeed = createServerFn({ method: "GET" }).handler(async (): P
     const heroes: Hero[] = heroPool.slice(0, 5).map((p, i): Hero => ({
       id: `hero-${p.id}`,
       title: p.title,
-      subtitle: p.description || "استمتع بأفضل المحتوى على ليون تي في.",
+      subtitle: p.description || "استمتع بأفضل المحتوى على Nova TV.",
       badge: i === 0 ? "مميز اليوم" : "جديد",
       gradient: p.gradient,
       imageUrl: p.imageUrl,
