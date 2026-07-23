@@ -109,6 +109,12 @@ export interface Capabilities {
   canManageSystem: boolean;
   canBroadcast: boolean;
   canManageRoles: boolean;
+  canManageResellers: boolean;
+  canManageBilling: boolean;
+  canManageApiKeys: boolean;
+  canManageWebhooks: boolean;
+  canViewFinance: boolean;
+  canImpersonateCustomer: boolean;
   readOnly: boolean;
 }
 
@@ -118,21 +124,30 @@ export function capabilitiesFor(roles: AppRole[]): Capabilities {
   const isAdmin = isSuper || has("admin");
   const isSupport = isAdmin || has("support");
   const isAuditor = has("auditor");
-  const isReadOnly = has("readonly") && !isSupport && !isAuditor;
+  const isBilling = isAdmin || has("billing_admin");
+  const isReseller = has("reseller_owner") || has("reseller_staff");
+  const isResellerOwner = isAdmin || has("reseller_owner");
+  const isReadOnly = has("readonly") && !isSupport && !isAuditor && !isReseller && !isBilling;
   return {
-    canManageUsers: isSupport,
+    canManageUsers: isSupport || isResellerOwner,
     canDeleteUsers: isAdmin,
-    canManageLicenses: isSupport,
+    canManageLicenses: isSupport || isReseller,
     canManagePackages: isAdmin,
-    canManageDevices: isSupport,
+    canManageDevices: isSupport || isReseller,
     canManageSessions: isSupport,
-    canBulk: isAdmin,
-    canExport: isAdmin || isAuditor,
+    canBulk: isAdmin || isResellerOwner,
+    canExport: isAdmin || isAuditor || isBilling,
     canViewSecurity: isAdmin || isAuditor || isSupport,
     canViewAudit: isAdmin || isAuditor,
     canManageSystem: isAdmin,
     canBroadcast: isSuper,
     canManageRoles: isSuper,
+    canManageResellers: isAdmin,
+    canManageBilling: isBilling,
+    canManageApiKeys: isAdmin || isResellerOwner,
+    canManageWebhooks: isAdmin || isResellerOwner,
+    canViewFinance: isAdmin || isBilling || isAuditor,
+    canImpersonateCustomer: isAdmin,
     readOnly: isReadOnly,
   };
 }
