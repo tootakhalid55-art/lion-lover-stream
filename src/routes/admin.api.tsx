@@ -38,7 +38,7 @@ export const Route = createFileRoute("/admin/api")({
 });
 
 function ApiPage() {
-  const orgsFn = useServerFn(visibleOrgsForAdmin);
+  const orgsFn = useServerFn(listOrgs);
   const orgsQ = useQuery({ queryKey: ["orgs-visible"], queryFn: () => orgsFn(), staleTime: 60_000 });
   const [orgId, setOrgId] = useState<string | null>(null);
   const activeOrg = orgId ?? orgsQ.data?.orgs?.[0]?.id ?? null;
