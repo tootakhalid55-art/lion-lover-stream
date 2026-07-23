@@ -34,6 +34,7 @@ import { Route as AdminDevicesRouteImport } from './routes/admin.devices'
 import { Route as AdminCodesRouteImport } from './routes/admin.codes'
 import { Route as AdminBulkRouteImport } from './routes/admin.bulk'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
+import { Route as AuthenticatedResellerRouteImport } from './routes/_authenticated/reseller'
 import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
 import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
 import { Route as ApiAdminExportFileRouteImport } from './routes/api.admin.export.$file'
@@ -164,6 +165,11 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AdminRoute,
 } as any)
+const AuthenticatedResellerRoute = AuthenticatedResellerRouteImport.update({
+  id: '/_authenticated/reseller',
+  path: '/reseller',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WatchKindIdRoute = WatchKindIdRouteImport.update({
   id: '/watch/$kind/$id',
   path: '/watch/$kind/$id',
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/reseller': typeof AuthenticatedResellerRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/reseller': typeof AuthenticatedResellerRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
@@ -257,6 +265,7 @@ export interface FileRoutesById {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/_authenticated/reseller': typeof AuthenticatedResellerRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
@@ -290,6 +299,7 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/reseller'
     | '/admin/audit'
     | '/admin/bulk'
     | '/admin/codes'
@@ -320,6 +330,7 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/reseller'
     | '/admin/audit'
     | '/admin/bulk'
     | '/admin/codes'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/_authenticated/reseller'
     | '/admin/audit'
     | '/admin/bulk'
     | '/admin/codes'
@@ -383,6 +395,7 @@ export interface RootRouteChildren {
   RedeemRoute: typeof RedeemRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
+  AuthenticatedResellerRoute: typeof AuthenticatedResellerRoute
   BrowseKindRoute: typeof BrowseKindRoute
   MovieIdRoute: typeof MovieIdRoute
   SeriesIdRoute: typeof SeriesIdRoute
@@ -569,6 +582,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_authenticated/reseller': {
+      id: '/_authenticated/reseller'
+      path: '/reseller'
+      fullPath: '/reseller'
+      preLoaderRoute: typeof AuthenticatedResellerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/watch/$kind/$id': {
       id: '/watch/$kind/$id'
       path: '/watch/$kind/$id'
@@ -644,6 +664,7 @@ const rootRouteChildren: RootRouteChildren = {
   RedeemRoute: RedeemRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
+  AuthenticatedResellerRoute: AuthenticatedResellerRoute,
   BrowseKindRoute: BrowseKindRoute,
   MovieIdRoute: MovieIdRoute,
   SeriesIdRoute: SeriesIdRoute,
