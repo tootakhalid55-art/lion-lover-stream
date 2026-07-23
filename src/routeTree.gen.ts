@@ -36,6 +36,7 @@ import { Route as AdminCodesRouteImport } from './routes/admin.codes'
 import { Route as AdminBulkRouteImport } from './routes/admin.bulk'
 import { Route as AdminBillingRouteImport } from './routes/admin.billing'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
+import { Route as AdminApiRouteImport } from './routes/admin.api'
 import { Route as AuthenticatedResellerRouteImport } from './routes/_authenticated/reseller'
 import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated/portal'
 import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
@@ -187,6 +188,11 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminApiRoute = AdminApiRouteImport.update({
+  id: '/api',
+  path: '/api',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AuthenticatedResellerRoute = AuthenticatedResellerRouteImport.update({
   id: '/reseller',
   path: '/reseller',
@@ -280,6 +286,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/portal': typeof AuthenticatedPortalRoute
   '/reseller': typeof AuthenticatedResellerRoute
+  '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/billing': typeof AdminBillingRoute
   '/admin/bulk': typeof AdminBulkRoute
@@ -323,6 +330,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/portal': typeof AuthenticatedPortalRoute
   '/reseller': typeof AuthenticatedResellerRoute
+  '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/billing': typeof AdminBillingRoute
   '/admin/bulk': typeof AdminBulkRoute
@@ -369,6 +377,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/_authenticated/portal': typeof AuthenticatedPortalRoute
   '/_authenticated/reseller': typeof AuthenticatedResellerRoute
+  '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/billing': typeof AdminBillingRoute
   '/admin/bulk': typeof AdminBulkRoute
@@ -415,6 +424,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/portal'
     | '/reseller'
+    | '/admin/api'
     | '/admin/audit'
     | '/admin/billing'
     | '/admin/bulk'
@@ -458,6 +468,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/portal'
     | '/reseller'
+    | '/admin/api'
     | '/admin/audit'
     | '/admin/billing'
     | '/admin/bulk'
@@ -503,6 +514,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/_authenticated/portal'
     | '/_authenticated/reseller'
+    | '/admin/api'
     | '/admin/audit'
     | '/admin/billing'
     | '/admin/bulk'
@@ -755,6 +767,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/api': {
+      id: '/admin/api'
+      path: '/api'
+      fullPath: '/admin/api'
+      preLoaderRoute: typeof AdminApiRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_authenticated/reseller': {
       id: '/_authenticated/reseller'
       path: '/reseller'
@@ -884,6 +903,7 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface AdminRouteChildren {
+  AdminApiRoute: typeof AdminApiRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBillingRoute: typeof AdminBillingRoute
   AdminBulkRoute: typeof AdminBulkRoute
@@ -901,6 +921,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminApiRoute: AdminApiRoute,
   AdminAuditRoute: AdminAuditRoute,
   AdminBillingRoute: AdminBillingRoute,
   AdminBulkRoute: AdminBulkRoute,
