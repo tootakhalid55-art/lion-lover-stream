@@ -43,6 +43,9 @@ function UsersAdmin() {
   const [credential, setCredential] = useState<{ username: string; password: string } | null>(null);
   const [editRow, setEditRow] = useState<Row | null>(null);
 
+  const pkgFn = useServerFn(listPackages);
+  const packages = useQuery({ queryKey: ["admin", "packages"], queryFn: () => pkgFn(), throwOnError: true });
+
   const list = useQuery({
     queryKey: ["admin", "users", search, status],
     queryFn: () => listFn({ data: { search, status } }),
