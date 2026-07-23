@@ -316,32 +316,53 @@ export type Database = {
       }
       user_devices: {
         Row: {
+          app_version: string | null
+          blocked_at: string | null
           bound_at: string
           browser: string | null
+          country: string | null
           device_id: string
           device_name: string | null
+          device_type: string | null
+          first_login_at: string | null
+          id: string
           ip: string | null
           last_seen: string
+          name: string | null
           os: string | null
           user_id: string
         }
         Insert: {
+          app_version?: string | null
+          blocked_at?: string | null
           bound_at?: string
           browser?: string | null
+          country?: string | null
           device_id: string
           device_name?: string | null
+          device_type?: string | null
+          first_login_at?: string | null
+          id?: string
           ip?: string | null
           last_seen?: string
+          name?: string | null
           os?: string | null
           user_id: string
         }
         Update: {
+          app_version?: string | null
+          blocked_at?: string | null
           bound_at?: string
           browser?: string | null
+          country?: string | null
           device_id?: string
           device_name?: string | null
+          device_type?: string | null
+          first_login_at?: string | null
+          id?: string
           ip?: string | null
           last_seen?: string
+          name?: string | null
           os?: string | null
           user_id?: string
         }
@@ -370,6 +391,7 @@ export type Database = {
       }
       user_sessions: {
         Row: {
+          country: string | null
           created_at: string
           device_id: string | null
           id: string
@@ -380,6 +402,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          country?: string | null
           created_at?: string
           device_id?: string | null
           id?: string
@@ -390,6 +413,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          country?: string | null
           created_at?: string
           device_id?: string | null
           id?: string
