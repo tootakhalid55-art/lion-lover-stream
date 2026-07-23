@@ -26,6 +26,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
 import { Route as AdminSecurityRouteImport } from './routes/admin.security'
+import { Route as AdminResellersRouteImport } from './routes/admin.resellers'
 import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminLicensesRouteImport } from './routes/admin.licenses'
@@ -123,6 +124,11 @@ const AdminSecurityRoute = AdminSecurityRouteImport.update({
   path: '/security',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminResellersRoute = AdminResellersRouteImport.update({
+  id: '/resellers',
+  path: '/resellers',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPackagesRoute = AdminPackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
@@ -196,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/admin/licenses': typeof AdminLicensesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/resellers': typeof AdminResellersRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/system': typeof AdminSystemRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/admin/licenses': typeof AdminLicensesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/resellers': typeof AdminResellersRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/system': typeof AdminSystemRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/admin/licenses': typeof AdminLicensesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/resellers': typeof AdminResellersRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/system': typeof AdminSystemRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/admin/licenses'
     | '/admin/notifications'
     | '/admin/packages'
+    | '/admin/resellers'
     | '/admin/security'
     | '/admin/sessions'
     | '/admin/system'
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/admin/licenses'
     | '/admin/notifications'
     | '/admin/packages'
+    | '/admin/resellers'
     | '/admin/security'
     | '/admin/sessions'
     | '/admin/system'
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/admin/licenses'
     | '/admin/notifications'
     | '/admin/packages'
+    | '/admin/resellers'
     | '/admin/security'
     | '/admin/sessions'
     | '/admin/system'
@@ -501,6 +513,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSecurityRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/resellers': {
+      id: '/admin/resellers'
+      path: '/resellers'
+      fullPath: '/admin/resellers'
+      preLoaderRoute: typeof AdminResellersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/packages': {
       id: '/admin/packages'
       path: '/packages'
@@ -589,6 +608,7 @@ interface AdminRouteChildren {
   AdminLicensesRoute: typeof AdminLicensesRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPackagesRoute: typeof AdminPackagesRoute
+  AdminResellersRoute: typeof AdminResellersRoute
   AdminSecurityRoute: typeof AdminSecurityRoute
   AdminSessionsRoute: typeof AdminSessionsRoute
   AdminSystemRoute: typeof AdminSystemRoute
@@ -604,6 +624,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLicensesRoute: AdminLicensesRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPackagesRoute: AdminPackagesRoute,
+  AdminResellersRoute: AdminResellersRoute,
   AdminSecurityRoute: AdminSecurityRoute,
   AdminSessionsRoute: AdminSessionsRoute,
   AdminSystemRoute: AdminSystemRoute,
