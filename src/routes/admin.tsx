@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Key, LayoutDashboard, LogOut, Package, Ticket, Users } from "lucide-react";
+import { Activity, Bell, Key, LayoutDashboard, ListChecks, LogOut, MonitorSmartphone, Package, Server, ShieldAlert, Ticket, Users, Wand2 } from "lucide-react";
 import { me } from "@/lib/auth.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { RouteError } from "@/components/RouteError";
