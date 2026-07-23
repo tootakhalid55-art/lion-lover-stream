@@ -12,7 +12,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { withAdvisoryLock } from "./advisory-lock.server";
 import { withIdempotency } from "./billing-idempotency.server";
-import { withCorrelation, currentCorrelationId, newCorrelationId } from "./correlation.server";
+import { currentCorrelationId, newCorrelationId, runWithCorrelation } from "./correlation.server";
 import { writeBillingAudit } from "./billing-audit.server";
 import { enqueueOutbox } from "./outbox.server";
 import { normalizeFailure, type NormalizedFailure } from "./failure-reasons.server";
