@@ -22,6 +22,10 @@ export const ROLE_LABEL: Record<AppRole, string> = {
   support: "دعم",
   auditor: "مدقّق",
   readonly: "قراءة فقط",
+  reseller_owner: "مالك موزّع",
+  reseller_staff: "موظّف موزّع",
+  billing_admin: "مسؤول فوترة",
+  api_client: "عميل API",
 };
 
 export const USERNAME_DOMAIN = "nova.local";
