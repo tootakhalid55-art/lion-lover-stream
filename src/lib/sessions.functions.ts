@@ -81,7 +81,8 @@ export const terminateOtherSessions = createServerFn({ method: "POST" })
       .update({ revoked_at: now, revoked_by: context.userId, revoked_reason: "terminate_others" })
       .eq("user_id", data.userId).is("revoked_at", null);
     if (data.keepSessionId) q = q.neq("id", data.keepSessionId);
-    const { error, count } = await q.select("id", { count: "exact" });
+    const { error, data: rows } = await q.select("id");
+    const count = rows?.length ?? 0;
     if (error) throw new Error(error.message);
     await writeAudit({
       actorId: context.userId, action: "session_terminate_others",
