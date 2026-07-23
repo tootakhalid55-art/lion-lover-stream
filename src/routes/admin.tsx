@@ -76,6 +76,7 @@ function AdminLayout() {
               { to: "/admin/bulk", label: "جماعي", icon: Wand2 },
               { to: "/admin/notifications", label: "الإشعارات", icon: Bell },
               { to: "/admin/system", label: "النظام", icon: Server },
+              { to: "/admin/api", label: "REST API", icon: Plug },
             ].map((l) => (
               <Link key={l.to} to={l.to} activeOptions={l.exact ? { exact: true } : undefined}
                 activeProps={{ className: "bg-white/10" }}
