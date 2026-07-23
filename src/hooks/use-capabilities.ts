@@ -7,7 +7,8 @@ const EMPTY: Capabilities = {
   canManageUsers: false, canDeleteUsers: false, canManageLicenses: false, canManagePackages: false,
   canManageDevices: false, canManageSessions: false, canBulk: false, canExport: false,
   canViewSecurity: false, canViewAudit: false, canManageSystem: false, canBroadcast: false,
-  canManageRoles: false, readOnly: false,
+  canManageRoles: false, canManageResellers: false, canManageBilling: false, canManageApiKeys: false,
+  canManageWebhooks: false, canViewFinance: false, canImpersonateCustomer: false, readOnly: false,
 };
 
 export function useCapabilities(): Capabilities {

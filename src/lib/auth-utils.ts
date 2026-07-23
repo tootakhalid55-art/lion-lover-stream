@@ -9,7 +9,11 @@ export type AppRole =
   | "moderator"
   | "support"
   | "auditor"
-  | "readonly";
+  | "readonly"
+  | "reseller_owner"
+  | "reseller_staff"
+  | "billing_admin"
+  | "api_client";
 
 export const ROLE_LABEL: Record<AppRole, string> = {
   super_admin: "مسؤول أعلى",
@@ -18,6 +22,10 @@ export const ROLE_LABEL: Record<AppRole, string> = {
   support: "دعم",
   auditor: "مدقّق",
   readonly: "قراءة فقط",
+  reseller_owner: "مالك موزّع",
+  reseller_staff: "موظّف موزّع",
+  billing_admin: "مسؤول فوترة",
+  api_client: "عميل API",
 };
 
 export const USERNAME_DOMAIN = "nova.local";
@@ -101,6 +109,12 @@ export interface Capabilities {
   canManageSystem: boolean;
   canBroadcast: boolean;
   canManageRoles: boolean;
+  canManageResellers: boolean;
+  canManageBilling: boolean;
+  canManageApiKeys: boolean;
+  canManageWebhooks: boolean;
+  canViewFinance: boolean;
+  canImpersonateCustomer: boolean;
   readOnly: boolean;
 }
 
@@ -110,21 +124,30 @@ export function capabilitiesFor(roles: AppRole[]): Capabilities {
   const isAdmin = isSuper || has("admin");
   const isSupport = isAdmin || has("support");
   const isAuditor = has("auditor");
-  const isReadOnly = has("readonly") && !isSupport && !isAuditor;
+  const isBilling = isAdmin || has("billing_admin");
+  const isReseller = has("reseller_owner") || has("reseller_staff");
+  const isResellerOwner = isAdmin || has("reseller_owner");
+  const isReadOnly = has("readonly") && !isSupport && !isAuditor && !isReseller && !isBilling;
   return {
-    canManageUsers: isSupport,
+    canManageUsers: isSupport || isResellerOwner,
     canDeleteUsers: isAdmin,
-    canManageLicenses: isSupport,
+    canManageLicenses: isSupport || isReseller,
     canManagePackages: isAdmin,
-    canManageDevices: isSupport,
+    canManageDevices: isSupport || isReseller,
     canManageSessions: isSupport,
-    canBulk: isAdmin,
-    canExport: isAdmin || isAuditor,
+    canBulk: isAdmin || isResellerOwner,
+    canExport: isAdmin || isAuditor || isBilling,
     canViewSecurity: isAdmin || isAuditor || isSupport,
     canViewAudit: isAdmin || isAuditor,
     canManageSystem: isAdmin,
     canBroadcast: isSuper,
     canManageRoles: isSuper,
+    canManageResellers: isAdmin,
+    canManageBilling: isBilling,
+    canManageApiKeys: isAdmin || isResellerOwner,
+    canManageWebhooks: isAdmin || isResellerOwner,
+    canViewFinance: isAdmin || isBilling || isAuditor,
+    canImpersonateCustomer: isAdmin,
     readOnly: isReadOnly,
   };
 }
