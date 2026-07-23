@@ -39,7 +39,16 @@ import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AuthenticatedResellerRouteImport } from './routes/_authenticated/reseller'
 import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated/portal'
 import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
+import { Route as ApiV1PackagesRouteImport } from './routes/api.v1.packages'
+import { Route as ApiV1OrdersRouteImport } from './routes/api.v1.orders'
+import { Route as ApiV1OpenapiRouteImport } from './routes/api.v1.openapi'
+import { Route as ApiV1LicensesRouteImport } from './routes/api.v1.licenses'
+import { Route as ApiV1InvoicesRouteImport } from './routes/api.v1.invoices'
+import { Route as ApiV1DocsRouteImport } from './routes/api.v1.docs'
 import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
+import { Route as ApiV1WebhooksEndpointsRouteImport } from './routes/api.v1.webhooks.endpoints'
+import { Route as ApiV1LicensesIdRouteImport } from './routes/api.v1.licenses.$id'
+import { Route as ApiV1InvoicesIdRouteImport } from './routes/api.v1.invoices.$id'
 import { Route as ApiAdminExportFileRouteImport } from './routes/api.admin.export.$file'
 import { Route as ApiPublicStreamKindFileRouteImport } from './routes/api.public.stream.$kind.$file'
 import { Route as ApiBillingInvoicesIdPdfRouteImport } from './routes/api.billing.invoices.$id.pdf'
@@ -193,10 +202,55 @@ const WatchKindIdRoute = WatchKindIdRouteImport.update({
   path: '/watch/$kind/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1PackagesRoute = ApiV1PackagesRouteImport.update({
+  id: '/api/v1/packages',
+  path: '/api/v1/packages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1OrdersRoute = ApiV1OrdersRouteImport.update({
+  id: '/api/v1/orders',
+  path: '/api/v1/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1OpenapiRoute = ApiV1OpenapiRouteImport.update({
+  id: '/api/v1/openapi',
+  path: '/api/v1/openapi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1LicensesRoute = ApiV1LicensesRouteImport.update({
+  id: '/api/v1/licenses',
+  path: '/api/v1/licenses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1InvoicesRoute = ApiV1InvoicesRouteImport.update({
+  id: '/api/v1/invoices',
+  path: '/api/v1/invoices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1DocsRoute = ApiV1DocsRouteImport.update({
+  id: '/api/v1/docs',
+  path: '/api/v1/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDebugXtreamRoute = ApiDebugXtreamRouteImport.update({
   id: '/api/debug/xtream',
   path: '/api/debug/xtream',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1WebhooksEndpointsRoute = ApiV1WebhooksEndpointsRouteImport.update({
+  id: '/api/v1/webhooks/endpoints',
+  path: '/api/v1/webhooks/endpoints',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1LicensesIdRoute = ApiV1LicensesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiV1LicensesRoute,
+} as any)
+const ApiV1InvoicesIdRoute = ApiV1InvoicesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiV1InvoicesRoute,
 } as any)
 const ApiAdminExportFileRoute = ApiAdminExportFileRouteImport.update({
   id: '/api/admin/export/$file',
@@ -244,8 +298,17 @@ export interface FileRoutesByFullPath {
   '/series/$id': typeof SeriesIdRoute
   '/admin/': typeof AdminIndexRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
+  '/api/v1/docs': typeof ApiV1DocsRoute
+  '/api/v1/invoices': typeof ApiV1InvoicesRouteWithChildren
+  '/api/v1/licenses': typeof ApiV1LicensesRouteWithChildren
+  '/api/v1/openapi': typeof ApiV1OpenapiRoute
+  '/api/v1/orders': typeof ApiV1OrdersRoute
+  '/api/v1/packages': typeof ApiV1PackagesRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/v1/invoices/$id': typeof ApiV1InvoicesIdRoute
+  '/api/v1/licenses/$id': typeof ApiV1LicensesIdRoute
+  '/api/v1/webhooks/endpoints': typeof ApiV1WebhooksEndpointsRoute
   '/api/billing/invoices/$id/pdf': typeof ApiBillingInvoicesIdPdfRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
@@ -278,8 +341,17 @@ export interface FileRoutesByTo {
   '/series/$id': typeof SeriesIdRoute
   '/admin': typeof AdminIndexRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
+  '/api/v1/docs': typeof ApiV1DocsRoute
+  '/api/v1/invoices': typeof ApiV1InvoicesRouteWithChildren
+  '/api/v1/licenses': typeof ApiV1LicensesRouteWithChildren
+  '/api/v1/openapi': typeof ApiV1OpenapiRoute
+  '/api/v1/orders': typeof ApiV1OrdersRoute
+  '/api/v1/packages': typeof ApiV1PackagesRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/v1/invoices/$id': typeof ApiV1InvoicesIdRoute
+  '/api/v1/licenses/$id': typeof ApiV1LicensesIdRoute
+  '/api/v1/webhooks/endpoints': typeof ApiV1WebhooksEndpointsRoute
   '/api/billing/invoices/$id/pdf': typeof ApiBillingInvoicesIdPdfRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
@@ -315,8 +387,17 @@ export interface FileRoutesById {
   '/series/$id': typeof SeriesIdRoute
   '/admin/': typeof AdminIndexRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
+  '/api/v1/docs': typeof ApiV1DocsRoute
+  '/api/v1/invoices': typeof ApiV1InvoicesRouteWithChildren
+  '/api/v1/licenses': typeof ApiV1LicensesRouteWithChildren
+  '/api/v1/openapi': typeof ApiV1OpenapiRoute
+  '/api/v1/orders': typeof ApiV1OrdersRoute
+  '/api/v1/packages': typeof ApiV1PackagesRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/v1/invoices/$id': typeof ApiV1InvoicesIdRoute
+  '/api/v1/licenses/$id': typeof ApiV1LicensesIdRoute
+  '/api/v1/webhooks/endpoints': typeof ApiV1WebhooksEndpointsRoute
   '/api/billing/invoices/$id/pdf': typeof ApiBillingInvoicesIdPdfRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
@@ -352,8 +433,17 @@ export interface FileRouteTypes {
     | '/series/$id'
     | '/admin/'
     | '/api/debug/xtream'
+    | '/api/v1/docs'
+    | '/api/v1/invoices'
+    | '/api/v1/licenses'
+    | '/api/v1/openapi'
+    | '/api/v1/orders'
+    | '/api/v1/packages'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/v1/invoices/$id'
+    | '/api/v1/licenses/$id'
+    | '/api/v1/webhooks/endpoints'
     | '/api/billing/invoices/$id/pdf'
     | '/api/public/stream/$kind/$file'
   fileRoutesByTo: FileRoutesByTo
@@ -386,8 +476,17 @@ export interface FileRouteTypes {
     | '/series/$id'
     | '/admin'
     | '/api/debug/xtream'
+    | '/api/v1/docs'
+    | '/api/v1/invoices'
+    | '/api/v1/licenses'
+    | '/api/v1/openapi'
+    | '/api/v1/orders'
+    | '/api/v1/packages'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/v1/invoices/$id'
+    | '/api/v1/licenses/$id'
+    | '/api/v1/webhooks/endpoints'
     | '/api/billing/invoices/$id/pdf'
     | '/api/public/stream/$kind/$file'
   id:
@@ -422,8 +521,17 @@ export interface FileRouteTypes {
     | '/series/$id'
     | '/admin/'
     | '/api/debug/xtream'
+    | '/api/v1/docs'
+    | '/api/v1/invoices'
+    | '/api/v1/licenses'
+    | '/api/v1/openapi'
+    | '/api/v1/orders'
+    | '/api/v1/packages'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/v1/invoices/$id'
+    | '/api/v1/licenses/$id'
+    | '/api/v1/webhooks/endpoints'
     | '/api/billing/invoices/$id/pdf'
     | '/api/public/stream/$kind/$file'
   fileRoutesById: FileRoutesById
@@ -443,8 +551,15 @@ export interface RootRouteChildren {
   MovieIdRoute: typeof MovieIdRoute
   SeriesIdRoute: typeof SeriesIdRoute
   ApiDebugXtreamRoute: typeof ApiDebugXtreamRoute
+  ApiV1DocsRoute: typeof ApiV1DocsRoute
+  ApiV1InvoicesRoute: typeof ApiV1InvoicesRouteWithChildren
+  ApiV1LicensesRoute: typeof ApiV1LicensesRouteWithChildren
+  ApiV1OpenapiRoute: typeof ApiV1OpenapiRoute
+  ApiV1OrdersRoute: typeof ApiV1OrdersRoute
+  ApiV1PackagesRoute: typeof ApiV1PackagesRoute
   WatchKindIdRoute: typeof WatchKindIdRoute
   ApiAdminExportFileRoute: typeof ApiAdminExportFileRoute
+  ApiV1WebhooksEndpointsRoute: typeof ApiV1WebhooksEndpointsRoute
   ApiBillingInvoicesIdPdfRoute: typeof ApiBillingInvoicesIdPdfRoute
   ApiPublicStreamKindFileRoute: typeof ApiPublicStreamKindFileRoute
 }
@@ -661,12 +776,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WatchKindIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/packages': {
+      id: '/api/v1/packages'
+      path: '/api/v1/packages'
+      fullPath: '/api/v1/packages'
+      preLoaderRoute: typeof ApiV1PackagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/orders': {
+      id: '/api/v1/orders'
+      path: '/api/v1/orders'
+      fullPath: '/api/v1/orders'
+      preLoaderRoute: typeof ApiV1OrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/openapi': {
+      id: '/api/v1/openapi'
+      path: '/api/v1/openapi'
+      fullPath: '/api/v1/openapi'
+      preLoaderRoute: typeof ApiV1OpenapiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/licenses': {
+      id: '/api/v1/licenses'
+      path: '/api/v1/licenses'
+      fullPath: '/api/v1/licenses'
+      preLoaderRoute: typeof ApiV1LicensesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/invoices': {
+      id: '/api/v1/invoices'
+      path: '/api/v1/invoices'
+      fullPath: '/api/v1/invoices'
+      preLoaderRoute: typeof ApiV1InvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/docs': {
+      id: '/api/v1/docs'
+      path: '/api/v1/docs'
+      fullPath: '/api/v1/docs'
+      preLoaderRoute: typeof ApiV1DocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/debug/xtream': {
       id: '/api/debug/xtream'
       path: '/api/debug/xtream'
       fullPath: '/api/debug/xtream'
       preLoaderRoute: typeof ApiDebugXtreamRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/webhooks/endpoints': {
+      id: '/api/v1/webhooks/endpoints'
+      path: '/api/v1/webhooks/endpoints'
+      fullPath: '/api/v1/webhooks/endpoints'
+      preLoaderRoute: typeof ApiV1WebhooksEndpointsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/licenses/$id': {
+      id: '/api/v1/licenses/$id'
+      path: '/$id'
+      fullPath: '/api/v1/licenses/$id'
+      preLoaderRoute: typeof ApiV1LicensesIdRouteImport
+      parentRoute: typeof ApiV1LicensesRoute
+    }
+    '/api/v1/invoices/$id': {
+      id: '/api/v1/invoices/$id'
+      path: '/$id'
+      fullPath: '/api/v1/invoices/$id'
+      preLoaderRoute: typeof ApiV1InvoicesIdRouteImport
+      parentRoute: typeof ApiV1InvoicesRoute
     }
     '/api/admin/export/$file': {
       id: '/api/admin/export/$file'
@@ -741,6 +919,30 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface ApiV1InvoicesRouteChildren {
+  ApiV1InvoicesIdRoute: typeof ApiV1InvoicesIdRoute
+}
+
+const ApiV1InvoicesRouteChildren: ApiV1InvoicesRouteChildren = {
+  ApiV1InvoicesIdRoute: ApiV1InvoicesIdRoute,
+}
+
+const ApiV1InvoicesRouteWithChildren = ApiV1InvoicesRoute._addFileChildren(
+  ApiV1InvoicesRouteChildren,
+)
+
+interface ApiV1LicensesRouteChildren {
+  ApiV1LicensesIdRoute: typeof ApiV1LicensesIdRoute
+}
+
+const ApiV1LicensesRouteChildren: ApiV1LicensesRouteChildren = {
+  ApiV1LicensesIdRoute: ApiV1LicensesIdRoute,
+}
+
+const ApiV1LicensesRouteWithChildren = ApiV1LicensesRoute._addFileChildren(
+  ApiV1LicensesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -756,8 +958,15 @@ const rootRouteChildren: RootRouteChildren = {
   MovieIdRoute: MovieIdRoute,
   SeriesIdRoute: SeriesIdRoute,
   ApiDebugXtreamRoute: ApiDebugXtreamRoute,
+  ApiV1DocsRoute: ApiV1DocsRoute,
+  ApiV1InvoicesRoute: ApiV1InvoicesRouteWithChildren,
+  ApiV1LicensesRoute: ApiV1LicensesRouteWithChildren,
+  ApiV1OpenapiRoute: ApiV1OpenapiRoute,
+  ApiV1OrdersRoute: ApiV1OrdersRoute,
+  ApiV1PackagesRoute: ApiV1PackagesRoute,
   WatchKindIdRoute: WatchKindIdRoute,
   ApiAdminExportFileRoute: ApiAdminExportFileRoute,
+  ApiV1WebhooksEndpointsRoute: ApiV1WebhooksEndpointsRoute,
   ApiBillingInvoicesIdPdfRoute: ApiBillingInvoicesIdPdfRoute,
   ApiPublicStreamKindFileRoute: ApiPublicStreamKindFileRoute,
 }
