@@ -380,7 +380,8 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 export const adminUpdateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((v: {
-    id: string; displayName?: string; email?: string | null; phone?: string | null; notes?: string | null; status?: AccountStatus; durationDays?: number | null;
+    id: string; displayName?: string; email?: string | null; phone?: string | null; notes?: string | null;
+    status?: AccountStatus; durationDays?: number | null; packageId?: string | null;
   }) =>
     z.object({
       id: z.string().uuid(),
@@ -390,6 +391,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
       notes: z.string().max(2000).optional().nullable(),
       status: z.enum(["active","suspended","expired","disabled","locked"]).optional(),
       durationDays: z.number().int().positive().nullable().optional(),
+      packageId: z.string().uuid().nullable().optional(),
     }).parse(v),
   )
   .handler(async ({ data, context }) => {
@@ -401,6 +403,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
     if (data.phone !== undefined) patch.phone = data.phone || null;
     if (data.notes !== undefined) patch.notes = data.notes || null;
     if (data.status !== undefined) patch.status = data.status;
+    if (data.packageId !== undefined) patch.package_id = data.packageId;
     if (data.durationDays !== undefined) {
       patch.expires_at = data.durationDays === null ? null : new Date(Date.now() + data.durationDays * 86400_000).toISOString();
     }
