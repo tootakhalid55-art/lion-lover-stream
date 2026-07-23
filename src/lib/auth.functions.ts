@@ -157,26 +157,36 @@ export const finalizeLogin = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const admin = await getAdmin();
     const uid = context.userId;
-    const { data: profile } = await admin.from("profiles").select("*").eq("id", uid).maybeSingle();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("*, packages(max_devices, max_sessions)")
+      .eq("id", uid)
+      .maybeSingle();
     if (!profile) throw new Error("الحساب غير موجود");
 
-    // Expiration check
+    // Expiration
     if (profile.expires_at && new Date(profile.expires_at) < new Date()) {
       await admin.from("profiles").update({ status: "expired" }).eq("id", uid);
       throw new Error("انتهى اشتراكك.");
     }
     if (profile.status !== "active") throw new Error("الحساب غير مفعّل.");
 
-    // Device binding: admins/staff bypass single-device
     const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", uid);
     const isStaff = (roles ?? []).some((r: any) => ["super_admin", "admin", "moderator"].includes(r.role));
+    const pkg: any = (profile as any).packages ?? null;
+    const maxDevices = isStaff ? 999 : Math.max(1, pkg?.max_devices ?? 1);
+    const maxSessions = isStaff ? 999 : Math.max(1, pkg?.max_sessions ?? maxDevices);
 
-    const { data: existingDevice } = await admin.from("user_devices").select("*").eq("user_id", uid).maybeSingle();
-    if (!isStaff) {
-      if (existingDevice && existingDevice.device_id !== data.deviceId) {
-        await admin.from("login_attempts").insert({ username: profile.username, ip: clientIp(), success: false, reason: "device_mismatch", user_agent: clientUA() });
-        throw new Error("هذا الحساب مفعّل على جهاز آخر بالفعل.");
-      }
+    // Devices: allow same device, otherwise enforce limit
+    const { data: devices } = await admin.from("user_devices").select("*").eq("user_id", uid);
+    const existing = (devices ?? []).find((d: any) => d.device_id === data.deviceId);
+    if (existing?.blocked_at) {
+      await admin.from("login_attempts").insert({ username: profile.username, ip: clientIp(), success: false, reason: "device_blocked", user_agent: clientUA() });
+      throw new Error("هذا الجهاز محظور من قبل الإدارة.");
+    }
+    if (!existing && (devices?.length ?? 0) >= maxDevices) {
+      await admin.from("login_attempts").insert({ username: profile.username, ip: clientIp(), success: false, reason: "device_limit", user_agent: clientUA() });
+      throw new Error(`وصلت للحد الأقصى للأجهزة (${maxDevices}). أزل جهازًا سابقًا أو تواصل مع الإدارة.`);
     }
     await admin.from("user_devices").upsert(
       {
@@ -188,11 +198,27 @@ export const finalizeLogin = createServerFn({ method: "POST" })
         ip: clientIp(),
         last_seen: new Date().toISOString(),
       },
-      { onConflict: "user_id" },
+      { onConflict: "user_id,device_id" },
     );
 
-    // Revoke prior sessions, insert new
-    await admin.from("user_sessions").update({ revoked_at: new Date().toISOString() }).eq("user_id", uid).is("revoked_at", null);
+    // Sessions: cap to maxSessions — revoke oldest active if over the cap
+    const { data: activeSessions } = await admin
+      .from("user_sessions")
+      .select("id, device_id, created_at")
+      .eq("user_id", uid)
+      .is("revoked_at", null)
+      .order("created_at", { ascending: true });
+    // Always revoke prior session on the same device
+    const sameDevice = (activeSessions ?? []).filter((s: any) => s.device_id === data.deviceId);
+    if (sameDevice.length) {
+      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString() }).in("id", sameDevice.map((s: any) => s.id));
+    }
+    const remaining = (activeSessions ?? []).filter((s: any) => s.device_id !== data.deviceId);
+    const overflow = remaining.length - (maxSessions - 1);
+    if (overflow > 0) {
+      const toRevoke = remaining.slice(0, overflow).map((s: any) => s.id);
+      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString() }).in("id", toRevoke);
+    }
     await admin.from("user_sessions").insert({
       user_id: uid, device_id: data.deviceId, ip: clientIp(), user_agent: clientUA(),
     });
