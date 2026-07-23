@@ -20,7 +20,7 @@ export async function enqueueOutbox(evt: OutboxEnqueue): Promise<string> {
       aggregate_type: evt.aggregateType,
       aggregate_id: evt.aggregateId ?? null,
       event_type: evt.eventType,
-      payload: evt.payload,
+      payload: evt.payload as never,
       correlation_id: evt.correlationId ?? null,
       next_attempt_at: nextAt,
     })
@@ -43,7 +43,7 @@ export async function moveToDeadLetter(opts: {
     source: opts.source,
     source_id: opts.sourceId ?? null,
     event_type: opts.eventType ?? null,
-    payload: opts.payload,
+    payload: opts.payload as never,
     error: opts.error,
     attempts: opts.attempts,
     correlation_id: opts.correlationId ?? null,
