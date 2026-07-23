@@ -74,29 +74,38 @@ export type Database = {
         Row: {
           action: string
           actor_id: string | null
+          after_value: Json | null
+          before_value: Json | null
           created_at: string
           id: string
           ip: string | null
           meta: Json | null
           target_user_id: string | null
+          user_agent: string | null
         }
         Insert: {
           action: string
           actor_id?: string | null
+          after_value?: Json | null
+          before_value?: Json | null
           created_at?: string
           id?: string
           ip?: string | null
           meta?: Json | null
           target_user_id?: string | null
+          user_agent?: string | null
         }
         Update: {
           action?: string
           actor_id?: string | null
+          after_value?: Json | null
+          before_value?: Json | null
           created_at?: string
           id?: string
           ip?: string | null
           meta?: Json | null
           target_user_id?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -186,6 +195,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          meta: Json
+          read_at: string | null
+          severity: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          meta?: Json
+          read_at?: string | null
+          severity?: string
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          meta?: Json
+          read_at?: string | null
+          severity?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       packages: {
         Row: {
           allow_download: boolean
@@ -264,6 +309,7 @@ export type Database = {
           notes: string | null
           package_id: string | null
           phone: string | null
+          reauth_after: string | null
           status: Database["public"]["Enums"]["account_status"]
           updated_at: string
           username: string
@@ -282,6 +328,7 @@ export type Database = {
           notes?: string | null
           package_id?: string | null
           phone?: string | null
+          reauth_after?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
           username: string
@@ -300,6 +347,7 @@ export type Database = {
           notes?: string | null
           package_id?: string | null
           phone?: string | null
+          reauth_after?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
           username?: string
@@ -314,6 +362,72 @@ export type Database = {
           },
         ]
       }
+      security_events: {
+        Row: {
+          country: string | null
+          created_at: string
+          id: string
+          ip: string | null
+          kind: string
+          meta: Json
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          kind: string
+          meta?: Json
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          kind?: string
+          meta?: Json
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      system_health_snapshots: {
+        Row: {
+          active_sessions: number | null
+          api_latency_ms: number | null
+          db_ok: boolean
+          failed_jobs: number | null
+          id: string
+          meta: Json
+          taken_at: string
+        }
+        Insert: {
+          active_sessions?: number | null
+          api_latency_ms?: number | null
+          db_ok: boolean
+          failed_jobs?: number | null
+          id?: string
+          meta?: Json
+          taken_at?: string
+        }
+        Update: {
+          active_sessions?: number | null
+          api_latency_ms?: number | null
+          db_ok?: boolean
+          failed_jobs?: number | null
+          id?: string
+          meta?: Json
+          taken_at?: string
+        }
+        Relationships: []
+      }
       user_devices: {
         Row: {
           app_version: string | null
@@ -327,9 +441,12 @@ export type Database = {
           first_login_at: string | null
           id: string
           ip: string | null
+          last_activity_at: string | null
           last_seen: string
           name: string | null
           os: string | null
+          region: string | null
+          trusted_at: string | null
           user_id: string
         }
         Insert: {
@@ -344,9 +461,12 @@ export type Database = {
           first_login_at?: string | null
           id?: string
           ip?: string | null
+          last_activity_at?: string | null
           last_seen?: string
           name?: string | null
           os?: string | null
+          region?: string | null
+          trusted_at?: string | null
           user_id: string
         }
         Update: {
@@ -361,9 +481,12 @@ export type Database = {
           first_login_at?: string | null
           id?: string
           ip?: string | null
+          last_activity_at?: string | null
           last_seen?: string
           name?: string | null
           os?: string | null
+          region?: string | null
+          trusted_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -398,6 +521,8 @@ export type Database = {
           ip: string | null
           last_seen: string
           revoked_at: string | null
+          revoked_by: string | null
+          revoked_reason: string | null
           user_agent: string | null
           user_id: string
         }
@@ -409,6 +534,8 @@ export type Database = {
           ip?: string | null
           last_seen?: string
           revoked_at?: string | null
+          revoked_by?: string | null
+          revoked_reason?: string | null
           user_agent?: string | null
           user_id: string
         }
@@ -420,6 +547,8 @@ export type Database = {
           ip?: string | null
           last_seen?: string
           revoked_at?: string | null
+          revoked_by?: string | null
+          revoked_reason?: string | null
           user_agent?: string | null
           user_id?: string
         }
@@ -430,6 +559,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_any_role: {
+        Args: { _roles: string[]; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -442,7 +575,13 @@ export type Database = {
     }
     Enums: {
       account_status: "active" | "suspended" | "expired" | "disabled" | "locked"
-      app_role: "super_admin" | "admin" | "moderator"
+      app_role:
+        | "super_admin"
+        | "admin"
+        | "moderator"
+        | "support"
+        | "auditor"
+        | "readonly"
       license_status: "active" | "expired" | "revoked" | "pending"
       license_type: "trial" | "paid" | "lifetime" | "comp"
       package_tier:
@@ -581,7 +720,14 @@ export const Constants = {
   public: {
     Enums: {
       account_status: ["active", "suspended", "expired", "disabled", "locked"],
-      app_role: ["super_admin", "admin", "moderator"],
+      app_role: [
+        "super_admin",
+        "admin",
+        "moderator",
+        "support",
+        "auditor",
+        "readonly",
+      ],
       license_status: ["active", "expired", "revoked", "pending"],
       license_type: ["trial", "paid", "lifetime", "comp"],
       package_tier: [
