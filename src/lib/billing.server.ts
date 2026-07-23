@@ -218,7 +218,7 @@ export async function buildSnapshot(opts: {
     .maybeSingle();
   const { data: profile } = await sb
     .from("reseller_profiles")
-    .select("company_name, email, address, tax_profile")
+    .select("company, email, address, tax_profile")
     .eq("org_id", opts.orgId)
     .maybeSingle();
   const reseller = org?.parent_id
