@@ -12,11 +12,16 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as MoreRouteImport } from './routes/more'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as BootstrapRouteImport } from './routes/bootstrap'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as SeriesIdRouteImport } from './routes/series.$id'
 import { Route as MovieIdRouteImport } from './routes/movie.$id'
 import { Route as BrowseKindRouteImport } from './routes/browse.$kind'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
 import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
 import { Route as ApiPublicStreamKindFileRouteImport } from './routes/api.public.stream.$kind.$file'
@@ -36,15 +41,35 @@ const MoreRoute = MoreRouteImport.update({
   path: '/more',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FavoritesRoute = FavoritesRouteImport.update({
   id: '/favorites',
   path: '/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BootstrapRoute = BootstrapRouteImport.update({
+  id: '/bootstrap',
+  path: '/bootstrap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const SeriesIdRoute = SeriesIdRouteImport.update({
   id: '/series/$id',
@@ -60,6 +85,11 @@ const BrowseKindRoute = BrowseKindRouteImport.update({
   id: '/browse/$kind',
   path: '/browse/$kind',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
 } as any)
 const WatchKindIdRoute = WatchKindIdRouteImport.update({
   id: '/watch/$kind/$id',
@@ -79,26 +109,35 @@ const ApiPublicStreamKindFileRoute = ApiPublicStreamKindFileRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/bootstrap': typeof BootstrapRoute
   '/favorites': typeof FavoritesRoute
+  '/login': typeof LoginRoute
   '/more': typeof MoreRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bootstrap': typeof BootstrapRoute
   '/favorites': typeof FavoritesRoute
+  '/login': typeof LoginRoute
   '/more': typeof MoreRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
+  '/admin': typeof AdminIndexRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
@@ -106,13 +145,18 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/bootstrap': typeof BootstrapRoute
   '/favorites': typeof FavoritesRoute
+  '/login': typeof LoginRoute
   '/more': typeof MoreRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
@@ -121,39 +165,53 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
+    | '/bootstrap'
     | '/favorites'
+    | '/login'
     | '/more'
     | '/search'
     | '/settings'
+    | '/admin/users'
     | '/browse/$kind'
     | '/movie/$id'
     | '/series/$id'
+    | '/admin/'
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
     | '/api/public/stream/$kind/$file'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/bootstrap'
     | '/favorites'
+    | '/login'
     | '/more'
     | '/search'
     | '/settings'
+    | '/admin/users'
     | '/browse/$kind'
     | '/movie/$id'
     | '/series/$id'
+    | '/admin'
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
     | '/api/public/stream/$kind/$file'
   id:
     | '__root__'
     | '/'
+    | '/admin'
+    | '/bootstrap'
     | '/favorites'
+    | '/login'
     | '/more'
     | '/search'
     | '/settings'
+    | '/admin/users'
     | '/browse/$kind'
     | '/movie/$id'
     | '/series/$id'
+    | '/admin/'
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
     | '/api/public/stream/$kind/$file'
@@ -161,7 +219,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  BootstrapRoute: typeof BootstrapRoute
   FavoritesRoute: typeof FavoritesRoute
+  LoginRoute: typeof LoginRoute
   MoreRoute: typeof MoreRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
@@ -196,11 +257,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MoreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/favorites': {
       id: '/favorites'
       path: '/favorites'
       fullPath: '/favorites'
       preLoaderRoute: typeof FavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bootstrap': {
+      id: '/bootstrap'
+      path: '/bootstrap'
+      fullPath: '/bootstrap'
+      preLoaderRoute: typeof BootstrapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -209,6 +291,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/series/$id': {
       id: '/series/$id'
@@ -230,6 +319,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/browse/$kind'
       preLoaderRoute: typeof BrowseKindRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/watch/$kind/$id': {
       id: '/watch/$kind/$id'
@@ -255,9 +351,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  BootstrapRoute: BootstrapRoute,
   FavoritesRoute: FavoritesRoute,
+  LoginRoute: LoginRoute,
   MoreRoute: MoreRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,

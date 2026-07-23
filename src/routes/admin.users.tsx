@@ -219,7 +219,7 @@ function Modal({ title, children, onClose }: any) {
   );
 }
 
-function CreateModal({ onSubmit, onClose, busy, error }: any) {
+function CreateModal({ onSubmit, onClose, busy, error }: { onSubmit: (v: any) => void; onClose: () => void; busy: boolean; error?: string }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
