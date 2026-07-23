@@ -200,6 +200,7 @@ export const finalizeLogin = createServerFn({ method: "POST" })
       await admin.from("login_attempts").insert({ username: profile.username, ip: clientIp(), success: false, reason: "device_limit", user_agent: clientUA() });
       throw new Error(`وصلت للحد الأقصى للأجهزة (${maxDevices}). أزل جهازًا سابقًا أو تواصل مع الإدارة.`);
     }
+    const isNewDevice = !existing;
     await admin.from("user_devices").upsert(
       {
         user_id: uid,
@@ -209,6 +210,8 @@ export const finalizeLogin = createServerFn({ method: "POST" })
         browser: data.browser,
         ip: clientIp(),
         last_seen: new Date().toISOString(),
+        last_activity_at: new Date().toISOString(),
+        ...(isNewDevice ? { first_login_at: new Date().toISOString() } : {}),
       },
       { onConflict: "user_id,device_id" },
     );
@@ -220,22 +223,28 @@ export const finalizeLogin = createServerFn({ method: "POST" })
       .eq("user_id", uid)
       .is("revoked_at", null)
       .order("created_at", { ascending: true });
-    // Always revoke prior session on the same device
     const sameDevice = (activeSessions ?? []).filter((s: any) => s.device_id === data.deviceId);
     if (sameDevice.length) {
-      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString() }).in("id", sameDevice.map((s: any) => s.id));
+      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString(), revoked_reason: "reconnect_same_device" }).in("id", sameDevice.map((s: any) => s.id));
     }
     const remaining = (activeSessions ?? []).filter((s: any) => s.device_id !== data.deviceId);
     const overflow = remaining.length - (maxSessions - 1);
     if (overflow > 0) {
       const toRevoke = remaining.slice(0, overflow).map((s: any) => s.id);
-      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString() }).in("id", toRevoke);
+      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString(), revoked_reason: "session_limit" }).in("id", toRevoke);
     }
     await admin.from("user_sessions").insert({
       user_id: uid, device_id: data.deviceId, ip: clientIp(), user_agent: clientUA(),
     });
     await admin.from("profiles").update({ last_login_at: new Date().toISOString(), last_ip: clientIp(), failed_attempts: 0 }).eq("id", uid);
     await admin.from("login_attempts").insert({ username: profile.username, ip: clientIp(), success: true, user_agent: clientUA() });
+
+    await secEvent(uid, "successful_login", "info", { device_id: data.deviceId, isNewDevice });
+    if (isNewDevice) {
+      await secEvent(uid, "new_device", "warn", { device_id: data.deviceId, name: data.deviceName, os: data.os, browser: data.browser });
+      await notify(uid, "new_device", "تسجيل دخول من جهاز جديد",
+        `${data.deviceName} من ${clientIp()}. إن لم يكن أنت، غيّر كلمة المرور فورًا.`, "warn");
+    }
 
     return { ok: true as const };
   });
