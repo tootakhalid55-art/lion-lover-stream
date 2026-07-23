@@ -98,6 +98,28 @@ function genUsername() {
 }
 
 // ─── Public: bootstrap first super admin ────────────────────────────────
+function timingSafeEqualStr(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  if (ab.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
+/** Public: check whether the one-time bootstrap window is still open. */
+export const bootstrapStatus = createServerFn({ method: "GET" }).handler(async () => {
+  const admin = await getAdmin();
+  const { count } = await admin
+    .from("user_roles")
+    .select("*", { count: "exact", head: true })
+    .eq("role", "super_admin");
+  const hasSuperAdmin = (count ?? 0) > 0;
+  const codeConfigured = !!process.env.NOVA_ADMIN_BOOTSTRAP_CODE;
+  return { locked: hasSuperAdmin || !codeConfigured, hasSuperAdmin, codeConfigured };
+});
+
 export const bootstrapSuperAdmin = createServerFn({ method: "POST" })
   .inputValidator((v: { username: string; password: string; code: string }) =>
     z
@@ -110,12 +132,23 @@ export const bootstrapSuperAdmin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const rl = rateLimit(`bootstrap:${clientIp()}`, { capacity: 5, refillPerSec: 1 / 60 });
-    if (!rl.allowed) throw new Error("Too many attempts");
+    if (!rl.allowed) {
+      await secEvent(null, "bootstrap_rate_limited", "warn", {});
+      throw new Error("Too many attempts");
+    }
     const expected = process.env.NOVA_ADMIN_BOOTSTRAP_CODE;
-    if (!expected || data.code !== expected) throw new Error("Invalid bootstrap code");
+    if (!expected) throw new Error("Bootstrap disabled");
     const admin = await getAdmin();
+    // Lock check FIRST — one-time only.
     const { count } = await admin.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "super_admin");
-    if ((count ?? 0) > 0) throw new Error("Super admin already exists");
+    if ((count ?? 0) > 0) {
+      await secEvent(null, "bootstrap_after_lock_attempt", "critical", {});
+      throw new Error("Bootstrap is locked: a super admin already exists");
+    }
+    if (!timingSafeEqualStr(data.code, expected)) {
+      await secEvent(null, "bootstrap_bad_code", "warn", {});
+      throw new Error("Invalid bootstrap code");
+    }
     const email = usernameToEmail(data.username);
     const { data: created, error } = await admin.auth.admin.createUser({
       email,
@@ -128,9 +161,11 @@ export const bootstrapSuperAdmin = createServerFn({ method: "POST" })
       { id: created.user.id, username: data.username.toLowerCase(), display_name: data.username, status: "active" as AccountStatus },
       { onConflict: "id" },
     );
-    await admin.from("user_roles").insert({ user_id: created.user.id, role: "super_admin" as AppRole });
+    const { error: roleErr } = await admin.from("user_roles").insert({ user_id: created.user.id, role: "super_admin" as AppRole });
+    if (roleErr) throw new Error(`Role grant failed: ${roleErr.message}`);
     await audit("bootstrap_super_admin", created.user.id, { username: data.username });
-    return { ok: true as const };
+    await secEvent(created.user.id, "bootstrap_super_admin", "critical", { username: data.username });
+    return { ok: true as const, locked: true as const };
   });
 
 // ─── login: resolve username → email, enforce status/device ─────────────
