@@ -50,6 +50,9 @@ import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
 import { Route as ApiV1WebhooksEndpointsRouteImport } from './routes/api.v1.webhooks.endpoints'
 import { Route as ApiV1LicensesIdRouteImport } from './routes/api.v1.licenses.$id'
 import { Route as ApiV1InvoicesIdRouteImport } from './routes/api.v1.invoices.$id'
+import { Route as ApiV1HealthVersionRouteImport } from './routes/api.v1.health.version'
+import { Route as ApiV1HealthReadyRouteImport } from './routes/api.v1.health.ready'
+import { Route as ApiV1HealthLiveRouteImport } from './routes/api.v1.health.live'
 import { Route as ApiAdminExportFileRouteImport } from './routes/api.admin.export.$file'
 import { Route as ApiPublicStreamKindFileRouteImport } from './routes/api.public.stream.$kind.$file'
 import { Route as ApiBillingInvoicesIdPdfRouteImport } from './routes/api.billing.invoices.$id.pdf'
@@ -258,6 +261,21 @@ const ApiV1InvoicesIdRoute = ApiV1InvoicesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ApiV1InvoicesRoute,
 } as any)
+const ApiV1HealthVersionRoute = ApiV1HealthVersionRouteImport.update({
+  id: '/api/v1/health/version',
+  path: '/api/v1/health/version',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1HealthReadyRoute = ApiV1HealthReadyRouteImport.update({
+  id: '/api/v1/health/ready',
+  path: '/api/v1/health/ready',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1HealthLiveRoute = ApiV1HealthLiveRouteImport.update({
+  id: '/api/v1/health/live',
+  path: '/api/v1/health/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminExportFileRoute = ApiAdminExportFileRouteImport.update({
   id: '/api/admin/export/$file',
   path: '/api/admin/export/$file',
@@ -313,6 +331,9 @@ export interface FileRoutesByFullPath {
   '/api/v1/packages': typeof ApiV1PackagesRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/v1/health/live': typeof ApiV1HealthLiveRoute
+  '/api/v1/health/ready': typeof ApiV1HealthReadyRoute
+  '/api/v1/health/version': typeof ApiV1HealthVersionRoute
   '/api/v1/invoices/$id': typeof ApiV1InvoicesIdRoute
   '/api/v1/licenses/$id': typeof ApiV1LicensesIdRoute
   '/api/v1/webhooks/endpoints': typeof ApiV1WebhooksEndpointsRoute
@@ -357,6 +378,9 @@ export interface FileRoutesByTo {
   '/api/v1/packages': typeof ApiV1PackagesRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/v1/health/live': typeof ApiV1HealthLiveRoute
+  '/api/v1/health/ready': typeof ApiV1HealthReadyRoute
+  '/api/v1/health/version': typeof ApiV1HealthVersionRoute
   '/api/v1/invoices/$id': typeof ApiV1InvoicesIdRoute
   '/api/v1/licenses/$id': typeof ApiV1LicensesIdRoute
   '/api/v1/webhooks/endpoints': typeof ApiV1WebhooksEndpointsRoute
@@ -404,6 +428,9 @@ export interface FileRoutesById {
   '/api/v1/packages': typeof ApiV1PackagesRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/v1/health/live': typeof ApiV1HealthLiveRoute
+  '/api/v1/health/ready': typeof ApiV1HealthReadyRoute
+  '/api/v1/health/version': typeof ApiV1HealthVersionRoute
   '/api/v1/invoices/$id': typeof ApiV1InvoicesIdRoute
   '/api/v1/licenses/$id': typeof ApiV1LicensesIdRoute
   '/api/v1/webhooks/endpoints': typeof ApiV1WebhooksEndpointsRoute
@@ -451,6 +478,9 @@ export interface FileRouteTypes {
     | '/api/v1/packages'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/v1/health/live'
+    | '/api/v1/health/ready'
+    | '/api/v1/health/version'
     | '/api/v1/invoices/$id'
     | '/api/v1/licenses/$id'
     | '/api/v1/webhooks/endpoints'
@@ -495,6 +525,9 @@ export interface FileRouteTypes {
     | '/api/v1/packages'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/v1/health/live'
+    | '/api/v1/health/ready'
+    | '/api/v1/health/version'
     | '/api/v1/invoices/$id'
     | '/api/v1/licenses/$id'
     | '/api/v1/webhooks/endpoints'
@@ -541,6 +574,9 @@ export interface FileRouteTypes {
     | '/api/v1/packages'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/v1/health/live'
+    | '/api/v1/health/ready'
+    | '/api/v1/health/version'
     | '/api/v1/invoices/$id'
     | '/api/v1/licenses/$id'
     | '/api/v1/webhooks/endpoints'
@@ -571,6 +607,9 @@ export interface RootRouteChildren {
   ApiV1PackagesRoute: typeof ApiV1PackagesRoute
   WatchKindIdRoute: typeof WatchKindIdRoute
   ApiAdminExportFileRoute: typeof ApiAdminExportFileRoute
+  ApiV1HealthLiveRoute: typeof ApiV1HealthLiveRoute
+  ApiV1HealthReadyRoute: typeof ApiV1HealthReadyRoute
+  ApiV1HealthVersionRoute: typeof ApiV1HealthVersionRoute
   ApiV1WebhooksEndpointsRoute: typeof ApiV1WebhooksEndpointsRoute
   ApiBillingInvoicesIdPdfRoute: typeof ApiBillingInvoicesIdPdfRoute
   ApiPublicStreamKindFileRoute: typeof ApiPublicStreamKindFileRoute
@@ -865,6 +904,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1InvoicesIdRouteImport
       parentRoute: typeof ApiV1InvoicesRoute
     }
+    '/api/v1/health/version': {
+      id: '/api/v1/health/version'
+      path: '/api/v1/health/version'
+      fullPath: '/api/v1/health/version'
+      preLoaderRoute: typeof ApiV1HealthVersionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/health/ready': {
+      id: '/api/v1/health/ready'
+      path: '/api/v1/health/ready'
+      fullPath: '/api/v1/health/ready'
+      preLoaderRoute: typeof ApiV1HealthReadyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/health/live': {
+      id: '/api/v1/health/live'
+      path: '/api/v1/health/live'
+      fullPath: '/api/v1/health/live'
+      preLoaderRoute: typeof ApiV1HealthLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/export/$file': {
       id: '/api/admin/export/$file'
       path: '/api/admin/export/$file'
@@ -987,6 +1047,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1PackagesRoute: ApiV1PackagesRoute,
   WatchKindIdRoute: WatchKindIdRoute,
   ApiAdminExportFileRoute: ApiAdminExportFileRoute,
+  ApiV1HealthLiveRoute: ApiV1HealthLiveRoute,
+  ApiV1HealthReadyRoute: ApiV1HealthReadyRoute,
+  ApiV1HealthVersionRoute: ApiV1HealthVersionRoute,
   ApiV1WebhooksEndpointsRoute: ApiV1WebhooksEndpointsRoute,
   ApiBillingInvoicesIdPdfRoute: ApiBillingInvoicesIdPdfRoute,
   ApiPublicStreamKindFileRoute: ApiPublicStreamKindFileRoute,
