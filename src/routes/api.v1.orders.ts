@@ -51,7 +51,7 @@ const handler = makeV1Handler(
             unit_price_cents: quote.unitPriceCents,
             currency: quote.currency,
             discount_cents: quote.discountCents,
-            tax_cents: quote.taxCents,
+            tax_cents: 0,
             total_cents: quote.totalCents,
             status: "draft",
             pricing_trace: quote.trace as any,
