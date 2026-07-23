@@ -34,12 +34,15 @@ import { Route as AdminLicensesRouteImport } from './routes/admin.licenses'
 import { Route as AdminDevicesRouteImport } from './routes/admin.devices'
 import { Route as AdminCodesRouteImport } from './routes/admin.codes'
 import { Route as AdminBulkRouteImport } from './routes/admin.bulk'
+import { Route as AdminBillingRouteImport } from './routes/admin.billing'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AuthenticatedResellerRouteImport } from './routes/_authenticated/reseller'
+import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated/portal'
 import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
 import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
 import { Route as ApiAdminExportFileRouteImport } from './routes/api.admin.export.$file'
 import { Route as ApiPublicStreamKindFileRouteImport } from './routes/api.public.stream.$kind.$file'
+import { Route as ApiBillingInvoicesIdPdfRouteImport } from './routes/api.billing.invoices.$id.pdf'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -165,6 +168,11 @@ const AdminBulkRoute = AdminBulkRouteImport.update({
   path: '/bulk',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBillingRoute = AdminBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAuditRoute = AdminAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -173,6 +181,11 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
 const AuthenticatedResellerRoute = AuthenticatedResellerRouteImport.update({
   id: '/reseller',
   path: '/reseller',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPortalRoute = AuthenticatedPortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const WatchKindIdRoute = WatchKindIdRouteImport.update({
@@ -195,6 +208,11 @@ const ApiPublicStreamKindFileRoute = ApiPublicStreamKindFileRouteImport.update({
   path: '/api/public/stream/$kind/$file',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiBillingInvoicesIdPdfRoute = ApiBillingInvoicesIdPdfRouteImport.update({
+  id: '/api/billing/invoices/$id/pdf',
+  path: '/api/billing/invoices/$id/pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -206,8 +224,10 @@ export interface FileRoutesByFullPath {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/portal': typeof AuthenticatedPortalRoute
   '/reseller': typeof AuthenticatedResellerRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/billing': typeof AdminBillingRoute
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
   '/admin/devices': typeof AdminDevicesRoute
@@ -226,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/billing/invoices/$id/pdf': typeof ApiBillingInvoicesIdPdfRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRoutesByTo {
@@ -237,8 +258,10 @@ export interface FileRoutesByTo {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/portal': typeof AuthenticatedPortalRoute
   '/reseller': typeof AuthenticatedResellerRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/billing': typeof AdminBillingRoute
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
   '/admin/devices': typeof AdminDevicesRoute
@@ -257,6 +280,7 @@ export interface FileRoutesByTo {
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/billing/invoices/$id/pdf': typeof ApiBillingInvoicesIdPdfRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRoutesById {
@@ -271,8 +295,10 @@ export interface FileRoutesById {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/_authenticated/portal': typeof AuthenticatedPortalRoute
   '/_authenticated/reseller': typeof AuthenticatedResellerRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/billing': typeof AdminBillingRoute
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
   '/admin/devices': typeof AdminDevicesRoute
@@ -291,6 +317,7 @@ export interface FileRoutesById {
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/billing/invoices/$id/pdf': typeof ApiBillingInvoicesIdPdfRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRouteTypes {
@@ -305,8 +332,10 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/portal'
     | '/reseller'
     | '/admin/audit'
+    | '/admin/billing'
     | '/admin/bulk'
     | '/admin/codes'
     | '/admin/devices'
@@ -325,6 +354,7 @@ export interface FileRouteTypes {
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/billing/invoices/$id/pdf'
     | '/api/public/stream/$kind/$file'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -336,8 +366,10 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/portal'
     | '/reseller'
     | '/admin/audit'
+    | '/admin/billing'
     | '/admin/bulk'
     | '/admin/codes'
     | '/admin/devices'
@@ -356,6 +388,7 @@ export interface FileRouteTypes {
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/billing/invoices/$id/pdf'
     | '/api/public/stream/$kind/$file'
   id:
     | '__root__'
@@ -369,8 +402,10 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/_authenticated/portal'
     | '/_authenticated/reseller'
     | '/admin/audit'
+    | '/admin/billing'
     | '/admin/bulk'
     | '/admin/codes'
     | '/admin/devices'
@@ -389,6 +424,7 @@ export interface FileRouteTypes {
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/billing/invoices/$id/pdf'
     | '/api/public/stream/$kind/$file'
   fileRoutesById: FileRoutesById
 }
@@ -409,6 +445,7 @@ export interface RootRouteChildren {
   ApiDebugXtreamRoute: typeof ApiDebugXtreamRoute
   WatchKindIdRoute: typeof WatchKindIdRoute
   ApiAdminExportFileRoute: typeof ApiAdminExportFileRoute
+  ApiBillingInvoicesIdPdfRoute: typeof ApiBillingInvoicesIdPdfRoute
   ApiPublicStreamKindFileRoute: typeof ApiPublicStreamKindFileRoute
 }
 
@@ -589,6 +626,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBulkRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/billing': {
+      id: '/admin/billing'
+      path: '/billing'
+      fullPath: '/admin/billing'
+      preLoaderRoute: typeof AdminBillingRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/audit': {
       id: '/admin/audit'
       path: '/audit'
@@ -601,6 +645,13 @@ declare module '@tanstack/react-router' {
       path: '/reseller'
       fullPath: '/reseller'
       preLoaderRoute: typeof AuthenticatedResellerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal': {
+      id: '/_authenticated/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof AuthenticatedPortalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/watch/$kind/$id': {
@@ -631,14 +682,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicStreamKindFileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/billing/invoices/$id/pdf': {
+      id: '/api/billing/invoices/$id/pdf'
+      path: '/api/billing/invoices/$id/pdf'
+      fullPath: '/api/billing/invoices/$id/pdf'
+      preLoaderRoute: typeof ApiBillingInvoicesIdPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedPortalRoute: typeof AuthenticatedPortalRoute
   AuthenticatedResellerRoute: typeof AuthenticatedResellerRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedPortalRoute: AuthenticatedPortalRoute,
   AuthenticatedResellerRoute: AuthenticatedResellerRoute,
 }
 
@@ -647,6 +707,7 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface AdminRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
+  AdminBillingRoute: typeof AdminBillingRoute
   AdminBulkRoute: typeof AdminBulkRoute
   AdminCodesRoute: typeof AdminCodesRoute
   AdminDevicesRoute: typeof AdminDevicesRoute
@@ -663,6 +724,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
+  AdminBillingRoute: AdminBillingRoute,
   AdminBulkRoute: AdminBulkRoute,
   AdminCodesRoute: AdminCodesRoute,
   AdminDevicesRoute: AdminDevicesRoute,
@@ -696,6 +758,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDebugXtreamRoute: ApiDebugXtreamRoute,
   WatchKindIdRoute: WatchKindIdRoute,
   ApiAdminExportFileRoute: ApiAdminExportFileRoute,
+  ApiBillingInvoicesIdPdfRoute: ApiBillingInvoicesIdPdfRoute,
   ApiPublicStreamKindFileRoute: ApiPublicStreamKindFileRoute,
 }
 export const routeTree = rootRouteImport

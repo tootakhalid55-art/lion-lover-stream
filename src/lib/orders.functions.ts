@@ -126,7 +126,15 @@ export const payOrder = createServerFn({ method: "POST" })
       .select("*")
       .single();
     await writeAudit({ actorId: context.userId, action: "order.pay", before: order, after: updated });
-    return { order: updated };
+    // Auto-issue the tax invoice for this order (idempotent inside the engine).
+    let invoice: { invoiceId: string; number: string } | null = null;
+    try {
+      const { issueInvoiceForOrder } = await import("./billing.server");
+      invoice = await issueInvoiceForOrder({ orderId: order.id, actorId: context.userId });
+    } catch (e) {
+      console.error("[orders.pay] invoice issue failed", e);
+    }
+    return { order: updated, invoice };
   });
 
 export const cancelOrder = createServerFn({ method: "POST" })
