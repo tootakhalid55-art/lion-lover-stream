@@ -216,6 +216,50 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          org_id: string
+          payload: Json
+          processed_at: string | null
+          ref_id: string
+          ref_type: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          org_id: string
+          payload?: Json
+          processed_at?: string | null
+          ref_id: string
+          ref_type: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          org_id?: string
+          payload?: Json
+          processed_at?: string | null
+          ref_id?: string
+          ref_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billing_plans: {
         Row: {
           code: string
@@ -314,6 +358,68 @@ export type Database = {
           },
         ]
       }
+      doc_number_sequences: {
+        Row: {
+          branch: string
+          doc_type: string
+          fiscal_year: number
+          next_seq: number
+          org_id: string
+        }
+        Insert: {
+          branch?: string
+          doc_type: string
+          fiscal_year: number
+          next_seq?: number
+          org_id: string
+        }
+        Update: {
+          branch?: string
+          doc_type?: string
+          fiscal_year?: number
+          next_seq?: number
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doc_number_sequences_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fx_rates: {
+        Row: {
+          base_currency: string
+          created_at: string
+          effective_at: string
+          id: string
+          quote_currency: string
+          rate: number
+          source: string
+        }
+        Insert: {
+          base_currency: string
+          created_at?: string
+          effective_at?: string
+          id?: string
+          quote_currency: string
+          rate: number
+          source?: string
+        }
+        Update: {
+          base_currency?: string
+          created_at?: string
+          effective_at?: string
+          id?: string
+          quote_currency?: string
+          rate?: number
+          source?: string
+        }
+        Relationships: []
+      }
       invoice_lines: {
         Row: {
           amount_cents: number
@@ -324,6 +430,9 @@ export type Database = {
           kind: string
           qty: number
           ref: Json
+          tax_amount_cents: number
+          tax_kind: string
+          tax_rate_bps: number
           unit_price_cents: number
         }
         Insert: {
@@ -335,6 +444,9 @@ export type Database = {
           kind: string
           qty?: number
           ref?: Json
+          tax_amount_cents?: number
+          tax_kind?: string
+          tax_rate_bps?: number
           unit_price_cents: number
         }
         Update: {
@@ -346,6 +458,9 @@ export type Database = {
           kind?: string
           qty?: number
           ref?: Json
+          tax_amount_cents?: number
+          tax_kind?: string
+          tax_rate_bps?: number
           unit_price_cents?: number
         }
         Relationships: [
@@ -383,16 +498,30 @@ export type Database = {
       }
       invoices: {
         Row: {
+          amount_due_cents: number
+          amount_paid_cents: number
+          base_currency: string
+          base_total_cents: number
+          billing_strategy: string
+          cancelled_at: string | null
           created_at: string
           currency: string
           discount_cents: number
+          doc_type: string
           due_at: string | null
+          fx_rate: number
           id: string
+          issued_at: string | null
           meta: Json
           number: string
           org_id: string
           paid_at: string | null
+          parent_invoice_id: string | null
           pdf_url: string | null
+          sent_at: string | null
+          snapshot: Json
+          source_id: string | null
+          source_type: string | null
           status: string
           subtotal_cents: number
           tax_cents: number
@@ -400,16 +529,30 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amount_due_cents?: number
+          amount_paid_cents?: number
+          base_currency?: string
+          base_total_cents?: number
+          billing_strategy?: string
+          cancelled_at?: string | null
           created_at?: string
           currency?: string
           discount_cents?: number
+          doc_type?: string
           due_at?: string | null
+          fx_rate?: number
           id?: string
+          issued_at?: string | null
           meta?: Json
           number: string
           org_id: string
           paid_at?: string | null
+          parent_invoice_id?: string | null
           pdf_url?: string | null
+          sent_at?: string | null
+          snapshot?: Json
+          source_id?: string | null
+          source_type?: string | null
           status?: string
           subtotal_cents?: number
           tax_cents?: number
@@ -417,16 +560,30 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amount_due_cents?: number
+          amount_paid_cents?: number
+          base_currency?: string
+          base_total_cents?: number
+          billing_strategy?: string
+          cancelled_at?: string | null
           created_at?: string
           currency?: string
           discount_cents?: number
+          doc_type?: string
           due_at?: string | null
+          fx_rate?: number
           id?: string
+          issued_at?: string | null
           meta?: Json
           number?: string
           org_id?: string
           paid_at?: string | null
+          parent_invoice_id?: string | null
           pdf_url?: string | null
+          sent_at?: string | null
+          snapshot?: Json
+          source_id?: string | null
+          source_type?: string | null
           status?: string
           subtotal_cents?: number
           tax_cents?: number
@@ -439,6 +596,104 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_parent_invoice_id_fkey"
+            columns: ["parent_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entries: {
+        Row: {
+          currency: string
+          entry_no: number
+          event_type: string
+          id: string
+          memo: string | null
+          meta: Json
+          org_id: string
+          posted_at: string
+          ref_id: string
+          ref_type: string
+          total_credit_cents: number
+          total_debit_cents: number
+        }
+        Insert: {
+          currency: string
+          entry_no?: number
+          event_type: string
+          id?: string
+          memo?: string | null
+          meta?: Json
+          org_id: string
+          posted_at?: string
+          ref_id: string
+          ref_type: string
+          total_credit_cents?: number
+          total_debit_cents?: number
+        }
+        Update: {
+          currency?: string
+          entry_no?: number
+          event_type?: string
+          id?: string
+          memo?: string | null
+          meta?: Json
+          org_id?: string
+          posted_at?: string
+          ref_id?: string
+          ref_type?: string
+          total_credit_cents?: number
+          total_debit_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_lines: {
+        Row: {
+          account: string
+          amount_cents: number
+          entry_id: string
+          id: string
+          memo: string | null
+          meta: Json
+          side: string
+        }
+        Insert: {
+          account: string
+          amount_cents: number
+          entry_id: string
+          id?: string
+          memo?: string | null
+          meta?: Json
+          side: string
+        }
+        Update: {
+          account?: string
+          amount_cents?: number
+          entry_id?: string
+          id?: string
+          memo?: string | null
+          meta?: Json
+          side?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_lines_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -1832,6 +2087,15 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_org_member: { Args: { _org: string; _user: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      next_doc_number: {
+        Args: {
+          _branch: string
+          _doc_type: string
+          _fiscal_year: number
+          _org: string
+        }
+        Returns: number
+      }
       org_ancestors: { Args: { _org: string }; Returns: string[] }
       org_wallet_balances: {
         Args: { _org: string }
