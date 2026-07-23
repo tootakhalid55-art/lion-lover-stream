@@ -15,7 +15,7 @@ export interface TraceStep {
   type: string;
   refType?: string | null;
   refId?: string | null;
-  payload?: Record<string, string | number | boolean | null | undefined> | null;
+  payload?: string | null;
 }
 
 export const getWorkflowTrace = createServerFn({ method: "POST" })
@@ -41,13 +41,13 @@ export const getWorkflowTrace = createServerFn({ method: "POST" })
     ]);
 
     const steps: TraceStep[] = [];
-    for (const r of (subEvents.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "subscription_events", type: String(r.event_type), refType: "subscription", refId: (r.subscription_id as string) ?? null, payload: { from: r.from_state, to: r.to_state, ...asObj(r.payload) } });
-    for (const r of (billEvents.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "billing_events", type: String(r.event_type), refType: (r.ref_type as string) ?? null, refId: (r.ref_id as string) ?? null, payload: asObj(r.payload) });
-    for (const r of (audits.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "audit_logs", type: String(r.action), payload: asObj(r.meta) });
-    for (const r of (outbox.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "outbox", type: String(r.event_type), refType: (r.aggregate_type as string) ?? null, refId: (r.aggregate_id as string) ?? null, payload: { status: r.status, attempts: r.attempts, ...asObj(r.payload) } });
-    for (const r of (webhooks.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "webhook_deliveries", type: "webhook.delivery", refId: (r.endpoint_id as string) ?? null, payload: { event_id: r.event_id, status: r.status, attempt: r.attempt, http: r.response_status } });
-    for (const r of (intents.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "payment_intents", type: `payment.${r.status}`, refType: "invoice", refId: (r.invoice_id as string) ?? null, payload: { provider: r.provider, amount_cents: r.amount_cents, currency: r.currency, failure_code: r.failure_code } });
-    for (const r of (gwEvents.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.received_at), source: "gateway_webhook_events", type: `${r.provider}.${r.event_type}`, refId: (r.provider_event_id as string) ?? null, payload: { status: r.status } });
+    for (const r of (subEvents.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "subscription_events", type: String(r.event_type), refType: "subscription", refId: (r.subscription_id as string) ?? null, payload: JSON.stringify({ from: r.from_state, to: r.to_state, ...asObj(r.payload) } ) });
+    for (const r of (billEvents.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "billing_events", type: String(r.event_type), refType: (r.ref_type as string) ?? null, refId: (r.ref_id as string) ?? null, payload: JSON.stringify(asObj(r.payload) ) });
+    for (const r of (audits.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "audit_logs", type: String(r.action), payload: JSON.stringify(asObj(r.meta) ) });
+    for (const r of (outbox.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "outbox", type: String(r.event_type), refType: (r.aggregate_type as string) ?? null, refId: (r.aggregate_id as string) ?? null, payload: JSON.stringify({ status: r.status, attempts: r.attempts, ...asObj(r.payload) } ) });
+    for (const r of (webhooks.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "webhook_deliveries", type: "webhook.delivery", refId: (r.endpoint_id as string) ?? null, payload: JSON.stringify({ event_id: r.event_id, status: r.status, attempt: r.attempt, http: r.response_status } ) });
+    for (const r of (intents.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.created_at), source: "payment_intents", type: `payment.${r.status}`, refType: "invoice", refId: (r.invoice_id as string) ?? null, payload: JSON.stringify({ provider: r.provider, amount_cents: r.amount_cents, currency: r.currency, failure_code: r.failure_code } ) });
+    for (const r of (gwEvents.data ?? []) as Array<Record<string, unknown>>) steps.push({ at: String(r.received_at), source: "gateway_webhook_events", type: `${r.provider}.${r.event_type}`, refId: (r.provider_event_id as string) ?? null, payload: JSON.stringify({ status: r.status } ) });
 
     steps.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
     return { correlationId: cid, count: steps.length, steps };
