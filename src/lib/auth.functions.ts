@@ -349,7 +349,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
     if (data.durationDays !== undefined) {
       patch.expires_at = data.durationDays === null ? null : new Date(Date.now() + data.durationDays * 86400_000).toISOString();
     }
-    const { error } = await admin.from("profiles").update(patch).eq("id", data.id);
+    const { error } = await admin.from("profiles").update(patch as any).eq("id", data.id);
     if (error) throw new Error(error.message);
     await audit("update_user", data.id, patch, context.userId);
     return { ok: true as const };
