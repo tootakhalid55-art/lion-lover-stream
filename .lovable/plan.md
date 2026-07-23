@@ -1,106 +1,100 @@
-# Phase 2 – Professional Auth & License Management
+# Sub-phase 2B — Administration & Security Center
 
-Phase 1 already gave us auth, single-device binding, admin CRUD, audit logs, and dashboard stats. Phase 2 turns that into a commercial licensing system. It is far too large for one shot without regressions, so I'll ship it in **three self-contained sub-phases**, each independently useful and testable.
+Big scope, so I'll ship it as one migration + several focused server-fn modules + admin pages, wired to the existing `/admin` layout. Everything RBAC-gated, every mutation audited, every list exportable.
 
-Everything stays modular under `src/lib/<module>.functions.ts` + `src/routes/admin.<module>.tsx` (Authentication / Licensing / Devices / Sessions / Packages / Resellers / Activity / API / Billing).
+## 1. Database migration (single call)
 
----
+New / altered tables:
+- `user_devices` — add `name`, `device_type`, `browser`, `os`, `country`, `region`, `trusted_at`, `blocked_at`, `first_seen_at`, `last_activity_at`.
+- `user_sessions` — add `country`, `revoked_at`, `revoked_by`, `revoked_reason`.
+- `notifications` — id, user_id (nullable = broadcast to admins), kind, title, body, meta jsonb, read_at, created_at.
+- `security_events` — id, user_id (nullable), kind (`failed_login`|`successful_login`|`password_change`|`package_activated`|`license_activated`|`device_registered`|`suspicious`|`account_locked`|`session_revoked`|`device_revoked`|`new_device`|`bulk_op`), severity, ip, ua, country, meta jsonb, created_at. Indexed on (kind, created_at desc).
+- `system_health_snapshots` — id, taken_at, db_ok, api_latency_ms, active_sessions, failed_jobs, meta jsonb. (For history charts.)
+- Extend `app_role` enum: add `support`, `auditor`, `readonly` (keep existing `super_admin`, `admin`, `moderator`).
+- New security-definer helpers: `has_any_role(_uid, _roles[])`, `can_manage_users(_uid)`, `can_view_only(_uid)`.
+- RLS: admins/support can read all events/notifications; users see only their own.
+- GRANTs for every new table (authenticated + service_role).
 
-## Sub-phase 2A — Packages, Licenses & Multi-Device (core)
+## 2. Server modules
 
-New tables (migration):
-- `packages` — name, tier (`trial`|`monthly`|`quarterly`|`semi_annual`|`annual`|`lifetime`|`custom`), duration_days (null=lifetime), max_devices, max_sessions, simultaneous_streams, allow_download, allow_recording, allowed_features (jsonb), allowed_categories (jsonb), price_cents, currency, is_active
-- `licenses` — user_id, package_id, license_key (unique `NOVA-YYYY-XXXX-XXXX-XXXX`), license_type (`trial`|`paid`|`lifetime`|`comp`), activated_at, expires_at, auto_renew, status (`active`|`expired`|`revoked`|`pending`), issued_by
-- `activation_codes` — code (unique `NOVA-XXXX-XXXX-XXXX`), package_id, duration_override_days, uses_allowed, uses_count, expires_at, created_by, notes
-- Seed default packages (Trial/Basic/Family/Premium/Lifetime).
-- Add `package_id` to `profiles` (nullable) and enforce max_devices in `finalizeLogin`.
+Splitting rule respected (helpers in `.server.ts`, handlers in `.functions.ts`).
 
-Server module `src/lib/licensing.functions.ts`:
-- `listPackages`, `upsertPackage`, `deletePackage`
-- `listLicenses(filter)`, `issueLicense`, `renewLicense(id, days|packageId)`, `revokeLicense`
-- `listActivationCodes`, `createActivationCodes(count, packageId, ...)`, `revokeActivationCode`, `redeemActivationCode(code)` (public — creates account + license)
-- Helpers: `generateLicenseKey()`, `generateActivationCode()` (cryptographic)
+- `src/lib/rbac.server.ts` — `assertRole(ctx, roles[])`, `capabilities(uid)` returning `{ canManageUsers, canManageLicenses, canRevokeDevices, canBulk, canExport, canViewSecurity, canViewAudit, canManageSystem, readOnly }`.
+- `src/lib/audit.server.ts` — `writeAudit({ actor, action, target, before, after, ip, ua })` used by every mutating fn; also mirrors relevant entries into `security_events`.
+- `src/lib/devices.functions.ts` — `listDevices({ userId?, query?, status?, trusted?, page })`, `renameDevice`, `trustDevice`, `untrustDevice`, `revokeDevice`, `forceLogoutDevice` (kills sessions on that device), `bulkRevokeDevices`.
+- `src/lib/sessions.functions.ts` — `listSessions({ userId?, state: active|expired|all })`, `terminateSession`, `terminateOtherSessions(userId)`, `forceReauth(userId)` (bumps a `reauth_after` on profile, gate checks it), `myActiveSessions` (self).
+- `src/lib/security.functions.ts` — `listSecurityEvents({ kind?, severity?, userId?, from?, to?, query?, page })`, `securityKpis(range)`, `lockAccount`, `unlockAccount`. Threshold job: `finalizeLogin` (already exists) will call `recordFailedLogin` → auto-lock at N failures/window.
+- `src/lib/bulk.functions.ts` — `bulkAssignLicense`, `bulkChangePackage`, `bulkActivate`, `bulkSuspend`, `bulkRevokeDevices`, plus a paired `previewBulk*` that returns per-target effect + validation errors (no writes).
+- `src/lib/notifications.functions.ts` — `listMyNotifications`, `markRead`, `markAllRead`, `adminBroadcast` (super_admin), + internal `emitNotification(...)` helper used by device/license/security flows.
+- `src/lib/export.server.ts` + server routes `src/routes/api/admin/export/$dataset.$format.ts` — datasets: users, packages, licenses, devices, sessions, security. Formats: csv, xlsx. Auth via bearer (same as protected server fns) inside handler; passes filters from query string. Uses `xlsx` npm package for xlsx.
+- `src/lib/dashboard.functions.ts` — `dashboardV2({ range })` returning KPIs + time-series (daily activations, new users, logins, package distribution).
+- `src/lib/system-health.functions.ts` — `systemHealth()` returning db ping, api latency, active-session count, cache stats, failed-jobs (from `security_events` kind=`job_failed`), background-task list (currently: cache warmers, heartbeats), storage usage (Supabase storage — return N/A when unavailable).
 
-Update `adminCreateUser` + Create modal to pick a package. Update `finalizeLogin` device check to `max_devices` (list vs. single).
+## 3. Admin routes (new)
 
-Admin UI:
-- `/admin/packages` — table + editor (all package fields)
-- `/admin/licenses` — table with filters (status, package, expiring soon), one-click renew, revoke
-- `/admin/codes` — activation-code generator (bulk N), CSV download, revoke
-- `/redeem` (public route) — user redeems code → creates account → shows credentials
-- Update `/admin/users` — package column + change package action
+All under existing `/admin` layout; nav grows.
 
----
+- `/admin/devices` — table with filter chips (all / trusted / blocked / online), per-row menu (Rename, Trust, Revoke, Force Logout). Drawer shows full detail.
+- `/admin/sessions` — tabs (Active / Expired), filter by user, actions per row + bulk toolbar.
+- `/admin/security` — tabs: **Events**, **Failed Logins**, **Locks**. Filter + search. Severity color chips.
+- `/admin/bulk` — pick target set (users/devices) via multi-select, pick action, **Preview** modal shows diff, **Confirm** writes.
+- `/admin/audit` — read-only audit log with actor, action, before/after JSON diff, IP, device.
+- `/admin/system` — System Health Dashboard: DB, latency, active sessions, cache, jobs, background tasks, API perf sparkline (30 min).
+- `/admin/notifications` — inbox for the current admin + broadcast composer (super_admin only).
+- Update `/admin` overview → **Dashboard v2** with KPI cards + Recharts (line: activations 30d, area: new users 30d, bar: logins 24h, donut: package distribution). I'll add `recharts` if not already installed.
 
-## Sub-phase 2B — Devices, Sessions, Activity, Security, Bulk ops, Export
+Header nav additions: Devices, Sessions, Security, Audit, Bulk, System, plus a bell icon for notifications.
 
-Migration: add columns to `user_devices` (`device_type`, `app_version`, `country`, `first_login_at`, `blocked_at`, `name`) and `user_sessions` (`country`). Add `password_history` table (user_id, password_hash, changed_at) — Supabase Auth stores the current hash; we track only the last N *change events* (timestamp + a short salted digest) for expiry/history UI, not full replay.
+## 4. RBAC enforcement
 
-Server modules:
-- `src/lib/devices.functions.ts` — listDevices(userId?), renameDevice, blockDevice, unblockDevice, removeDevice, forceReregister
-- `src/lib/sessions.functions.ts` — listSessions(userId?, activeOnly), terminateSession, terminateAllForUser, terminateAllGlobal, mySessions (self), myLogoutAll
-- `src/lib/security.functions.ts` — changeMyPassword (with strength check + brute-force lock), adminSetLockoutPolicy (config table), detectSuspiciousLogin (impossible-travel + new-country flag written to `audit_logs.meta`)
-- Geo-IP: use `https://ipapi.co/{ip}/json/` server-side (no key, cached in memory). Graceful degradation if unavailable.
-- Bulk actions in `src/lib/bulk.functions.ts` — extendSubscription, suspend, delete, resetPassword, resetDevices, forceLogout, assignPackage on a list of user ids
-- CSV/Excel export in `src/lib/export.functions.ts` — returns a `Response` from server routes at `/api/admin/export/{users|licenses|devices|sessions|activity}.{csv|xlsx}` (server-route auth-gated with the caller's bearer). `xlsx` via `xlsx` npm package (bundled).
+- `src/lib/rbac.server.ts` gates every server fn.
+- `src/hooks/use-capabilities.ts` fetches `capabilities()` once, caches with react-query.
+- Admin routes hide nav links and disable actions the caller lacks. Server always re-checks — client hiding is UX only.
+- Roles matrix:
+  - `super_admin`: everything, incl. bulk + broadcast + resellers (2C).
+  - `admin`: everything except role changes to admins, resellers, broadcast.
+  - `support`: read all, revoke device, terminate session, reset password. No delete/bulk destructive.
+  - `auditor`: read all incl. audit + security. No writes.
+  - `readonly`: read own scope + dashboards. No security/audit.
 
-Admin UI:
-- `/admin/devices` — global device list with filter + per-user drilldown
-- `/admin/sessions` — active sessions, force-terminate individually or in bulk
-- `/admin/activity` — filterable audit + login-attempt log (user, date range, action)
-- `/admin/security` — lockout policy (max failed attempts, lock duration), password expiry days, HIBP toggle
-- `/account/security` — end-user: change password (strength meter), view own sessions/devices, logout everywhere
-- Bulk selection on `/admin/users` with the toolbar above
+## 5. Notifications wiring
 
-Dashboard v2 (`/admin`):
-- Cards: Revenue (sum of paid licenses this month — placeholder = Σ package.price_cents on licenses issued), Expiring in 7d, Recently created, Recently active, Failed logins 24h, Suspended, Top active users, Top devices, Active streams (=active sessions with an open playback session — we'll approximate via `user_sessions.last_seen` within 60s)
-- Charts (Recharts, already in stack if not I'll add): line — daily logins 30d; bar — new users 30d; donut — package distribution
+Emit on: new device registration (`finalizeLogin` new fingerprint), license/package expiry (checked lazily by a light server fn triggered by dashboard load — good enough without cron; a real cron can plug in later), failed-login threshold hit, account locked, session revoked. Delivered in-app (bell + `/admin/notifications`); email hook is a no-op unless mail connector is added.
 
----
+## 6. Testing
 
-## Sub-phase 2C — Resellers, REST API, Payments-ready hooks
+Add `bunx vitest` tests under `src/lib/__tests__/`:
+- `rbac.test.ts` — matrix of role vs. capability.
+- `audit.test.ts` — every mutating fn writes an audit row + before/after.
+- `devices.test.ts` — revoke, trust flow, force-logout kills sessions.
+- `sessions.test.ts` — terminate, terminate-others, force-reauth.
+- `bulk.test.ts` — preview vs. execute; partial failures reported; audit rows per target.
+- `licensing-assign.test.ts` — bulk license assignment side effects.
+- `export.test.ts` — CSV headers + row count for each dataset; xlsx opens.
+- `permissions.test.ts` — unauthorized caller gets 403 and no writes/audit rows.
 
-Migration:
-- `resellers` — user_id, credit_balance_cents, customer_limit, allowed_package_ids, notes
-- `api_keys` — reseller/admin_id, key_hash, prefix, scopes (jsonb), last_used_at, revoked_at
-- Roles enum extended: `reseller`
+Server fns are unit-tested with a mocked `supabase` client (existing pattern where present; otherwise a thin fake) to avoid needing a live DB in CI.
 
-Reseller UI:
-- `/admin/resellers` (super_admin only) — create reseller, credit top-up, package allowlist, customer limit
-- `/reseller` — subset dashboard: their own users, licenses, codes; issuing consumes credit; cannot see other resellers or super-admin data (enforced via RLS + fn checks)
+## 7. Rollout inside 2B
 
-REST API (`src/routes/api/v1/*`):
-- `POST /api/v1/users`, `DELETE /api/v1/users/:id`, `POST /api/v1/users/:id/suspend`, `POST /api/v1/users/:id/renew`, `POST /api/v1/users/:id/reset-device`, `GET /api/v1/users/:id`, `GET /api/v1/licenses/:key/validate`, `GET /api/v1/users/:id/sessions`
-- Auth: `Authorization: Bearer nova_sk_...`; key hashed (SHA-256) and matched to `api_keys`; scopes enforced per endpoint. Rate-limited via existing `rate-limit.server`.
-- `/admin/api-keys` — create/revoke keys, show once.
+Order I'll actually implement, each landing green before the next:
 
-Billing scaffolding (`src/lib/billing.functions.ts` + `src/routes/api/public/webhooks/*`):
-- `payment_intents` table (provider, provider_id, user_id, package_id, amount_cents, currency, status, meta)
-- Provider adapters interface: `createCheckout(user, package)`, `handleWebhook(request)` — stubs for Stripe, PayPal, Apple Pay, Google Pay, Mada, STC Pay
-- Webhook route validates signature (per provider), on `succeeded` calls shared `activateOrRenewLicense(user, package)` used by activation codes / admin renew / payment webhooks — one code path.
-- Only Stripe stub gets a real signature check; others log and return 202 until keys are provided. Login-notification hook lives here (`onLicenseActivated`) but sends via email connector only if configured.
-
----
-
-## What I'll defer and why
-
-- **Email/SMS login notifications** actually delivered: needs a mail connector (Resend/SendGrid). I'll wire the hook and UI toggle; sending activates when the user connects an email provider — otherwise it's a no-op with an admin banner.
-- **Real payment charging** for Stripe/PayPal/Apple/Google/Mada/STC — requires the user's merchant accounts + secrets. Scaffolding + webhook contract ships now; live keys unlock the flow.
-- **Apple Pay / Google Pay** as first-party providers — normally ride on Stripe/Adyen; I'll expose them through the Stripe adapter's payment-request button rather than as separate integrations.
-
----
+1. Migration + RBAC helpers + audit helper (foundation).
+2. Devices + Sessions server fns and pages.
+3. Security Center + Notifications + auto-lock in `finalizeLogin`.
+4. Bulk ops (preview + execute) + Bulk page.
+5. Export routes + "Export" button on every list.
+6. Dashboard v2 + System Health page.
+7. Audit trail page.
+8. Vitest suite; make everything green.
 
 ## Technical notes
 
-- Every new table follows the required order: CREATE → GRANT (authenticated + service_role, no anon) → RLS → policies using `is_admin` / `is_staff` / owner. Reseller access via a `is_reseller_of(caller, target)` SECURITY DEFINER helper.
-- All server fns keep to the `tanstack-serverfn-splitting` rule (helpers in `.server.ts`, handlers in `.functions.ts`).
-- `assertAdmin`/`assertStaff`/`assertReseller`/`assertSuperAdmin` gates before any `supabaseAdmin` write.
-- Query builders use the `.returns<T>()` pattern from `query-builder-type-performance` to keep typecheck fast.
-- All new admin pages under the existing `/admin` layout; nav grows to include Packages / Licenses / Codes / Devices / Sessions / Activity / Resellers / API keys / Security.
-- Client-side password-strength meter uses `zxcvbn-ts` (small, no network).
+- Every new table follows CREATE → GRANT → RLS → POLICY.
+- All mutating server fns: `.middleware([requireSupabaseAuth])` → `assertRole` → do work → `writeAudit` → `emitNotification` where relevant.
+- Export routes live at `/api/admin/export/*` (NOT `api/public`) and validate bearer inside the handler.
+- xlsx uses the `xlsx` package (Worker-safe, pure JS).
+- Recharts added if missing.
+- No changes to existing playback/backend logic.
 
----
-
-## Rollout order
-
-I'll implement and verify **2A first**, then 2B, then 2C — each ends with a working preview and its own migration. Approving this plan means "go ahead with all three sub-phases in order"; if you want to stop after 2A or 2B just say so.
+Approve and I'll execute steps 1–8 in order.
