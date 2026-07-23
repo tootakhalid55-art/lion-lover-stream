@@ -1,0 +1,28 @@
+# Local production-like stack.
+# For a real deployment, use the Terraform module under infra/ instead.
+version: "3.9"
+
+services:
+  app:
+    build: .
+    image: nova-tv:local
+    restart: unless-stopped
+    env_file: .env.production
+    ports: ["3000:3000"]
+    depends_on: [proxy]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/v1/health/live').then(r=>process.exit(r.ok?0:1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits: { cpus: "2", memory: 1024M }
+
+  proxy:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/certs:/etc/nginx/certs:ro
