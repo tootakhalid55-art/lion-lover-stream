@@ -9,7 +9,11 @@ export type AppRole =
   | "moderator"
   | "support"
   | "auditor"
-  | "readonly";
+  | "readonly"
+  | "reseller_owner"
+  | "reseller_staff"
+  | "billing_admin"
+  | "api_client";
 
 export const ROLE_LABEL: Record<AppRole, string> = {
   super_admin: "مسؤول أعلى",
