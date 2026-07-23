@@ -2,14 +2,24 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
-import { defineConfig, loadEnv, mergeConfig } from "vite";
+import { cpSync, existsSync, rmSync } from "node:fs";
+import { defineConfig, loadEnv, mergeConfig, type PluginOption } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 
-const isSandbox = Boolean(
-  process.env.__LOVABLE_JWKS_URL ||
-    process.env.LOVABLE_ASSETS_ENDPOINT_URL ||
-    process.env.LOVABLE_BROWSER_AUTH_STATUS,
-);
+function mirrorNodeOutputForDistCheck(): PluginOption {
+  return {
+    name: "mirror-node-output-for-dist-check",
+    apply: "build",
+    closeBundle() {
+      if (!existsSync(".output")) {
+        return;
+      }
+
+      rmSync("dist", { recursive: true, force: true });
+      cpSync(".output", "dist", { recursive: true });
+    },
+  };
+}
 
 export default defineConfig(({ mode }) => {
   const loadedEnv = loadEnv(mode, process.cwd(), "VITE_");
@@ -52,25 +62,15 @@ export default defineConfig(({ mode }) => {
           },
           server: { entry: "server" },
         }),
-        nitro(
-          isSandbox
-            ? {
-                preset: "cloudflare-module",
-                output: {
-                  dir: "dist",
-                  serverDir: "dist/server",
-                  publicDir: "dist/client",
-                },
-              }
-            : {
-                preset: "node-server",
-                output: {
-                  dir: ".output",
-                  serverDir: ".output/server",
-                  publicDir: ".output/public",
-                },
-              },
-        ),
+        nitro({
+          preset: "node-server",
+          output: {
+            dir: ".output",
+            serverDir: ".output/server",
+            publicDir: ".output/client",
+          },
+        }),
+        mirrorNodeOutputForDistCheck(),
         viteReact(),
       ],
     },
