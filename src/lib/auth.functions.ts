@@ -55,10 +55,22 @@ async function assertAdmin(ctx: { supabase: any; userId: string }): Promise<AppR
 async function audit(action: string, target_user_id: string | null, meta: any, actor_id: string | null = null) {
   try {
     const admin = await getAdmin();
-    await admin.from("audit_logs").insert({ action, target_user_id, meta, actor_id, ip: clientIp() });
+    await admin.from("audit_logs").insert({ action, target_user_id, meta, actor_id, ip: clientIp(), user_agent: clientUA() });
   } catch (e) {
     console.error("[audit] failed", e);
   }
+}
+async function secEvent(userId: string | null, kind: string, severity: "info" | "warn" | "critical" = "info", meta: any = {}) {
+  try {
+    const admin = await getAdmin();
+    await admin.from("security_events").insert({ user_id: userId, kind, severity, ip: clientIp(), user_agent: clientUA(), meta });
+  } catch (e) { console.error("[sec] failed", e); }
+}
+async function notify(userId: string | null, kind: string, title: string, body?: string, severity: "info" | "warn" | "critical" = "info") {
+  try {
+    const admin = await getAdmin();
+    await admin.from("notifications").insert({ user_id: userId, kind, title, body: body ?? null, severity });
+  } catch (e) { console.error("[notify] failed", e); }
 }
 
 // ─── Password generator ─────────────────────────────────────────────────
