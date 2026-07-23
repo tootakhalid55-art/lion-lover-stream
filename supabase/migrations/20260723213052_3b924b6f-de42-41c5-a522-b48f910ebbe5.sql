@@ -1,0 +1,1 @@
+ALTER VIEW public.billing_metrics_recent SET (security_invoker = on);
