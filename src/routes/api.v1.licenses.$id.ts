@@ -10,6 +10,7 @@ const handler = makeV1Handler(
           .from("licenses")
           .select("*")
           .eq("id", params.id)
+          .eq("org_id", ctx.orgId)
           .maybeSingle();
         if (error) throw new Error(error.message);
         if (!data) throw new Error("License not found");
