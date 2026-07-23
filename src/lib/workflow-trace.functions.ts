@@ -15,7 +15,7 @@ export interface TraceStep {
   type: string;
   refType?: string | null;
   refId?: string | null;
-  payload?: Record<string, unknown> | null;
+  payload?: Record<string, string | number | boolean | null | undefined> | null;
 }
 
 export const getWorkflowTrace = createServerFn({ method: "POST" })

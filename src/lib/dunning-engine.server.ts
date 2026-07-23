@@ -60,7 +60,7 @@ export interface AdvanceResult {
  */
 export async function advanceDunning(subscriptionId: string, correlationId?: string): Promise<AdvanceResult> {
   const cid = correlationId ?? currentCorrelationId() ?? newCorrelationId();
-  return withCorrelation(cid, async () => {
+  return runWithCorrelation(cid, async () => {
     const lock = await withAdvisoryLock("dunning", subscriptionId, async () => {
       const { data: sub, error } = await supabaseAdmin
         .from("subscriptions")
