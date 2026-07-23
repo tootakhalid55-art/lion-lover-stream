@@ -148,9 +148,13 @@ export const resolveLoginEmail = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!p) {
       await admin.from("login_attempts").insert({ username: data.username, ip: clientIp(), success: false, reason: "no_user", user_agent: clientUA() });
+      await secEvent(null, "failed_login", "info", { username: data.username, reason: "no_user" });
       throw new Error("بيانات الدخول غير صحيحة");
     }
-    if (p.locked_until && new Date(p.locked_until) > new Date()) throw new Error("الحساب مقفول مؤقتًا. حاول لاحقًا.");
+    if (p.locked_until && new Date(p.locked_until) > new Date()) {
+      await secEvent(p.id, "failed_login", "warn", { reason: "locked" });
+      throw new Error("الحساب مقفول مؤقتًا. حاول لاحقًا.");
+    }
     if (p.status === "suspended") throw new Error("الحساب معلّق. تواصل مع الإدارة.");
     if (p.status === "disabled") throw new Error("الحساب معطّل.");
     if (p.expires_at && new Date(p.expires_at) < new Date()) {
