@@ -84,7 +84,7 @@ export async function deliverOnce(deliveryId: string): Promise<{ ok: boolean; st
   if (!d) return { ok: false, error: "delivery not found" };
   const { data: ep } = await supabaseAdmin
     .from("webhook_endpoints")
-    .select("url, secret, active, org_id")
+    .select("id, url, secret, active, org_id")
     .eq("id", d.endpoint_id)
     .maybeSingle();
   const { data: evt } = await supabaseAdmin
