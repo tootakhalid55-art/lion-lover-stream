@@ -2,21 +2,36 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
-import { cpSync, existsSync, rmSync } from "node:fs";
-import { defineConfig, loadEnv, mergeConfig, type PluginOption } from "vite";
+import { rmSync } from "node:fs";
+import { defineConfig, loadEnv, mergeConfig, type PluginOption, type UserConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 
-function mirrorNodeOutputForDistCheck(): PluginOption {
+const NODE_NITRO_PRESET = "node-server" as const;
+
+const nodeNitroConfig = {
+  preset: NODE_NITRO_PRESET,
+  output: {
+    dir: ".output",
+    serverDir: ".output/server",
+    publicDir: ".output/client",
+  },
+} satisfies UserConfig["nitro"];
+
+function forceNodeNitroBuild(): PluginOption {
   return {
-    name: "mirror-node-output-for-dist-check",
+    name: "force-node-nitro-build",
+    enforce: "pre",
     apply: "build",
-    closeBundle() {
-      if (!existsSync(".output")) {
-        return;
+    config(_config, { command }) {
+      process.env.NITRO_PRESET = NODE_NITRO_PRESET;
+      process.env.SERVER_PRESET = NODE_NITRO_PRESET;
+
+      if (command === "build") {
+        rmSync(".output", { recursive: true, force: true });
+        rmSync("dist", { recursive: true, force: true });
       }
 
-      rmSync("dist", { recursive: true, force: true });
-      cpSync(".output", "dist", { recursive: true });
+      return { nitro: nodeNitroConfig };
     },
   };
 }
@@ -33,6 +48,7 @@ export default defineConfig(({ mode }) => {
         ]),
       ),
       css: { transformer: "lightningcss" },
+      nitro: nodeNitroConfig,
       resolve: {
         alias: { "@": `${process.cwd()}/src` },
         dedupe: [
@@ -50,6 +66,7 @@ export default defineConfig(({ mode }) => {
         strictPort: true,
       },
       plugins: [
+        forceNodeNitroBuild(),
         tailwindcss(),
         tsConfigPaths({ projects: ["./tsconfig.json"] }),
         tanstackStart({
@@ -62,15 +79,7 @@ export default defineConfig(({ mode }) => {
           },
           server: { entry: "server" },
         }),
-        nitro({
-          preset: "node-server",
-          output: {
-            dir: ".output",
-            serverDir: ".output/server",
-            publicDir: ".output/client",
-          },
-        }),
-        mirrorNodeOutputForDistCheck(),
+        nitro(nodeNitroConfig),
         viteReact(),
       ],
     },
