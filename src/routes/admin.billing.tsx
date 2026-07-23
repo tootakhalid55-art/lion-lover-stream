@@ -118,10 +118,10 @@ function Kpi({ icon, label, value, accent }: { icon: React.ReactNode; label: str
   );
 }
 
-function pillTone(status: string): "success" | "warn" | "danger" | "muted" | "info" {
-  if (status === "paid") return "success";
-  if (status === "overdue") return "danger";
-  if (status === "partially_paid" || status === "sent") return "warn";
-  if (status === "cancelled" || status === "refunded" || status === "written_off") return "muted";
-  return "info";
+function pillTone(status: string): "blue" | "green" | "purple" | "red" | "slate" | "yellow" {
+  if (status === "paid") return "green";
+  if (status === "overdue") return "red";
+  if (status === "partially_paid" || status === "sent") return "yellow";
+  if (status === "cancelled" || status === "refunded" || status === "written_off") return "slate";
+  return "blue";
 }
