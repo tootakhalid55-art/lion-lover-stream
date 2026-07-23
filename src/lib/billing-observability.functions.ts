@@ -43,8 +43,9 @@ function quantile(sorted: number[], q: number): number | null {
   return sorted[idx];
 }
 
-async function assertAdmin(context: { supabase: { rpc: (n: never, a: never) => Promise<{ data: unknown }> }; userId: string }) {
-  const { data } = await (context.supabase.rpc as (n: string, a: Record<string, unknown>) => Promise<{ data: unknown }>)("has_role", { _user_id: context.userId, _role: "admin" });
+async function assertAdmin(context: { supabase: unknown; userId: string }): Promise<void> {
+  const rpc = (context.supabase as { rpc: (n: string, a: Record<string, unknown>) => Promise<{ data: unknown }> }).rpc;
+  const { data } = await rpc("has_role", { _user_id: context.userId, _role: "admin" });
   if (!data) throw new Error("Forbidden");
 }
 
