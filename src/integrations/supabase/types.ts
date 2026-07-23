@@ -72,8 +72,10 @@ export type Database = {
       }
       api_keys: {
         Row: {
+          allowed_ips: string[]
           created_at: string
           created_by: string | null
+          description: string | null
           expires_at: string | null
           hash: string
           id: string
@@ -84,10 +86,14 @@ export type Database = {
           prefix: string
           revoked_at: string | null
           scopes: string[]
+          status: string
+          updated_at: string
         }
         Insert: {
+          allowed_ips?: string[]
           created_at?: string
           created_by?: string | null
+          description?: string | null
           expires_at?: string | null
           hash: string
           id?: string
@@ -98,10 +104,14 @@ export type Database = {
           prefix: string
           revoked_at?: string | null
           scopes?: string[]
+          status?: string
+          updated_at?: string
         }
         Update: {
+          allowed_ips?: string[]
           created_at?: string
           created_by?: string | null
+          description?: string | null
           expires_at?: string | null
           hash?: string
           id?: string
@@ -112,6 +122,8 @@ export type Database = {
           prefix?: string
           revoked_at?: string | null
           scopes?: string[]
+          status?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -183,6 +195,7 @@ export type Database = {
           actor_id: string | null
           after_value: Json | null
           before_value: Json | null
+          correlation_id: string | null
           created_at: string
           id: string
           ip: string | null
@@ -195,6 +208,7 @@ export type Database = {
           actor_id?: string | null
           after_value?: Json | null
           before_value?: Json | null
+          correlation_id?: string | null
           created_at?: string
           id?: string
           ip?: string | null
@@ -207,6 +221,7 @@ export type Database = {
           actor_id?: string | null
           after_value?: Json | null
           before_value?: Json | null
+          correlation_id?: string | null
           created_at?: string
           id?: string
           ip?: string | null
@@ -219,6 +234,7 @@ export type Database = {
       billing_events: {
         Row: {
           actor_id: string | null
+          correlation_id: string | null
           created_at: string
           event_type: string
           id: string
@@ -230,6 +246,7 @@ export type Database = {
         }
         Insert: {
           actor_id?: string | null
+          correlation_id?: string | null
           created_at?: string
           event_type: string
           id?: string
@@ -241,6 +258,7 @@ export type Database = {
         }
         Update: {
           actor_id?: string | null
+          correlation_id?: string | null
           created_at?: string
           event_type?: string
           id?: string
@@ -419,6 +437,59 @@ export type Database = {
           source?: string
         }
         Relationships: []
+      }
+      idempotency_keys: {
+        Row: {
+          api_key_id: string | null
+          correlation_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          key: string
+          method: string
+          org_id: string | null
+          path: string
+          request_hash: string
+          response_body: string | null
+          response_status: number | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          key: string
+          method: string
+          org_id?: string | null
+          path: string
+          request_hash: string
+          response_body?: string | null
+          response_status?: number | null
+        }
+        Update: {
+          api_key_id?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          key?: string
+          method?: string
+          org_id?: string | null
+          path?: string
+          request_hash?: string
+          response_body?: string | null
+          response_status?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idempotency_keys_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_lines: {
         Row: {
@@ -1937,39 +2008,57 @@ export type Database = {
       webhook_deliveries: {
         Row: {
           attempt: number
+          correlation_id: string | null
           created_at: string
+          dead: boolean
           delivered_at: string | null
           endpoint_id: string
           event_id: string
           id: string
+          last_error: string | null
           next_attempt_at: string | null
+          request_body: string | null
+          request_headers: Json
           response_body: string | null
+          response_headers: Json
           response_status: number | null
           status: string
           updated_at: string
         }
         Insert: {
           attempt?: number
+          correlation_id?: string | null
           created_at?: string
+          dead?: boolean
           delivered_at?: string | null
           endpoint_id: string
           event_id: string
           id?: string
+          last_error?: string | null
           next_attempt_at?: string | null
+          request_body?: string | null
+          request_headers?: Json
           response_body?: string | null
+          response_headers?: Json
           response_status?: number | null
           status?: string
           updated_at?: string
         }
         Update: {
           attempt?: number
+          correlation_id?: string | null
           created_at?: string
+          dead?: boolean
           delivered_at?: string | null
           endpoint_id?: string
           event_id?: string
           id?: string
+          last_error?: string | null
           next_attempt_at?: string | null
+          request_body?: string | null
+          request_headers?: Json
           response_body?: string | null
+          response_headers?: Json
           response_status?: number | null
           status?: string
           updated_at?: string
@@ -1996,6 +2085,7 @@ export type Database = {
           active: boolean
           created_at: string
           created_by: string | null
+          description: string | null
           events: string[]
           id: string
           org_id: string
@@ -2007,6 +2097,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           created_by?: string | null
+          description?: string | null
           events?: string[]
           id?: string
           org_id: string
@@ -2018,6 +2109,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           created_by?: string | null
+          description?: string | null
           events?: string[]
           id?: string
           org_id?: string
