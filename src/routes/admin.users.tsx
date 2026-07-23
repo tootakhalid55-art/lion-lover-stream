@@ -225,19 +225,22 @@ function Modal({ title, children, onClose }: any) {
   );
 }
 
-function CreateModal({ onSubmit, onClose, busy, error }: { onSubmit: (v: any) => void; onClose: () => void; busy: boolean; error?: string }) {
+function CreateModal({ onSubmit, onClose, busy, error, packages }: { onSubmit: (v: any) => void; onClose: () => void; busy: boolean; error?: string; packages: any[] }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [packageId, setPackageId] = useState<string>("");
   const [durationDays, setDurationDays] = useState<number | null>(30);
   const [notes, setNotes] = useState("");
   function onFormSubmit(e: FormEvent) {
     e.preventDefault();
     onSubmit({
       username: username || undefined, password: password || undefined,
-      displayName: displayName || undefined, email, phone, durationDays, notes,
+      displayName: displayName || undefined, email, phone,
+      packageId: packageId || null,
+      durationDays: packageId ? null : durationDays, notes,
     });
   }
   return (
@@ -256,12 +259,20 @@ function CreateModal({ onSubmit, onClose, busy, error }: { onSubmit: (v: any) =>
           <Field label="البريد (اختياري)"><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} /></Field>
           <Field label="الهاتف (اختياري)"><input value={phone} onChange={(e) => setPhone(e.target.value)} className={input} /></Field>
         </div>
-        <Field label="مدة الاشتراك">
-          <select value={durationDays === null ? "lifetime" : String(durationDays)}
-            onChange={(e) => setDurationDays(e.target.value === "lifetime" ? null : Number(e.target.value))} className={input}>
-            {DURATION_OPTIONS.map((o) => <option key={o.label} value={o.days === null ? "lifetime" : o.days}>{o.label}</option>)}
+        <Field label="الباقة">
+          <select value={packageId} onChange={(e) => setPackageId(e.target.value)} className={input}>
+            <option value="">— بدون باقة (مدة يدوية) —</option>
+            {packages.map((p: any) => <option key={p.id} value={p.id}>{p.name} · {p.duration_days ?? "∞"} يوم · {p.max_devices} جهاز</option>)}
           </select>
         </Field>
+        {!packageId && (
+          <Field label="مدة الاشتراك">
+            <select value={durationDays === null ? "lifetime" : String(durationDays)}
+              onChange={(e) => setDurationDays(e.target.value === "lifetime" ? null : Number(e.target.value))} className={input}>
+              {DURATION_OPTIONS.map((o) => <option key={o.label} value={o.days === null ? "lifetime" : o.days}>{o.label}</option>)}
+            </select>
+          </Field>
+        )}
         <Field label="ملاحظات">
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={input} />
         </Field>
@@ -274,16 +285,17 @@ function CreateModal({ onSubmit, onClose, busy, error }: { onSubmit: (v: any) =>
   );
 }
 
-function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; onSave: (v: any) => void }) {
+function EditModal({ row, onClose, onSave, packages }: { row: Row; onClose: () => void; onSave: (v: any) => void; packages: any[] }) {
   const [displayName, setDisplayName] = useState(row.display_name || "");
   const [email, setEmail] = useState(row.email || "");
   const [phone, setPhone] = useState(row.phone || "");
   const [status, setStatus] = useState<AccountStatus>(row.status as AccountStatus);
   const [durationDays, setDurationDays] = useState<number | null | undefined>(undefined);
+  const [packageId, setPackageId] = useState<string | null | undefined>(undefined);
   const [notes, setNotes] = useState<string>((row as any).notes || "");
   return (
     <Modal title={`تعديل ${row.username}`} onClose={onClose}>
-      <form onSubmit={(e) => { e.preventDefault(); onSave({ displayName, email, phone, status, durationDays, notes }); }} className="space-y-3">
+      <form onSubmit={(e) => { e.preventDefault(); onSave({ displayName, email, phone, status, durationDays, packageId, notes }); }} className="space-y-3">
         <Field label="الاسم الظاهر"><input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className={input} /></Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="البريد"><input value={email} onChange={(e) => setEmail(e.target.value)} className={input} /></Field>
@@ -293,6 +305,17 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
           <select value={status} onChange={(e) => setStatus(e.target.value as AccountStatus)} className={input}>
             {(["active","suspended","expired","disabled","locked"] as AccountStatus[]).map((s) =>
               <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+          </select>
+        </Field>
+        <Field label="تغيير الباقة (اختياري)">
+          <select value={packageId === undefined ? "__nochange" : packageId ?? "__none"}
+            onChange={(e) => {
+              const v = e.target.value;
+              setPackageId(v === "__nochange" ? undefined : v === "__none" ? null : v);
+            }} className={input}>
+            <option value="__nochange">— لا تغيير —</option>
+            <option value="__none">إزالة الباقة</option>
+            {packages.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </Field>
         <Field label="تمديد الاشتراك (اختياري)">
