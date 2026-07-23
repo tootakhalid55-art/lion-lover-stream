@@ -61,21 +61,26 @@ function AdminLayout() {
             </div>
           </div>
           <nav className="mx-2 flex flex-wrap items-center gap-1 text-sm">
-            <Link to="/admin" activeOptions={{ exact: true }} activeProps={{ className: "bg-white/10" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/5">
-              <LayoutDashboard className="h-4 w-4" /> نظرة عامة
-            </Link>
-            <Link to="/admin/users" activeProps={{ className: "bg-white/10" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/5">
-              <Users className="h-4 w-4" /> المستخدمون
-            </Link>
-            <Link to="/admin/packages" activeProps={{ className: "bg-white/10" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/5">
-              <Package className="h-4 w-4" /> الباقات
-            </Link>
-            <Link to="/admin/licenses" activeProps={{ className: "bg-white/10" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/5">
-              <Key className="h-4 w-4" /> الرخص
-            </Link>
-            <Link to="/admin/codes" activeProps={{ className: "bg-white/10" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/5">
-              <Ticket className="h-4 w-4" /> رموز التفعيل
-            </Link>
+            {[
+              { to: "/admin", label: "نظرة عامة", icon: LayoutDashboard, exact: true },
+              { to: "/admin/users", label: "المستخدمون", icon: Users },
+              { to: "/admin/packages", label: "الباقات", icon: Package },
+              { to: "/admin/licenses", label: "الرخص", icon: Key },
+              { to: "/admin/codes", label: "رموز التفعيل", icon: Ticket },
+              { to: "/admin/devices", label: "الأجهزة", icon: MonitorSmartphone },
+              { to: "/admin/sessions", label: "الجلسات", icon: Activity },
+              { to: "/admin/security", label: "الأمان", icon: ShieldAlert },
+              { to: "/admin/audit", label: "التدقيق", icon: ListChecks },
+              { to: "/admin/bulk", label: "جماعي", icon: Wand2 },
+              { to: "/admin/notifications", label: "الإشعارات", icon: Bell },
+              { to: "/admin/system", label: "النظام", icon: Server },
+            ].map((l) => (
+              <Link key={l.to} to={l.to} activeOptions={l.exact ? { exact: true } : undefined}
+                activeProps={{ className: "bg-white/10" }}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/5">
+                <l.icon className="h-4 w-4" /> {l.label}
+              </Link>
+            ))}
           </nav>
           <div className="mr-auto flex items-center gap-2">
             <span className="hidden sm:inline text-xs text-foreground/60">{q.data.username}</span>
