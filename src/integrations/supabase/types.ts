@@ -376,6 +376,51 @@ export type Database = {
           },
         ]
       }
+      dead_letter_queue: {
+        Row: {
+          attempts: number
+          correlation_id: string | null
+          created_at: string
+          error: string
+          event_type: string | null
+          id: string
+          payload: Json
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          source: string
+          source_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          correlation_id?: string | null
+          created_at?: string
+          error: string
+          event_type?: string | null
+          id?: string
+          payload?: Json
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source: string
+          source_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          correlation_id?: string | null
+          created_at?: string
+          error?: string
+          event_type?: string | null
+          id?: string
+          payload?: Json
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source?: string
+          source_id?: string | null
+        }
+        Relationships: []
+      }
       doc_number_sequences: {
         Row: {
           branch: string
@@ -407,6 +452,159 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dunning_policies: {
+        Row: {
+          created_at: string
+          description: string | null
+          grace_days: number
+          id: string
+          is_default: boolean
+          name: string
+          org_id: string | null
+          terminate_after_days: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          grace_days?: number
+          id?: string
+          is_default?: boolean
+          name: string
+          org_id?: string | null
+          terminate_after_days?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          grace_days?: number
+          id?: string
+          is_default?: boolean
+          name?: string
+          org_id?: string | null
+          terminate_after_days?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dunning_policies_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dunning_policy_stages: {
+        Row: {
+          action: string
+          channels: string[]
+          id: string
+          offset_days: number
+          policy_id: string
+          stage_index: number
+          template_code: string | null
+        }
+        Insert: {
+          action: string
+          channels?: string[]
+          id?: string
+          offset_days: number
+          policy_id: string
+          stage_index: number
+          template_code?: string | null
+        }
+        Update: {
+          action?: string
+          channels?: string[]
+          id?: string
+          offset_days?: number
+          policy_id?: string
+          stage_index?: number
+          template_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dunning_policy_stages_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "dunning_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_flag_overrides: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          flag_key: string
+          id: string
+          reason: string | null
+          scope: string
+          scope_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled: boolean
+          flag_key: string
+          id?: string
+          reason?: string | null
+          scope: string
+          scope_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          flag_key?: string
+          id?: string
+          reason?: string | null
+          scope?: string
+          scope_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flag_overrides_flag_key_fkey"
+            columns: ["flag_key"]
+            isOneToOne: false
+            referencedRelation: "feature_flags"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      feature_flags: {
+        Row: {
+          category: string
+          created_at: string
+          default_enabled: boolean
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          default_enabled?: boolean
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          default_enabled?: boolean
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       fx_rates: {
         Row: {
@@ -678,6 +876,110 @@ export type Database = {
           },
         ]
       }
+      job_definitions: {
+        Row: {
+          avg_runtime_ms: number | null
+          code: string
+          created_at: string
+          description: string | null
+          handler: string
+          id: string
+          is_enabled: boolean
+          last_failure_at: string | null
+          last_run_at: string | null
+          last_success_at: string | null
+          max_retries: number
+          name: string
+          schedule: string
+          timeout_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          avg_runtime_ms?: number | null
+          code: string
+          created_at?: string
+          description?: string | null
+          handler: string
+          id?: string
+          is_enabled?: boolean
+          last_failure_at?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          max_retries?: number
+          name: string
+          schedule: string
+          timeout_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          avg_runtime_ms?: number | null
+          code?: string
+          created_at?: string
+          description?: string | null
+          handler?: string
+          id?: string
+          is_enabled?: boolean
+          last_failure_at?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          max_retries?: number
+          name?: string
+          schedule?: string
+          timeout_seconds?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      job_runs: {
+        Row: {
+          attempt: number
+          correlation_id: string | null
+          duration_ms: number | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          job_id: string
+          output: Json
+          started_at: string
+          status: string
+          triggered_by: string
+        }
+        Insert: {
+          attempt?: number
+          correlation_id?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          job_id: string
+          output?: Json
+          started_at?: string
+          status?: string
+          triggered_by?: string
+        }
+        Update: {
+          attempt?: number
+          correlation_id?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          job_id?: string
+          output?: Json
+          started_at?: string
+          status?: string
+          triggered_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_runs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "job_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journal_entries: {
         Row: {
           currency: string
@@ -939,6 +1241,171 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_channels_config: {
+        Row: {
+          channel: string
+          config: Json
+          created_at: string
+          id: string
+          is_enabled: boolean
+          org_id: string | null
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          config?: Json
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          org_id?: string | null
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          config?: Json
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          org_id?: string | null
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_channels_config_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_deliveries: {
+        Row: {
+          attempts: number
+          body: string
+          channel: string
+          correlation_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          last_attempt_at: string | null
+          meta: Json
+          next_attempt_at: string | null
+          org_id: string | null
+          provider: string | null
+          provider_ref: string | null
+          recipient: string
+          status: string
+          subject: string | null
+          template_code: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          body: string
+          channel: string
+          correlation_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          meta?: Json
+          next_attempt_at?: string | null
+          org_id?: string | null
+          provider?: string | null
+          provider_ref?: string | null
+          recipient: string
+          status?: string
+          subject?: string | null
+          template_code: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          body?: string
+          channel?: string
+          correlation_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          meta?: Json
+          next_attempt_at?: string | null
+          org_id?: string | null
+          provider?: string | null
+          provider_ref?: string | null
+          recipient?: string
+          status?: string
+          subject?: string | null
+          template_code?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_deliveries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_templates: {
+        Row: {
+          body: string
+          channel: string
+          code: string
+          created_at: string
+          id: string
+          is_enabled: boolean
+          locale: string
+          org_id: string | null
+          subject: string | null
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          body: string
+          channel: string
+          code: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          locale?: string
+          org_id?: string | null
+          subject?: string | null
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          body?: string
+          channel?: string
+          code?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          locale?: string
+          org_id?: string | null
+          subject?: string | null
+          updated_at?: string
+          variables?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_templates_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -1112,6 +1579,54 @@ export type Database = {
           },
         ]
       }
+      outbox_events: {
+        Row: {
+          aggregate_id: string | null
+          aggregate_type: string
+          attempts: number
+          correlation_id: string | null
+          created_at: string
+          delivered_at: string | null
+          event_type: string
+          id: string
+          last_error: string | null
+          next_attempt_at: string
+          payload: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          aggregate_id?: string | null
+          aggregate_type: string
+          attempts?: number
+          correlation_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          event_type: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          payload?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          aggregate_id?: string | null
+          aggregate_type?: string
+          attempts?: number
+          correlation_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          payload?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       package_pricing: {
         Row: {
           created_at: string
@@ -1244,6 +1759,144 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_configs: {
+        Row: {
+          config: Json
+          created_at: string
+          display_name: string | null
+          id: string
+          is_default: boolean
+          is_enabled: boolean
+          merchant_id: string | null
+          mode: string
+          org_id: string | null
+          provider: string
+          publishable_key: string | null
+          secret_key_ref: string | null
+          updated_at: string
+          webhook_secret_ref: string | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_default?: boolean
+          is_enabled?: boolean
+          merchant_id?: string | null
+          mode?: string
+          org_id?: string | null
+          provider: string
+          publishable_key?: string | null
+          secret_key_ref?: string | null
+          updated_at?: string
+          webhook_secret_ref?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_default?: boolean
+          is_enabled?: boolean
+          merchant_id?: string | null
+          mode?: string
+          org_id?: string | null
+          provider?: string
+          publishable_key?: string | null
+          secret_key_ref?: string | null
+          updated_at?: string
+          webhook_secret_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateway_configs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_intents: {
+        Row: {
+          amount_cents: number
+          client_secret: string | null
+          correlation_id: string | null
+          created_at: string
+          currency: string
+          failure_code: string | null
+          failure_message: string | null
+          id: string
+          invoice_id: string | null
+          metadata: Json
+          org_id: string
+          provider: string
+          provider_ref: string | null
+          status: string
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          client_secret?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          currency?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json
+          org_id: string
+          provider: string
+          provider_ref?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          client_secret?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          currency?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json
+          org_id?: string
+          provider?: string
+          provider_ref?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_intents_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_intents_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_intents_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_methods: {
         Row: {
           brand: string | null
@@ -1290,6 +1943,79 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_refunds: {
+        Row: {
+          amount_cents: number
+          correlation_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json
+          org_id: string
+          payment_id: string | null
+          payment_intent_id: string | null
+          provider: string
+          provider_ref: string | null
+          reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          correlation_id?: string | null
+          created_at?: string
+          currency: string
+          id?: string
+          metadata?: Json
+          org_id: string
+          payment_id?: string | null
+          payment_intent_id?: string | null
+          provider: string
+          provider_ref?: string | null
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          correlation_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          org_id?: string
+          payment_id?: string | null
+          payment_intent_id?: string | null
+          provider?: string
+          provider_ref?: string | null
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_refunds_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_refunds_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_refunds_payment_intent_id_fkey"
+            columns: ["payment_intent_id"]
+            isOneToOne: false
+            referencedRelation: "payment_intents"
             referencedColumns: ["id"]
           },
         ]
@@ -1482,6 +2208,147 @@ export type Database = {
           },
         ]
       }
+      reconciliation_batches: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          matched_count: number
+          meta: Json
+          org_id: string | null
+          period_end: string | null
+          period_start: string | null
+          provider: string
+          source: string
+          status: string
+          total_amount_cents: number
+          unmatched_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          matched_count?: number
+          meta?: Json
+          org_id?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          provider: string
+          source?: string
+          status?: string
+          total_amount_cents?: number
+          unmatched_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          matched_count?: number
+          meta?: Json
+          org_id?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          provider?: string
+          source?: string
+          status?: string
+          total_amount_cents?: number
+          unmatched_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_batches_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reconciliation_entries: {
+        Row: {
+          amount_cents: number
+          batch_id: string
+          created_at: string
+          currency: string
+          external_ref: string
+          id: string
+          matched_amount_cents: number
+          matched_at: string | null
+          matched_by: string | null
+          note: string | null
+          occurred_at: string | null
+          payment_id: string | null
+          payment_intent_id: string | null
+          raw: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          batch_id: string
+          created_at?: string
+          currency: string
+          external_ref: string
+          id?: string
+          matched_amount_cents?: number
+          matched_at?: string | null
+          matched_by?: string | null
+          note?: string | null
+          occurred_at?: string | null
+          payment_id?: string | null
+          payment_intent_id?: string | null
+          raw?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          batch_id?: string
+          created_at?: string
+          currency?: string
+          external_ref?: string
+          id?: string
+          matched_amount_cents?: number
+          matched_at?: string | null
+          matched_by?: string | null
+          note?: string | null
+          occurred_at?: string | null
+          payment_id?: string | null
+          payment_intent_id?: string | null
+          raw?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_entries_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "reconciliation_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliation_entries_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliation_entries_payment_intent_id_fkey"
+            columns: ["payment_intent_id"]
+            isOneToOne: false
+            referencedRelation: "payment_intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reseller_profiles: {
         Row: {
           address: Json
@@ -1547,6 +2414,102 @@ export type Database = {
           },
         ]
       }
+      revenue_entries: {
+        Row: {
+          amount_cents: number
+          id: string
+          period: string
+          recognized_at: string | null
+          schedule_id: string
+        }
+        Insert: {
+          amount_cents: number
+          id?: string
+          period: string
+          recognized_at?: string | null
+          schedule_id: string
+        }
+        Update: {
+          amount_cents?: number
+          id?: string
+          period?: string
+          recognized_at?: string | null
+          schedule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_entries_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_schedules: {
+        Row: {
+          created_at: string
+          currency: string
+          ends_on: string
+          id: string
+          invoice_id: string | null
+          meta: Json
+          method: string
+          org_id: string
+          starts_on: string
+          subscription_id: string | null
+          total_amount_cents: number
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          ends_on: string
+          id?: string
+          invoice_id?: string | null
+          meta?: Json
+          method?: string
+          org_id: string
+          starts_on: string
+          subscription_id?: string | null
+          total_amount_cents: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          ends_on?: string
+          id?: string
+          invoice_id?: string | null
+          meta?: Json
+          method?: string
+          org_id?: string
+          starts_on?: string
+          subscription_id?: string | null
+          total_amount_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_schedules_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_schedules_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_schedules_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_events: {
         Row: {
           country: string | null
@@ -1583,16 +2546,77 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_events: {
+        Row: {
+          actor_id: string | null
+          correlation_id: string | null
+          created_at: string
+          event_type: string
+          from_state: string | null
+          id: string
+          org_id: string
+          payload: Json
+          subscription_id: string
+          to_state: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          event_type: string
+          from_state?: string | null
+          id?: string
+          org_id: string
+          payload?: Json
+          subscription_id: string
+          to_state?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          event_type?: string
+          from_state?: string | null
+          id?: string
+          org_id?: string
+          payload?: Json
+          subscription_id?: string
+          to_state?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           cancel_at: string | null
           canceled_at: string | null
+          collection_method: string
           created_at: string
           current_period_end: string | null
           current_period_start: string
+          dunning_policy_id: string | null
+          dunning_stage: number
+          grace_period_ends_at: string | null
           id: string
+          last_billing_at: string | null
           meta: Json
+          next_billing_at: string | null
           org_id: string
+          payment_method_id: string | null
           plan_id: string
           quantity: number
           status: string
@@ -1602,12 +2626,19 @@ export type Database = {
         Insert: {
           cancel_at?: string | null
           canceled_at?: string | null
+          collection_method?: string
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string
+          dunning_policy_id?: string | null
+          dunning_stage?: number
+          grace_period_ends_at?: string | null
           id?: string
+          last_billing_at?: string | null
           meta?: Json
+          next_billing_at?: string | null
           org_id: string
+          payment_method_id?: string | null
           plan_id: string
           quantity?: number
           status?: string
@@ -1617,12 +2648,19 @@ export type Database = {
         Update: {
           cancel_at?: string | null
           canceled_at?: string | null
+          collection_method?: string
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string
+          dunning_policy_id?: string | null
+          dunning_stage?: number
+          grace_period_ends_at?: string | null
           id?: string
+          last_billing_at?: string | null
           meta?: Json
+          next_billing_at?: string | null
           org_id?: string
+          payment_method_id?: string | null
           plan_id?: string
           quantity?: number
           status?: string
@@ -1631,10 +2669,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "subscriptions_dunning_policy_fk"
+            columns: ["dunning_policy_id"]
+            isOneToOne: false
+            referencedRelation: "dunning_policies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "subscriptions_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
             referencedColumns: ["id"]
           },
           {
@@ -1781,6 +2833,94 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      usage_meter_readings: {
+        Row: {
+          created_at: string
+          id: string
+          meta: Json
+          meter_id: string
+          org_id: string
+          period_end: string
+          period_start: string
+          subscription_id: string | null
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meta?: Json
+          meter_id: string
+          org_id: string
+          period_end: string
+          period_start: string
+          subscription_id?: string | null
+          value?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meta?: Json
+          meter_id?: string
+          org_id?: string
+          period_end?: string
+          period_start?: string
+          subscription_id?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_meter_readings_meter_id_fkey"
+            columns: ["meter_id"]
+            isOneToOne: false
+            referencedRelation: "usage_meters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_meter_readings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_meter_readings_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usage_meters: {
+        Row: {
+          aggregation: string
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          unit: string
+        }
+        Insert: {
+          aggregation?: string
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          unit: string
+        }
+        Update: {
+          aggregation?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          unit?: string
+        }
+        Relationships: []
       }
       user_devices: {
         Row: {
