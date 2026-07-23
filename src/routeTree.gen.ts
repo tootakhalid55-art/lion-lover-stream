@@ -31,6 +31,7 @@ import { Route as AdminResellersRouteImport } from './routes/admin.resellers'
 import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminLicensesRouteImport } from './routes/admin.licenses'
+import { Route as AdminJobsRouteImport } from './routes/admin.jobs'
 import { Route as AdminDevicesRouteImport } from './routes/admin.devices'
 import { Route as AdminCodesRouteImport } from './routes/admin.codes'
 import { Route as AdminBulkRouteImport } from './routes/admin.bulk'
@@ -164,6 +165,11 @@ const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
 const AdminLicensesRoute = AdminLicensesRouteImport.update({
   id: '/licenses',
   path: '/licenses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminJobsRoute = AdminJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDevicesRoute = AdminDevicesRouteImport.update({
@@ -310,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
   '/admin/devices': typeof AdminDevicesRoute
+  '/admin/jobs': typeof AdminJobsRoute
   '/admin/licenses': typeof AdminLicensesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
@@ -357,6 +364,7 @@ export interface FileRoutesByTo {
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
   '/admin/devices': typeof AdminDevicesRoute
+  '/admin/jobs': typeof AdminJobsRoute
   '/admin/licenses': typeof AdminLicensesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
@@ -407,6 +415,7 @@ export interface FileRoutesById {
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
   '/admin/devices': typeof AdminDevicesRoute
+  '/admin/jobs': typeof AdminJobsRoute
   '/admin/licenses': typeof AdminLicensesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
@@ -457,6 +466,7 @@ export interface FileRouteTypes {
     | '/admin/bulk'
     | '/admin/codes'
     | '/admin/devices'
+    | '/admin/jobs'
     | '/admin/licenses'
     | '/admin/notifications'
     | '/admin/packages'
@@ -504,6 +514,7 @@ export interface FileRouteTypes {
     | '/admin/bulk'
     | '/admin/codes'
     | '/admin/devices'
+    | '/admin/jobs'
     | '/admin/licenses'
     | '/admin/notifications'
     | '/admin/packages'
@@ -553,6 +564,7 @@ export interface FileRouteTypes {
     | '/admin/bulk'
     | '/admin/codes'
     | '/admin/devices'
+    | '/admin/jobs'
     | '/admin/licenses'
     | '/admin/notifications'
     | '/admin/packages'
@@ -771,6 +783,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLicensesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/jobs': {
+      id: '/admin/jobs'
+      path: '/jobs'
+      fullPath: '/admin/jobs'
+      preLoaderRoute: typeof AdminJobsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/devices': {
       id: '/admin/devices'
       path: '/devices'
@@ -969,6 +988,7 @@ interface AdminRouteChildren {
   AdminBulkRoute: typeof AdminBulkRoute
   AdminCodesRoute: typeof AdminCodesRoute
   AdminDevicesRoute: typeof AdminDevicesRoute
+  AdminJobsRoute: typeof AdminJobsRoute
   AdminLicensesRoute: typeof AdminLicensesRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPackagesRoute: typeof AdminPackagesRoute
@@ -987,6 +1007,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBulkRoute: AdminBulkRoute,
   AdminCodesRoute: AdminCodesRoute,
   AdminDevicesRoute: AdminDevicesRoute,
+  AdminJobsRoute: AdminJobsRoute,
   AdminLicensesRoute: AdminLicensesRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPackagesRoute: AdminPackagesRoute,
