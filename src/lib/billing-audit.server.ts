@@ -50,11 +50,11 @@ export async function writeBillingAudit(entry: BillingAuditEntry): Promise<void>
       org_id: entry.orgId,
       event_type: entry.action,
       ref_type: entry.refType,
-      ref_id: entry.refId ?? null,
+      ref_id: (entry.refId ?? "") as string,
       payload: (entry.meta ?? {}) as never,
-      actor_id: entry.actorId ?? null,
+      actor_id: (entry.actorId ?? null) as string | null,
       correlation_id: correlationId,
-    });
+    } as never);
   } catch (e) {
     console.error("[billing-audit] billing_events insert failed", e);
   }
