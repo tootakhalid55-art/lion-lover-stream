@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Bell, Search, UserRound } from "lucide-react";
-import lionLogo from "@/assets/lion-logo.png";
+import novaLogo from "@/assets/nova-tv-logo.png.asset.json";
+
 import { IconBtn } from "@/components/primitives/IconBtn";
 import { useScrollState } from "@/hooks/use-scroll-state";
 import { useDismiss } from "@/hooks/use-dismiss";
@@ -33,17 +34,18 @@ export function Header() {
               className="absolute inset-0 rounded-full bg-brand/50 blur-xl motion-safe:animate-pulse-glow"
             />
             <img
-              src={lionLogo}
-              alt="LionTV"
+              src={novaLogo.url}
+              alt="Nova TV"
               width={40}
               height={40}
               className="relative h-10 w-10 shrink-0 object-contain"
             />
           </div>
           <span className="text-base font-extrabold tracking-wide">
-            <span className="text-gradient-brand">Lion</span>
-            <span className="text-foreground/95">TV</span>
+            <span className="text-gradient-brand">Nova</span>
+            <span className="text-foreground/95"> TV</span>
           </span>
+
         </div>
         <div />
         <div ref={wrapRef} className="relative flex items-center gap-1">

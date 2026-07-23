@@ -1,17 +1,18 @@
 {
-  "name": "LionTV — أفلام ومسلسلات",
-  "short_name": "LionTV",
-  "description": "تطبيق ليون تي في لمشاهدة الأفلام والمسلسلات والبث المباشر",
+  "name": "Nova TV — أفلام ومسلسلات",
+  "short_name": "Nova TV",
+  "description": "تطبيق Nova TV لمشاهدة الأفلام والمسلسلات والبث المباشر",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "dir": "rtl",
   "lang": "ar",
-  "background_color": "#0b0b0f",
-  "theme_color": "#0b0b0f",
+  "background_color": "#050505",
+  "theme_color": "#050505",
   "categories": ["entertainment", "video"],
   "icons": [
-    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+    { "src": "/__l5e/assets-v1/bf115614-9f6e-4bea-bff1-8ea1a6c3898e/nova-tv-logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/__l5e/assets-v1/bf115614-9f6e-4bea-bff1-8ea1a6c3898e/nova-tv-logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }
   ]
 }

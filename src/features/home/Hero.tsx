@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Info, Play, Plus, Volume2, VolumeX } from "lucide-react";
 import type { Hero as HeroData } from "@/services/api/types";
-import lionLogo from "@/assets/lion-logo.png";
+import novaLogo from "@/assets/nova-tv-logo.png.asset.json";
 import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion";
 import { track } from "@/lib/analytics";
 import { heroDetailPath, heroWatchPath, toggleFavorite, useFavorites } from "@/lib/user-data";
@@ -130,12 +130,13 @@ export function Hero({ heroes }: { heroes: HeroData[] }) {
           </div>
         ))}
         <img
-          src={lionLogo}
+          src={novaLogo.url}
           alt=""
           aria-hidden
           fetchPriority="high"
-          className="absolute -left-8 bottom-0 h-full w-auto opacity-20 grayscale object-contain motion-safe:animate-float"
+          className="absolute -left-8 bottom-0 h-full w-auto opacity-20 object-contain motion-safe:animate-float"
         />
+
         {/* Cinematic gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background/50" />

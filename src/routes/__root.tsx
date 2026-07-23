@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { buildRuntimeDiagnostic, logRuntimeDiagnostic } from "../lib/runtime-diagnostics";
 import { isRecoverableClientLoadError, requestClientReload } from "../lib/recoverable-errors";
+import { Splash } from "../components/brand/Splash";
+
 
 function NotFoundComponent() {
   return (
@@ -104,32 +106,31 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "LionTV — أفلام ومسلسلات" },
-      { name: "description", content: "تطبيق ليون تي في لمشاهدة الأفلام والمسلسلات والبث المباشر" },
-      { property: "og:title", content: "LionTV — أفلام ومسلسلات" },
-      { property: "og:description", content: "تطبيق ليون تي في لمشاهدة الأفلام والمسلسلات والبث المباشر" },
+      { title: "Nova TV — أفلام ومسلسلات" },
+      { name: "description", content: "تطبيق Nova TV لمشاهدة الأفلام والمسلسلات والبث المباشر" },
+      { property: "og:title", content: "Nova TV — أفلام ومسلسلات" },
+      { property: "og:description", content: "تطبيق Nova TV لمشاهدة الأفلام والمسلسلات والبث المباشر" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "theme-color", content: "#0b0b0f" },
+      { name: "theme-color", content: "#050505" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "LionTV" },
+      { name: "apple-mobile-web-app-title", content: "Nova TV" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { name: "twitter:title", content: "LionTV — أفلام ومسلسلات" },
-      { name: "twitter:description", content: "تطبيق ليون تي في لمشاهدة الأفلام والمسلسلات والبث المباشر" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e13919d9-20af-44b9-9425-f8ba5262ecbd/id-preview-a54dd680--5ac0b86c-ce48-4d2e-83da-4a74087e7d38.lovable.app-1784589505341.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e13919d9-20af-44b9-9425-f8ba5262ecbd/id-preview-a54dd680--5ac0b86c-ce48-4d2e-83da-4a74087e7d38.lovable.app-1784589505341.png" },
+      { name: "twitter:title", content: "Nova TV — أفلام ومسلسلات" },
+      { name: "twitter:description", content: "تطبيق Nova TV لمشاهدة الأفلام والمسلسلات والبث المباشر" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", type: "image/png", href: "/__l5e/assets-v1/bf115614-9f6e-4bea-bff1-8ea1a6c3898e/nova-tv-logo.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/favicon.ico" },
+      { rel: "apple-touch-icon", href: "/__l5e/assets-v1/bf115614-9f6e-4bea-bff1-8ea1a6c3898e/nova-tv-logo.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" },
     ],
   }),
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -170,11 +171,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <Splash />
       <HealthBannerLazy />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
   );
+
 }
 
 import { lazy, Suspense } from "react";

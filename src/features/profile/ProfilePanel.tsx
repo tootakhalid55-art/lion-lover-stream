@@ -26,7 +26,7 @@ export function ProfilePanel({ onClose }: { onClose: () => void }) {
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-bold">مرحبًا بك</p>
-          <p className="truncate text-[11px] text-muted-foreground">حساب ليون تي في</p>
+          <p className="truncate text-[11px] text-muted-foreground">حساب Nova TV</p>
         </div>
       </div>
       <ul className="mt-1">
