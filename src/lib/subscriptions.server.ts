@@ -54,7 +54,7 @@ async function logEvent(sub: {
     event_type: evt.type,
     from_state: evt.from ?? null,
     to_state: evt.to ?? null,
-    payload: evt.payload ?? {},
+    payload: (evt.payload ?? {}) as never,
     correlation_id: evt.correlationId ?? null,
     actor_id: evt.actorId ?? null,
   });
@@ -196,7 +196,7 @@ export async function cancelSubscription(opts: { subscriptionId: string; atPerio
   const updates: Record<string, unknown> = atEnd
     ? { cancel_at: sub.current_period_end, canceled_at: new Date().toISOString() }
     : { status: "cancelled", cancel_at: new Date().toISOString(), canceled_at: new Date().toISOString() };
-  await supabaseAdmin.from("subscriptions").update(updates).eq("id", sub.id);
+  await supabaseAdmin.from("subscriptions").update(updates as never).eq("id", sub.id);
   await logEvent(sub, {
     type: atEnd ? "cancel_scheduled" : "cancelled",
     from: sub.status,

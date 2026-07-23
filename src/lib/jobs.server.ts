@@ -56,7 +56,7 @@ export async function runJob(code: string, triggeredBy = "scheduler"): Promise<{
     const durationMs = Date.now() - startedAt;
     await supabaseAdmin
       .from("job_runs")
-      .update({ status: "success", finished_at: new Date().toISOString(), duration_ms: durationMs, output })
+      .update({ status: "success", finished_at: new Date().toISOString(), duration_ms: durationMs, output: output as never })
       .eq("id", run.id);
     await supabaseAdmin
       .from("job_definitions")
