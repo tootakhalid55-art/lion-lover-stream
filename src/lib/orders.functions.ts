@@ -134,6 +134,14 @@ export const payOrder = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("[orders.pay] invoice issue failed", e);
     }
+    // Fire webhooks (order.fulfilled + payment.received; invoice.issued/paid emitted by billing engine hook).
+    try {
+      const { emitWebhook } = await import("./webhooks.server");
+      await emitWebhook(order.org_id, "order.fulfilled", { order: updated, invoice });
+      await emitWebhook(order.org_id, "payment.received", { orderId: order.id, amountCents: order.total_cents, currency: order.currency });
+    } catch (e) {
+      console.error("[orders.pay] webhook emit failed", e);
+    }
     return { order: updated, invoice };
   });
 
