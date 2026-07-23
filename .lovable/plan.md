@@ -1,74 +1,106 @@
-# Nova TV — Admin-Managed User Licensing System
+# Phase 2 – Professional Auth & License Management
 
-Replace open access with a commercial-grade auth model: only an admin can create accounts; users log in with username + password, bound to one device and one session, with expiration dates and account status.
+Phase 1 already gave us auth, single-device binding, admin CRUD, audit logs, and dashboard stats. Phase 2 turns that into a commercial licensing system. It is far too large for one shot without regressions, so I'll ship it in **three self-contained sub-phases**, each independently useful and testable.
 
-Backend: Lovable Cloud (Postgres + Auth + server functions). The existing Xtream streaming layer is untouched — we only add a gate in front of it.
+Everything stays modular under `src/lib/<module>.functions.ts` + `src/routes/admin.<module>.tsx` (Authentication / Licensing / Devices / Sessions / Packages / Resellers / Activity / API / Billing).
 
-## Scope (Phase 1 — ship now)
+---
 
-Ships a working, secure, commercial-grade core. Phases 2–3 layer on advanced admin polish and "future-ready" hooks without rework.
+## Sub-phase 2A — Packages, Licenses & Multi-Device (core)
 
-### Phase 1
-1. **Cloud + schema**
-   - Enable Lovable Cloud.
-   - Tables (all with RLS + explicit grants):
-     - `profiles` (linked to `auth.users`): `username`, `display_name`, `email`, `phone`, `status` (`active|suspended|expired|disabled|locked`), `expires_at`, `activated_at`, `notes`, timestamps.
-     - `user_roles` + `app_role` enum (`super_admin`, `admin`, `moderator`) + `has_role()` security-definer fn.
-     - `user_devices`: one row per account = the bound device (`device_id`, `device_name`, `os`, `browser`, `ip`, `last_seen`).
-     - `user_sessions`: active session token hash, device_id, ip, ua, `created_at`, `expires_at`, `revoked_at`.
-     - `login_attempts`: for rate-limiting + lockout.
-     - `audit_logs`: every admin action (`actor_id`, `action`, `target_user_id`, `meta`, `ip`, `ts`).
-   - Trigger creates a `profiles` row on `auth.users` insert.
-   - No public signup: disable email confirmations UX-side; the admin creates users via Auth Admin API from a privileged server fn.
+New tables (migration):
+- `packages` — name, tier (`trial`|`monthly`|`quarterly`|`semi_annual`|`annual`|`lifetime`|`custom`), duration_days (null=lifetime), max_devices, max_sessions, simultaneous_streams, allow_download, allow_recording, allowed_features (jsonb), allowed_categories (jsonb), price_cents, currency, is_active
+- `licenses` — user_id, package_id, license_key (unique `NOVA-YYYY-XXXX-XXXX-XXXX`), license_type (`trial`|`paid`|`lifetime`|`comp`), activated_at, expires_at, auto_renew, status (`active`|`expired`|`revoked`|`pending`), issued_by
+- `activation_codes` — code (unique `NOVA-XXXX-XXXX-XXXX`), package_id, duration_override_days, uses_allowed, uses_count, expires_at, created_by, notes
+- Seed default packages (Trial/Basic/Family/Premium/Lifetime).
+- Add `package_id` to `profiles` (nullable) and enforce max_devices in `finalizeLogin`.
 
-2. **Server functions (`createServerFn`, `requireSupabaseAuth` where relevant)**
-   - `adminCreateUser` (super_admin/admin): generate `nova#####` username + strong password (returned once, in the response, for the admin to hand off), create `auth.users` via `supabaseAdmin`, insert profile + role, log audit.
-   - `adminListUsers`, `adminUpdateUser`, `adminSuspend`, `adminReactivate`, `adminDelete`, `adminResetPassword`, `adminResetDevice`, `adminForceLogout`, `adminSetExpiration(duration)`.
-   - `login(username, password, deviceFingerprint)`:
-     - rate-limit by IP + username (token bucket already in repo);
-     - resolve username → email, call Supabase password sign-in server-side;
-     - enforce status + `expires_at` (auto-flip to `expired`);
-     - device check: if no bound device → bind; if bound and mismatch → reject with "already active on another device";
-     - revoke prior sessions, insert new `user_sessions` row, set HttpOnly encrypted cookie.
-   - `logout`, `me`.
-   - `adminStats` for dashboard totals.
+Server module `src/lib/licensing.functions.ts`:
+- `listPackages`, `upsertPackage`, `deletePackage`
+- `listLicenses(filter)`, `issueLicense`, `renewLicense(id, days|packageId)`, `revokeLicense`
+- `listActivationCodes`, `createActivationCodes(count, packageId, ...)`, `revokeActivationCode`, `redeemActivationCode(code)` (public — creates account + license)
+- Helpers: `generateLicenseKey()`, `generateActivationCode()` (cryptographic)
 
-3. **Auth gating**
-   - `_authenticated/route.tsx` layout gates the whole app (home, browse, watch, settings…) via `me` server fn; unauthenticated → `/login`.
-   - `_admin/route.tsx` layout additionally requires `super_admin|admin|moderator` via `has_role`.
-   - Move existing app routes under `_authenticated/`.
+Update `adminCreateUser` + Create modal to pick a package. Update `finalizeLogin` device check to `max_devices` (list vs. single).
 
-4. **Screens**
-   - `/login` — username + password only, no signup link, generic error messages, lockout notice.
-   - `/admin` — dashboard: totals (users, active, online, expired, suspended, devices, sessions, new today).
-   - `/admin/users` — table with search, status filter, columns: username, status, expires, device, last login, online dot; row actions: edit, reset pw, reset device, force logout, suspend/reactivate, delete.
-   - `/admin/users/new` — auto-generated username + password (editable), duration select (1/7/30/90/180/365/Lifetime), copy-to-clipboard on save.
-   - `/admin/users/$id` — full profile, device info, session list, login history, audit trail.
+Admin UI:
+- `/admin/packages` — table + editor (all package fields)
+- `/admin/licenses` — table with filters (status, package, expiring soon), one-click renew, revoke
+- `/admin/codes` — activation-code generator (bulk N), CSV download, revoke
+- `/redeem` (public route) — user redeems code → creates account → shows credentials
+- Update `/admin/users` — package column + change package action
 
-5. **Security**
-   - Argon2/bcrypt handled by Supabase Auth for passwords.
-   - Rate limit login (per IP + per username), lock account after N failures (configurable, default 5) for 15 min.
-   - CSRF: same-site strict on session cookie; server fns are same-origin.
-   - HttpOnly, Secure, SameSite=strict session cookie via `useSession`.
-   - Audit every admin mutation.
+---
 
-### Phase 2 (follow-up, no schema break)
-- Moderator read-only view polish, bulk actions, CSV export, richer login history charts, notifications on suspicious login.
+## Sub-phase 2B — Devices, Sessions, Activity, Security, Bulk ops, Export
 
-### Phase 3 (future-ready hooks — schema stubs only in P1)
-- `subscription_plans`, `licenses`, `activation_codes`, `resellers` tables created empty with RLS so later features slot in without migration churn.
+Migration: add columns to `user_devices` (`device_type`, `app_version`, `country`, `first_login_at`, `blocked_at`, `name`) and `user_sessions` (`country`). Add `password_history` table (user_id, password_hash, changed_at) — Supabase Auth stores the current hash; we track only the last N *change events* (timestamp + a short salted digest) for expiry/history UI, not full replay.
+
+Server modules:
+- `src/lib/devices.functions.ts` — listDevices(userId?), renameDevice, blockDevice, unblockDevice, removeDevice, forceReregister
+- `src/lib/sessions.functions.ts` — listSessions(userId?, activeOnly), terminateSession, terminateAllForUser, terminateAllGlobal, mySessions (self), myLogoutAll
+- `src/lib/security.functions.ts` — changeMyPassword (with strength check + brute-force lock), adminSetLockoutPolicy (config table), detectSuspiciousLogin (impossible-travel + new-country flag written to `audit_logs.meta`)
+- Geo-IP: use `https://ipapi.co/{ip}/json/` server-side (no key, cached in memory). Graceful degradation if unavailable.
+- Bulk actions in `src/lib/bulk.functions.ts` — extendSubscription, suspend, delete, resetPassword, resetDevices, forceLogout, assignPackage on a list of user ids
+- CSV/Excel export in `src/lib/export.functions.ts` — returns a `Response` from server routes at `/api/admin/export/{users|licenses|devices|sessions|activity}.{csv|xlsx}` (server-route auth-gated with the caller's bearer). `xlsx` via `xlsx` npm package (bundled).
+
+Admin UI:
+- `/admin/devices` — global device list with filter + per-user drilldown
+- `/admin/sessions` — active sessions, force-terminate individually or in bulk
+- `/admin/activity` — filterable audit + login-attempt log (user, date range, action)
+- `/admin/security` — lockout policy (max failed attempts, lock duration), password expiry days, HIBP toggle
+- `/account/security` — end-user: change password (strength meter), view own sessions/devices, logout everywhere
+- Bulk selection on `/admin/users` with the toolbar above
+
+Dashboard v2 (`/admin`):
+- Cards: Revenue (sum of paid licenses this month — placeholder = Σ package.price_cents on licenses issued), Expiring in 7d, Recently created, Recently active, Failed logins 24h, Suspended, Top active users, Top devices, Active streams (=active sessions with an open playback session — we'll approximate via `user_sessions.last_seen` within 60s)
+- Charts (Recharts, already in stack if not I'll add): line — daily logins 30d; bar — new users 30d; donut — package distribution
+
+---
+
+## Sub-phase 2C — Resellers, REST API, Payments-ready hooks
+
+Migration:
+- `resellers` — user_id, credit_balance_cents, customer_limit, allowed_package_ids, notes
+- `api_keys` — reseller/admin_id, key_hash, prefix, scopes (jsonb), last_used_at, revoked_at
+- Roles enum extended: `reseller`
+
+Reseller UI:
+- `/admin/resellers` (super_admin only) — create reseller, credit top-up, package allowlist, customer limit
+- `/reseller` — subset dashboard: their own users, licenses, codes; issuing consumes credit; cannot see other resellers or super-admin data (enforced via RLS + fn checks)
+
+REST API (`src/routes/api/v1/*`):
+- `POST /api/v1/users`, `DELETE /api/v1/users/:id`, `POST /api/v1/users/:id/suspend`, `POST /api/v1/users/:id/renew`, `POST /api/v1/users/:id/reset-device`, `GET /api/v1/users/:id`, `GET /api/v1/licenses/:key/validate`, `GET /api/v1/users/:id/sessions`
+- Auth: `Authorization: Bearer nova_sk_...`; key hashed (SHA-256) and matched to `api_keys`; scopes enforced per endpoint. Rate-limited via existing `rate-limit.server`.
+- `/admin/api-keys` — create/revoke keys, show once.
+
+Billing scaffolding (`src/lib/billing.functions.ts` + `src/routes/api/public/webhooks/*`):
+- `payment_intents` table (provider, provider_id, user_id, package_id, amount_cents, currency, status, meta)
+- Provider adapters interface: `createCheckout(user, package)`, `handleWebhook(request)` — stubs for Stripe, PayPal, Apple Pay, Google Pay, Mada, STC Pay
+- Webhook route validates signature (per provider), on `succeeded` calls shared `activateOrRenewLicense(user, package)` used by activation codes / admin renew / payment webhooks — one code path.
+- Only Stripe stub gets a real signature check; others log and return 202 until keys are provided. Login-notification hook lives here (`onLicenseActivated`) but sends via email connector only if configured.
+
+---
+
+## What I'll defer and why
+
+- **Email/SMS login notifications** actually delivered: needs a mail connector (Resend/SendGrid). I'll wire the hook and UI toggle; sending activates when the user connects an email provider — otherwise it's a no-op with an admin banner.
+- **Real payment charging** for Stripe/PayPal/Apple/Google/Mada/STC — requires the user's merchant accounts + secrets. Scaffolding + webhook contract ships now; live keys unlock the flow.
+- **Apple Pay / Google Pay** as first-party providers — normally ride on Stripe/Adyen; I'll expose them through the Stripe adapter's payment-request button rather than as separate integrations.
+
+---
 
 ## Technical notes
 
-- Username is stored on `profiles.username` (unique, lowercased). Auth uses a synthetic email `${username}@users.novatv.local` so we can reuse Supabase's password + session machinery without exposing email to the user.
-- Device fingerprint: stable hash of `navigator.userAgent + language + screen + a persistent random id in localStorage`. Sent from client on login; server also records IP + UA server-side.
-- "Online" = has a `user_sessions` row with `last_seen` within the last 5 min (updated on every authenticated server fn via middleware).
-- `supabaseAdmin` is only loaded inside handler bodies of privileged fns, after `has_role` check on `context.supabase`.
-- All new tables get explicit `GRANT`s per project rules; policies scoped to `auth.uid()` for self-reads, and `has_role(auth.uid(),'admin'|'super_admin')` for admin reads/writes.
-- Existing Xtream layer, player, and streaming proxy are untouched.
+- Every new table follows the required order: CREATE → GRANT (authenticated + service_role, no anon) → RLS → policies using `is_admin` / `is_staff` / owner. Reseller access via a `is_reseller_of(caller, target)` SECURITY DEFINER helper.
+- All server fns keep to the `tanstack-serverfn-splitting` rule (helpers in `.server.ts`, handlers in `.functions.ts`).
+- `assertAdmin`/`assertStaff`/`assertReseller`/`assertSuperAdmin` gates before any `supabaseAdmin` write.
+- Query builders use the `.returns<T>()` pattern from `query-builder-type-performance` to keep typecheck fast.
+- All new admin pages under the existing `/admin` layout; nav grows to include Packages / Licenses / Codes / Devices / Sessions / Activity / Resellers / API keys / Security.
+- Client-side password-strength meter uses `zxcvbn-ts` (small, no network).
 
-## Out of scope for this plan
-- Payments, plan purchase UI, reseller portal, activation-code redemption UI (schema stubs only).
-- Email/SMS delivery of credentials (admin copies from the create-user screen).
+---
 
-Confirm and I'll implement Phase 1 end to end.
+## Rollout order
+
+I'll implement and verify **2A first**, then 2B, then 2C — each ends with a working preview and its own migration. Approving this plan means "go ahead with all three sub-phases in order"; if you want to stop after 2A or 2B just say so.

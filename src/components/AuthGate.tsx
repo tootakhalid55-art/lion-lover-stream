@@ -9,7 +9,7 @@ import { heartbeat } from "@/lib/auth.functions";
  * route except the public allow-list. Keeps existing app routes as-is
  * (no need to move them under `_authenticated/`).
  */
-const PUBLIC_PATHS = ["/login", "/bootstrap"];
+const PUBLIC_PATHS = ["/login", "/bootstrap", "/redeem"];
 
 export function AuthGate() {
   const router = useRouter();

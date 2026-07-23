@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as RedeemRouteImport } from './routes/redeem'
 import { Route as MoreRouteImport } from './routes/more'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FavoritesRouteImport } from './routes/favorites'
@@ -22,6 +23,9 @@ import { Route as SeriesIdRouteImport } from './routes/series.$id'
 import { Route as MovieIdRouteImport } from './routes/movie.$id'
 import { Route as BrowseKindRouteImport } from './routes/browse.$kind'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
+import { Route as AdminLicensesRouteImport } from './routes/admin.licenses'
+import { Route as AdminCodesRouteImport } from './routes/admin.codes'
 import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
 import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
 import { Route as ApiPublicStreamKindFileRouteImport } from './routes/api.public.stream.$kind.$file'
@@ -34,6 +38,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedeemRoute = RedeemRouteImport.update({
+  id: '/redeem',
+  path: '/redeem',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MoreRoute = MoreRouteImport.update({
@@ -91,6 +100,21 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPackagesRoute = AdminPackagesRouteImport.update({
+  id: '/packages',
+  path: '/packages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLicensesRoute = AdminLicensesRouteImport.update({
+  id: '/licenses',
+  path: '/licenses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCodesRoute = AdminCodesRouteImport.update({
+  id: '/codes',
+  path: '/codes',
+  getParentRoute: () => AdminRoute,
+} as any)
 const WatchKindIdRoute = WatchKindIdRouteImport.update({
   id: '/watch/$kind/$id',
   path: '/watch/$kind/$id',
@@ -114,8 +138,12 @@ export interface FileRoutesByFullPath {
   '/favorites': typeof FavoritesRoute
   '/login': typeof LoginRoute
   '/more': typeof MoreRoute
+  '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/admin/codes': typeof AdminCodesRoute
+  '/admin/licenses': typeof AdminLicensesRoute
+  '/admin/packages': typeof AdminPackagesRoute
   '/admin/users': typeof AdminUsersRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
@@ -131,8 +159,12 @@ export interface FileRoutesByTo {
   '/favorites': typeof FavoritesRoute
   '/login': typeof LoginRoute
   '/more': typeof MoreRoute
+  '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/admin/codes': typeof AdminCodesRoute
+  '/admin/licenses': typeof AdminLicensesRoute
+  '/admin/packages': typeof AdminPackagesRoute
   '/admin/users': typeof AdminUsersRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
@@ -150,8 +182,12 @@ export interface FileRoutesById {
   '/favorites': typeof FavoritesRoute
   '/login': typeof LoginRoute
   '/more': typeof MoreRoute
+  '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/admin/codes': typeof AdminCodesRoute
+  '/admin/licenses': typeof AdminLicensesRoute
+  '/admin/packages': typeof AdminPackagesRoute
   '/admin/users': typeof AdminUsersRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
@@ -170,8 +206,12 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/login'
     | '/more'
+    | '/redeem'
     | '/search'
     | '/settings'
+    | '/admin/codes'
+    | '/admin/licenses'
+    | '/admin/packages'
     | '/admin/users'
     | '/browse/$kind'
     | '/movie/$id'
@@ -187,8 +227,12 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/login'
     | '/more'
+    | '/redeem'
     | '/search'
     | '/settings'
+    | '/admin/codes'
+    | '/admin/licenses'
+    | '/admin/packages'
     | '/admin/users'
     | '/browse/$kind'
     | '/movie/$id'
@@ -205,8 +249,12 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/login'
     | '/more'
+    | '/redeem'
     | '/search'
     | '/settings'
+    | '/admin/codes'
+    | '/admin/licenses'
+    | '/admin/packages'
     | '/admin/users'
     | '/browse/$kind'
     | '/movie/$id'
@@ -224,6 +272,7 @@ export interface RootRouteChildren {
   FavoritesRoute: typeof FavoritesRoute
   LoginRoute: typeof LoginRoute
   MoreRoute: typeof MoreRoute
+  RedeemRoute: typeof RedeemRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   BrowseKindRoute: typeof BrowseKindRoute
@@ -248,6 +297,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redeem': {
+      id: '/redeem'
+      path: '/redeem'
+      fullPath: '/redeem'
+      preLoaderRoute: typeof RedeemRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/more': {
@@ -327,6 +383,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/packages': {
+      id: '/admin/packages'
+      path: '/packages'
+      fullPath: '/admin/packages'
+      preLoaderRoute: typeof AdminPackagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/licenses': {
+      id: '/admin/licenses'
+      path: '/licenses'
+      fullPath: '/admin/licenses'
+      preLoaderRoute: typeof AdminLicensesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/codes': {
+      id: '/admin/codes'
+      path: '/codes'
+      fullPath: '/admin/codes'
+      preLoaderRoute: typeof AdminCodesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/watch/$kind/$id': {
       id: '/watch/$kind/$id'
       path: '/watch/$kind/$id'
@@ -352,11 +429,17 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminCodesRoute: typeof AdminCodesRoute
+  AdminLicensesRoute: typeof AdminLicensesRoute
+  AdminPackagesRoute: typeof AdminPackagesRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCodesRoute: AdminCodesRoute,
+  AdminLicensesRoute: AdminLicensesRoute,
+  AdminPackagesRoute: AdminPackagesRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
@@ -370,6 +453,7 @@ const rootRouteChildren: RootRouteChildren = {
   FavoritesRoute: FavoritesRoute,
   LoginRoute: LoginRoute,
   MoreRoute: MoreRoute,
+  RedeemRoute: RedeemRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   BrowseKindRoute: BrowseKindRoute,
@@ -382,13 +466,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

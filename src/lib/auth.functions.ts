@@ -157,26 +157,36 @@ export const finalizeLogin = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const admin = await getAdmin();
     const uid = context.userId;
-    const { data: profile } = await admin.from("profiles").select("*").eq("id", uid).maybeSingle();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("*, packages(max_devices, max_sessions)")
+      .eq("id", uid)
+      .maybeSingle();
     if (!profile) throw new Error("الحساب غير موجود");
 
-    // Expiration check
+    // Expiration
     if (profile.expires_at && new Date(profile.expires_at) < new Date()) {
       await admin.from("profiles").update({ status: "expired" }).eq("id", uid);
       throw new Error("انتهى اشتراكك.");
     }
     if (profile.status !== "active") throw new Error("الحساب غير مفعّل.");
 
-    // Device binding: admins/staff bypass single-device
     const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", uid);
     const isStaff = (roles ?? []).some((r: any) => ["super_admin", "admin", "moderator"].includes(r.role));
+    const pkg: any = (profile as any).packages ?? null;
+    const maxDevices = isStaff ? 999 : Math.max(1, pkg?.max_devices ?? 1);
+    const maxSessions = isStaff ? 999 : Math.max(1, pkg?.max_sessions ?? maxDevices);
 
-    const { data: existingDevice } = await admin.from("user_devices").select("*").eq("user_id", uid).maybeSingle();
-    if (!isStaff) {
-      if (existingDevice && existingDevice.device_id !== data.deviceId) {
-        await admin.from("login_attempts").insert({ username: profile.username, ip: clientIp(), success: false, reason: "device_mismatch", user_agent: clientUA() });
-        throw new Error("هذا الحساب مفعّل على جهاز آخر بالفعل.");
-      }
+    // Devices: allow same device, otherwise enforce limit
+    const { data: devices } = await admin.from("user_devices").select("*").eq("user_id", uid);
+    const existing = (devices ?? []).find((d: any) => d.device_id === data.deviceId);
+    if (existing?.blocked_at) {
+      await admin.from("login_attempts").insert({ username: profile.username, ip: clientIp(), success: false, reason: "device_blocked", user_agent: clientUA() });
+      throw new Error("هذا الجهاز محظور من قبل الإدارة.");
+    }
+    if (!existing && (devices?.length ?? 0) >= maxDevices) {
+      await admin.from("login_attempts").insert({ username: profile.username, ip: clientIp(), success: false, reason: "device_limit", user_agent: clientUA() });
+      throw new Error(`وصلت للحد الأقصى للأجهزة (${maxDevices}). أزل جهازًا سابقًا أو تواصل مع الإدارة.`);
     }
     await admin.from("user_devices").upsert(
       {
@@ -188,11 +198,27 @@ export const finalizeLogin = createServerFn({ method: "POST" })
         ip: clientIp(),
         last_seen: new Date().toISOString(),
       },
-      { onConflict: "user_id" },
+      { onConflict: "user_id,device_id" },
     );
 
-    // Revoke prior sessions, insert new
-    await admin.from("user_sessions").update({ revoked_at: new Date().toISOString() }).eq("user_id", uid).is("revoked_at", null);
+    // Sessions: cap to maxSessions — revoke oldest active if over the cap
+    const { data: activeSessions } = await admin
+      .from("user_sessions")
+      .select("id, device_id, created_at")
+      .eq("user_id", uid)
+      .is("revoked_at", null)
+      .order("created_at", { ascending: true });
+    // Always revoke prior session on the same device
+    const sameDevice = (activeSessions ?? []).filter((s: any) => s.device_id === data.deviceId);
+    if (sameDevice.length) {
+      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString() }).in("id", sameDevice.map((s: any) => s.id));
+    }
+    const remaining = (activeSessions ?? []).filter((s: any) => s.device_id !== data.deviceId);
+    const overflow = remaining.length - (maxSessions - 1);
+    if (overflow > 0) {
+      const toRevoke = remaining.slice(0, overflow).map((s: any) => s.id);
+      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString() }).in("id", toRevoke);
+    }
     await admin.from("user_sessions").insert({
       user_id: uid, device_id: data.deviceId, ip: clientIp(), user_agent: clientUA(),
     });
@@ -233,25 +259,31 @@ export const adminListUsers = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     let q = admin
       .from("profiles")
-      .select("id, username, display_name, email, phone, status, expires_at, activated_at, last_login_at, last_ip, created_at")
+      .select("id, username, display_name, email, phone, status, expires_at, activated_at, last_login_at, last_ip, created_at, package_id, packages(name, tier, max_devices)")
       .order("created_at", { ascending: false })
       .limit(500);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
     if (data.search) q = q.ilike("username", `%${data.search.toLowerCase()}%`);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    // Attach device + online status
     const ids = (rows ?? []).map((r: any) => r.id);
     const [{ data: devices }, { data: sessions }] = await Promise.all([
       admin.from("user_devices").select("user_id, device_name, os, browser, last_seen").in("user_id", ids),
       admin.from("user_sessions").select("user_id, last_seen").in("user_id", ids).is("revoked_at", null),
     ]);
-    const devByUser = new Map((devices ?? []).map((d: any) => [d.user_id, d]));
+    const devByUser = new Map<string, any>();
+    (devices ?? []).forEach((d: any) => {
+      const prev = devByUser.get(d.user_id);
+      if (!prev || new Date(d.last_seen) > new Date(prev.last_seen)) devByUser.set(d.user_id, d);
+    });
     const cutoff = Date.now() - 5 * 60 * 1000;
     const onlineSet = new Set((sessions ?? []).filter((s: any) => new Date(s.last_seen).getTime() > cutoff).map((s: any) => s.user_id));
+    const deviceCount = new Map<string, number>();
+    (devices ?? []).forEach((d: any) => deviceCount.set(d.user_id, (deviceCount.get(d.user_id) ?? 0) + 1));
     return (rows ?? []).map((r: any) => ({
       ...r,
       device: devByUser.get(r.id) ?? null,
+      deviceCount: deviceCount.get(r.id) ?? 0,
       online: onlineSet.has(r.id),
     }));
   });
@@ -279,7 +311,8 @@ export const adminGetUser = createServerFn({ method: "POST" })
 export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((v: {
-    username?: string; password?: string; displayName?: string; email?: string; phone?: string; durationDays: number | null; notes?: string;
+    username?: string; password?: string; displayName?: string; email?: string; phone?: string;
+    durationDays?: number | null; packageId?: string | null; notes?: string;
   }) =>
     z
       .object({
@@ -288,7 +321,8 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         displayName: z.string().max(80).optional(),
         email: z.string().email().max(200).optional().or(z.literal("")),
         phone: z.string().max(40).optional().or(z.literal("")),
-        durationDays: z.number().int().positive().nullable(),
+        durationDays: z.number().int().positive().nullable().optional(),
+        packageId: z.string().uuid().nullable().optional(),
         notes: z.string().max(2000).optional(),
       })
       .parse(v),
@@ -299,7 +333,16 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     const username = (data.username || genUsername()).toLowerCase();
     const password = data.password || genPassword(12);
     const email = usernameToEmail(username);
-    const expires_at = data.durationDays ? new Date(Date.now() + data.durationDays * 86400_000).toISOString() : null;
+
+    // Package overrides raw duration
+    let pkg: any = null;
+    if (data.packageId) {
+      const { data: p } = await admin.from("packages").select("*").eq("id", data.packageId).single();
+      pkg = p;
+    }
+    const days = pkg ? pkg.duration_days : data.durationDays ?? null;
+    const expires_at = pkg?.tier === "lifetime" ? null : days ? new Date(Date.now() + days * 86400_000).toISOString() : null;
+
     const { data: created, error } = await admin.auth.admin.createUser({
       email, password, email_confirm: true,
       user_metadata: { username, display_name: data.displayName || username },
@@ -312,20 +355,33 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         email: data.email || null,
         phone: data.phone || null,
         status: "active" as AccountStatus,
+        package_id: pkg?.id ?? null,
         expires_at,
         activated_at: new Date().toISOString(),
         notes: data.notes || null,
       },
       { onConflict: "id" },
     );
-    await audit("create_user", created.user.id, { username, durationDays: data.durationDays }, context.userId);
-    return { ok: true as const, id: created.user.id, username, password, expires_at };
+
+    // Issue license row if package chosen
+    if (pkg) {
+      const { generateLicenseKey } = await import("@/lib/licensing.server");
+      await admin.from("licenses").insert({
+        user_id: created.user.id, package_id: pkg.id, license_key: generateLicenseKey(),
+        license_type: pkg.tier === "lifetime" ? "lifetime" : pkg.tier === "trial" ? "trial" : "paid",
+        status: "active", expires_at, issued_by: context.userId,
+      });
+    }
+
+    await audit("create_user", created.user.id, { username, packageId: pkg?.id ?? null, durationDays: days }, context.userId);
+    return { ok: true as const, id: created.user.id, username, password, expires_at, packageName: pkg?.name ?? null };
   });
 
 export const adminUpdateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((v: {
-    id: string; displayName?: string; email?: string | null; phone?: string | null; notes?: string | null; status?: AccountStatus; durationDays?: number | null;
+    id: string; displayName?: string; email?: string | null; phone?: string | null; notes?: string | null;
+    status?: AccountStatus; durationDays?: number | null; packageId?: string | null;
   }) =>
     z.object({
       id: z.string().uuid(),
@@ -335,6 +391,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
       notes: z.string().max(2000).optional().nullable(),
       status: z.enum(["active","suspended","expired","disabled","locked"]).optional(),
       durationDays: z.number().int().positive().nullable().optional(),
+      packageId: z.string().uuid().nullable().optional(),
     }).parse(v),
   )
   .handler(async ({ data, context }) => {
@@ -346,6 +403,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
     if (data.phone !== undefined) patch.phone = data.phone || null;
     if (data.notes !== undefined) patch.notes = data.notes || null;
     if (data.status !== undefined) patch.status = data.status;
+    if (data.packageId !== undefined) patch.package_id = data.packageId;
     if (data.durationDays !== undefined) {
       patch.expires_at = data.durationDays === null ? null : new Date(Date.now() + data.durationDays * 86400_000).toISOString();
     }
