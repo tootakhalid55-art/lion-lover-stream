@@ -17,7 +17,7 @@ import {
   revokeApiKey,
   toggleWebhookEndpoint,
 } from "@/lib/api-keys.functions";
-import { visibleOrgsForAdmin } from "@/lib/resellers.functions";
+import { listOrgs } from "@/lib/resellers.functions";
 
 export const Route = createFileRoute("/admin/api")({
   head: () => ({
