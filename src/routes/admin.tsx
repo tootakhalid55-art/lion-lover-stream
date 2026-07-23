@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { LayoutDashboard, LogOut, Users } from "lucide-react";
+import { Key, LayoutDashboard, LogOut, Package, Ticket, Users } from "lucide-react";
 import { me } from "@/lib/auth.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { RouteError } from "@/components/RouteError";
@@ -60,12 +60,21 @@ function AdminLayout() {
               <p className="text-sm font-black">لوحة التحكم</p>
             </div>
           </div>
-          <nav className="mx-2 flex items-center gap-1 text-sm">
+          <nav className="mx-2 flex flex-wrap items-center gap-1 text-sm">
             <Link to="/admin" activeOptions={{ exact: true }} activeProps={{ className: "bg-white/10" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/5">
               <LayoutDashboard className="h-4 w-4" /> نظرة عامة
             </Link>
             <Link to="/admin/users" activeProps={{ className: "bg-white/10" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/5">
               <Users className="h-4 w-4" /> المستخدمون
+            </Link>
+            <Link to="/admin/packages" activeProps={{ className: "bg-white/10" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/5">
+              <Package className="h-4 w-4" /> الباقات
+            </Link>
+            <Link to="/admin/licenses" activeProps={{ className: "bg-white/10" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/5">
+              <Key className="h-4 w-4" /> الرخص
+            </Link>
+            <Link to="/admin/codes" activeProps={{ className: "bg-white/10" }} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/5">
+              <Ticket className="h-4 w-4" /> رموز التفعيل
             </Link>
           </nav>
           <div className="mr-auto flex items-center gap-2">
