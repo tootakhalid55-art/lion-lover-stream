@@ -168,7 +168,8 @@ function UsersAdmin() {
         <CreateModal
           busy={create.isPending}
           error={(create.error as any)?.message}
-          onSubmit={(v) => create.mutate(v)}
+          packages={packages.data ?? []}
+          onSubmit={(v: any) => create.mutate(v)}
           onClose={() => setShowCreate(false)}
         />
       )}
@@ -181,8 +182,9 @@ function UsersAdmin() {
       {editRow && (
         <EditModal
           row={editRow}
+          packages={packages.data ?? []}
           onClose={() => setEditRow(null)}
-          onSave={async (v) => { await updateFn({ data: { id: editRow.id, ...v } }); setEditRow(null); invalidate(); }}
+          onSave={async (v: any) => { await updateFn({ data: { id: editRow.id, ...v } }); setEditRow(null); invalidate(); }}
         />
       )}
     </div>
