@@ -26,15 +26,15 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: Nova TV,
+  component: NovaTV,
   errorComponent: ({ error, reset }) => (
-    <RouteError error={error} reset={reset} filename="src/routes/index.tsx" functionName="Nova TV" lineNumber={25} />
+    <RouteError error={error} reset={reset} filename="src/routes/index.tsx" functionName="NovaTV" lineNumber={25} />
   ),
 });
 
 let analyticsBooted = false;
 
-function Nova TV() {
+function NovaTV() {
   const { data: feed } = useQuery({
     queryKey: ["home-feed"],
     queryFn: () => api.home.getFeed(),
