@@ -3,7 +3,22 @@
  */
 
 export type AccountStatus = "active" | "suspended" | "expired" | "disabled" | "locked";
-export type AppRole = "super_admin" | "admin" | "moderator";
+export type AppRole =
+  | "super_admin"
+  | "admin"
+  | "moderator"
+  | "support"
+  | "auditor"
+  | "readonly";
+
+export const ROLE_LABEL: Record<AppRole, string> = {
+  super_admin: "مسؤول أعلى",
+  admin: "مسؤول",
+  moderator: "مشرف",
+  support: "دعم",
+  auditor: "مدقّق",
+  readonly: "قراءة فقط",
+};
 
 export const USERNAME_DOMAIN = "nova.local";
 
@@ -70,3 +85,46 @@ export const STATUS_LABEL: Record<AccountStatus, string> = {
   disabled: "معطّل",
   locked: "مقفول",
 };
+
+// ─── RBAC capability matrix (client + server share this) ────────────────
+export interface Capabilities {
+  canManageUsers: boolean;
+  canDeleteUsers: boolean;
+  canManageLicenses: boolean;
+  canManagePackages: boolean;
+  canManageDevices: boolean;
+  canManageSessions: boolean;
+  canBulk: boolean;
+  canExport: boolean;
+  canViewSecurity: boolean;
+  canViewAudit: boolean;
+  canManageSystem: boolean;
+  canBroadcast: boolean;
+  canManageRoles: boolean;
+  readOnly: boolean;
+}
+
+export function capabilitiesFor(roles: AppRole[]): Capabilities {
+  const has = (r: AppRole) => roles.includes(r);
+  const isSuper = has("super_admin");
+  const isAdmin = isSuper || has("admin");
+  const isSupport = isAdmin || has("support");
+  const isAuditor = has("auditor");
+  const isReadOnly = has("readonly") && !isSupport && !isAuditor;
+  return {
+    canManageUsers: isSupport,
+    canDeleteUsers: isAdmin,
+    canManageLicenses: isSupport,
+    canManagePackages: isAdmin,
+    canManageDevices: isSupport,
+    canManageSessions: isSupport,
+    canBulk: isAdmin,
+    canExport: isAdmin || isAuditor,
+    canViewSecurity: isAdmin || isAuditor || isSupport,
+    canViewAudit: isAdmin || isAuditor,
+    canManageSystem: isAdmin,
+    canBroadcast: isSuper,
+    canManageRoles: isSuper,
+    readOnly: isReadOnly,
+  };
+}
