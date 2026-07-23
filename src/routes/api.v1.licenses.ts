@@ -10,11 +10,10 @@ const handler = makeV1Handler(
         const { limit, cursor, q, from, to } = parseListParams(url);
         let query = ctx.admin
           .from("licenses")
-          .select("id, user_id, package_id, license_key, license_type, status, activated_at, expires_at, created_at")
+          .select("id, user_id, package_id, license_key, license_type, status, activated_at, expires_at, created_at, org_id")
+          .eq("org_id", ctx.orgId)
           .order("created_at", { ascending: false })
           .limit(limit + 1);
-        // Tenant filter: licenses issued for the org's users (or by resellers under it).
-        // For v1 foundation, filter by issued_by belonging to org (best-effort).
         if (cursor) query = query.lt("created_at", cursor);
         if (from) query = query.gte("created_at", from);
         if (to) query = query.lte("created_at", to);
