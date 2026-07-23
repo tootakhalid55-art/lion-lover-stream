@@ -23,9 +23,16 @@ import { Route as SeriesIdRouteImport } from './routes/series.$id'
 import { Route as MovieIdRouteImport } from './routes/movie.$id'
 import { Route as BrowseKindRouteImport } from './routes/browse.$kind'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminSystemRouteImport } from './routes/admin.system'
+import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
+import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminLicensesRouteImport } from './routes/admin.licenses'
+import { Route as AdminDevicesRouteImport } from './routes/admin.devices'
 import { Route as AdminCodesRouteImport } from './routes/admin.codes'
+import { Route as AdminBulkRouteImport } from './routes/admin.bulk'
+import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
 import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
 import { Route as ApiAdminExportFileRouteImport } from './routes/api.admin.export.$file'
@@ -101,9 +108,29 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSystemRoute = AdminSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSessionsRoute = AdminSessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSecurityRoute = AdminSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPackagesRoute = AdminPackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLicensesRoute = AdminLicensesRouteImport.update({
@@ -111,9 +138,24 @@ const AdminLicensesRoute = AdminLicensesRouteImport.update({
   path: '/licenses',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDevicesRoute = AdminDevicesRouteImport.update({
+  id: '/devices',
+  path: '/devices',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCodesRoute = AdminCodesRouteImport.update({
   id: '/codes',
   path: '/codes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBulkRoute = AdminBulkRouteImport.update({
+  id: '/bulk',
+  path: '/bulk',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => AdminRoute,
 } as any)
 const WatchKindIdRoute = WatchKindIdRouteImport.update({
@@ -147,9 +189,16 @@ export interface FileRoutesByFullPath {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
+  '/admin/devices': typeof AdminDevicesRoute
   '/admin/licenses': typeof AdminLicensesRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/security': typeof AdminSecurityRoute
+  '/admin/sessions': typeof AdminSessionsRoute
+  '/admin/system': typeof AdminSystemRoute
   '/admin/users': typeof AdminUsersRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
@@ -169,9 +218,16 @@ export interface FileRoutesByTo {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
+  '/admin/devices': typeof AdminDevicesRoute
   '/admin/licenses': typeof AdminLicensesRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/security': typeof AdminSecurityRoute
+  '/admin/sessions': typeof AdminSessionsRoute
+  '/admin/system': typeof AdminSystemRoute
   '/admin/users': typeof AdminUsersRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
@@ -193,9 +249,16 @@ export interface FileRoutesById {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
+  '/admin/devices': typeof AdminDevicesRoute
   '/admin/licenses': typeof AdminLicensesRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/security': typeof AdminSecurityRoute
+  '/admin/sessions': typeof AdminSessionsRoute
+  '/admin/system': typeof AdminSystemRoute
   '/admin/users': typeof AdminUsersRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
@@ -218,9 +281,16 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/admin/audit'
+    | '/admin/bulk'
     | '/admin/codes'
+    | '/admin/devices'
     | '/admin/licenses'
+    | '/admin/notifications'
     | '/admin/packages'
+    | '/admin/security'
+    | '/admin/sessions'
+    | '/admin/system'
     | '/admin/users'
     | '/browse/$kind'
     | '/movie/$id'
@@ -240,9 +310,16 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/admin/audit'
+    | '/admin/bulk'
     | '/admin/codes'
+    | '/admin/devices'
     | '/admin/licenses'
+    | '/admin/notifications'
     | '/admin/packages'
+    | '/admin/security'
+    | '/admin/sessions'
+    | '/admin/system'
     | '/admin/users'
     | '/browse/$kind'
     | '/movie/$id'
@@ -263,9 +340,16 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/admin/audit'
+    | '/admin/bulk'
     | '/admin/codes'
+    | '/admin/devices'
     | '/admin/licenses'
+    | '/admin/notifications'
     | '/admin/packages'
+    | '/admin/security'
+    | '/admin/sessions'
+    | '/admin/system'
     | '/admin/users'
     | '/browse/$kind'
     | '/movie/$id'
@@ -396,11 +480,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/system': {
+      id: '/admin/system'
+      path: '/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AdminSystemRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/sessions': {
+      id: '/admin/sessions'
+      path: '/sessions'
+      fullPath: '/admin/sessions'
+      preLoaderRoute: typeof AdminSessionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/security': {
+      id: '/admin/security'
+      path: '/security'
+      fullPath: '/admin/security'
+      preLoaderRoute: typeof AdminSecurityRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/packages': {
       id: '/admin/packages'
       path: '/packages'
       fullPath: '/admin/packages'
       preLoaderRoute: typeof AdminPackagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/licenses': {
@@ -410,11 +522,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLicensesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/devices': {
+      id: '/admin/devices'
+      path: '/devices'
+      fullPath: '/admin/devices'
+      preLoaderRoute: typeof AdminDevicesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/codes': {
       id: '/admin/codes'
       path: '/codes'
       fullPath: '/admin/codes'
       preLoaderRoute: typeof AdminCodesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bulk': {
+      id: '/admin/bulk'
+      path: '/bulk'
+      fullPath: '/admin/bulk'
+      preLoaderRoute: typeof AdminBulkRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRoute
     }
     '/watch/$kind/$id': {
@@ -449,17 +582,31 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAuditRoute: typeof AdminAuditRoute
+  AdminBulkRoute: typeof AdminBulkRoute
   AdminCodesRoute: typeof AdminCodesRoute
+  AdminDevicesRoute: typeof AdminDevicesRoute
   AdminLicensesRoute: typeof AdminLicensesRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPackagesRoute: typeof AdminPackagesRoute
+  AdminSecurityRoute: typeof AdminSecurityRoute
+  AdminSessionsRoute: typeof AdminSessionsRoute
+  AdminSystemRoute: typeof AdminSystemRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAuditRoute: AdminAuditRoute,
+  AdminBulkRoute: AdminBulkRoute,
   AdminCodesRoute: AdminCodesRoute,
+  AdminDevicesRoute: AdminDevicesRoute,
   AdminLicensesRoute: AdminLicensesRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPackagesRoute: AdminPackagesRoute,
+  AdminSecurityRoute: AdminSecurityRoute,
+  AdminSessionsRoute: AdminSessionsRoute,
+  AdminSystemRoute: AdminSystemRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
