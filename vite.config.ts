@@ -12,4 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Target a standard Node.js server (deployable on Ubuntu VPS + Nginx + PM2).
+  // Build output: `.output/server/index.mjs` — start with `node .output/server/index.mjs`.
+  nitro: {
+    preset: "node-server",
+  },
 });
