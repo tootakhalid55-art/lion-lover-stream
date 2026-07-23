@@ -48,6 +48,8 @@ import { Route as ApiV1LicensesRouteImport } from './routes/api.v1.licenses'
 import { Route as ApiV1InvoicesRouteImport } from './routes/api.v1.invoices'
 import { Route as ApiV1DocsRouteImport } from './routes/api.v1.docs'
 import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
+import { Route as AdminBillingTracesRouteImport } from './routes/admin.billing.traces'
+import { Route as AdminBillingObservabilityRouteImport } from './routes/admin.billing.observability'
 import { Route as ApiV1WebhooksEndpointsRouteImport } from './routes/api.v1.webhooks.endpoints'
 import { Route as ApiV1LicensesIdRouteImport } from './routes/api.v1.licenses.$id'
 import { Route as ApiV1InvoicesIdRouteImport } from './routes/api.v1.invoices.$id'
@@ -252,6 +254,17 @@ const ApiDebugXtreamRoute = ApiDebugXtreamRouteImport.update({
   path: '/api/debug/xtream',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminBillingTracesRoute = AdminBillingTracesRouteImport.update({
+  id: '/traces',
+  path: '/traces',
+  getParentRoute: () => AdminBillingRoute,
+} as any)
+const AdminBillingObservabilityRoute =
+  AdminBillingObservabilityRouteImport.update({
+    id: '/observability',
+    path: '/observability',
+    getParentRoute: () => AdminBillingRoute,
+  } as any)
 const ApiV1WebhooksEndpointsRoute = ApiV1WebhooksEndpointsRouteImport.update({
   id: '/api/v1/webhooks/endpoints',
   path: '/api/v1/webhooks/endpoints',
@@ -312,7 +325,7 @@ export interface FileRoutesByFullPath {
   '/reseller': typeof AuthenticatedResellerRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/billing': typeof AdminBillingRoute
+  '/admin/billing': typeof AdminBillingRouteWithChildren
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
   '/admin/devices': typeof AdminDevicesRoute
@@ -329,6 +342,8 @@ export interface FileRoutesByFullPath {
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/billing/observability': typeof AdminBillingObservabilityRoute
+  '/admin/billing/traces': typeof AdminBillingTracesRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/api/v1/docs': typeof ApiV1DocsRoute
   '/api/v1/invoices': typeof ApiV1InvoicesRouteWithChildren
@@ -360,7 +375,7 @@ export interface FileRoutesByTo {
   '/reseller': typeof AuthenticatedResellerRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/billing': typeof AdminBillingRoute
+  '/admin/billing': typeof AdminBillingRouteWithChildren
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
   '/admin/devices': typeof AdminDevicesRoute
@@ -377,6 +392,8 @@ export interface FileRoutesByTo {
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/billing/observability': typeof AdminBillingObservabilityRoute
+  '/admin/billing/traces': typeof AdminBillingTracesRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/api/v1/docs': typeof ApiV1DocsRoute
   '/api/v1/invoices': typeof ApiV1InvoicesRouteWithChildren
@@ -411,7 +428,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller': typeof AuthenticatedResellerRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/billing': typeof AdminBillingRoute
+  '/admin/billing': typeof AdminBillingRouteWithChildren
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
   '/admin/devices': typeof AdminDevicesRoute
@@ -428,6 +445,8 @@ export interface FileRoutesById {
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/billing/observability': typeof AdminBillingObservabilityRoute
+  '/admin/billing/traces': typeof AdminBillingTracesRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/api/v1/docs': typeof ApiV1DocsRoute
   '/api/v1/invoices': typeof ApiV1InvoicesRouteWithChildren
@@ -479,6 +498,8 @@ export interface FileRouteTypes {
     | '/movie/$id'
     | '/series/$id'
     | '/admin/'
+    | '/admin/billing/observability'
+    | '/admin/billing/traces'
     | '/api/debug/xtream'
     | '/api/v1/docs'
     | '/api/v1/invoices'
@@ -527,6 +548,8 @@ export interface FileRouteTypes {
     | '/movie/$id'
     | '/series/$id'
     | '/admin'
+    | '/admin/billing/observability'
+    | '/admin/billing/traces'
     | '/api/debug/xtream'
     | '/api/v1/docs'
     | '/api/v1/invoices'
@@ -577,6 +600,8 @@ export interface FileRouteTypes {
     | '/movie/$id'
     | '/series/$id'
     | '/admin/'
+    | '/admin/billing/observability'
+    | '/admin/billing/traces'
     | '/api/debug/xtream'
     | '/api/v1/docs'
     | '/api/v1/invoices'
@@ -902,6 +927,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDebugXtreamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/billing/traces': {
+      id: '/admin/billing/traces'
+      path: '/traces'
+      fullPath: '/admin/billing/traces'
+      preLoaderRoute: typeof AdminBillingTracesRouteImport
+      parentRoute: typeof AdminBillingRoute
+    }
+    '/admin/billing/observability': {
+      id: '/admin/billing/observability'
+      path: '/observability'
+      fullPath: '/admin/billing/observability'
+      preLoaderRoute: typeof AdminBillingObservabilityRouteImport
+      parentRoute: typeof AdminBillingRoute
+    }
     '/api/v1/webhooks/endpoints': {
       id: '/api/v1/webhooks/endpoints'
       path: '/api/v1/webhooks/endpoints'
@@ -981,10 +1020,24 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AdminBillingRouteChildren {
+  AdminBillingObservabilityRoute: typeof AdminBillingObservabilityRoute
+  AdminBillingTracesRoute: typeof AdminBillingTracesRoute
+}
+
+const AdminBillingRouteChildren: AdminBillingRouteChildren = {
+  AdminBillingObservabilityRoute: AdminBillingObservabilityRoute,
+  AdminBillingTracesRoute: AdminBillingTracesRoute,
+}
+
+const AdminBillingRouteWithChildren = AdminBillingRoute._addFileChildren(
+  AdminBillingRouteChildren,
+)
+
 interface AdminRouteChildren {
   AdminApiRoute: typeof AdminApiRoute
   AdminAuditRoute: typeof AdminAuditRoute
-  AdminBillingRoute: typeof AdminBillingRoute
+  AdminBillingRoute: typeof AdminBillingRouteWithChildren
   AdminBulkRoute: typeof AdminBulkRoute
   AdminCodesRoute: typeof AdminCodesRoute
   AdminDevicesRoute: typeof AdminDevicesRoute
@@ -1003,7 +1056,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminApiRoute: AdminApiRoute,
   AdminAuditRoute: AdminAuditRoute,
-  AdminBillingRoute: AdminBillingRoute,
+  AdminBillingRoute: AdminBillingRouteWithChildren,
   AdminBulkRoute: AdminBulkRoute,
   AdminCodesRoute: AdminCodesRoute,
   AdminDevicesRoute: AdminDevicesRoute,
