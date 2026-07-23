@@ -1,20 +1,64 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - TanStack devtools (dev-only, first), tanstackStart, viteReact, tailwindcss, tsConfigPaths,
-//     nitro (build-only using cloudflare as a default target), VITE_* env injection, @ path alias,
-//     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
-// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import tailwindcss from "@tailwindcss/vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import { nitro } from "nitro/vite";
+import { defineConfig, loadEnv, mergeConfig } from "vite";
+import tsConfigPaths from "vite-tsconfig-paths";
 
-export default defineConfig({
-  tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
-  },
-  // Target a standard Node.js server (deployable on Ubuntu VPS + Nginx + PM2).
-  // Build output: `.output/server/index.mjs` — start with `node .output/server/index.mjs`.
-  nitro: {
-    preset: "node-server",
-  },
+export default defineConfig(({ mode }) => {
+  const loadedEnv = loadEnv(mode, process.cwd(), "VITE_");
+
+  return mergeConfig(
+    {
+      define: Object.fromEntries(
+        Object.entries(loadedEnv).map(([key, value]) => [
+          `import.meta.env.${key}`,
+          JSON.stringify(value),
+        ]),
+      ),
+      css: { transformer: "lightningcss" },
+      resolve: {
+        alias: { "@": `${process.cwd()}/src` },
+        dedupe: [
+          "react",
+          "react-dom",
+          "react/jsx-runtime",
+          "react/jsx-dev-runtime",
+          "@tanstack/react-query",
+          "@tanstack/query-core",
+        ],
+      },
+      server: {
+        host: "::",
+        port: 8080,
+        strictPort: true,
+      },
+      plugins: [
+        tailwindcss(),
+        tsConfigPaths({ projects: ["./tsconfig.json"] }),
+        tanstackStart({
+          importProtection: {
+            behavior: "error",
+            client: {
+              files: ["**/server/**"],
+              specifiers: ["server-only"],
+            },
+          },
+          // Redirect TanStack Start's bundled server entry to src/server.ts
+          // so SSR errors go through the production error wrapper.
+          server: { entry: "server" },
+        }),
+        nitro({
+          preset: "node-server",
+          output: {
+            dir: ".output",
+            serverDir: ".output/server",
+            publicDir: ".output/public",
+          },
+        }),
+        viteReact(),
+      ],
+    },
+    {},
+  );
 });
