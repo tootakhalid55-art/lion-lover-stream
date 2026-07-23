@@ -238,7 +238,7 @@ export async function buildSnapshot(opts: {
     company: { name: "Nova TV", brand: "Nova TV", logoUrl: null },
     customer: {
       orgId: opts.orgId,
-      name: (profile?.company_name as string) ?? org?.name ?? "Customer",
+      name: (profile?.company as string) ?? org?.name ?? "Customer",
       email: (profile?.email as string) ?? null,
       address: profile?.address ? JSON.stringify(profile.address) : null,
       country: org?.country ?? null,
