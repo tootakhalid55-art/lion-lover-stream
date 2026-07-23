@@ -278,6 +278,59 @@ export type Database = {
           },
         ]
       }
+      billing_idempotency: {
+        Row: {
+          attempts: number
+          completed_at: string | null
+          correlation_id: string | null
+          created_at: string
+          error: string | null
+          expires_at: string
+          id: string
+          op_key: string
+          op_type: string
+          org_id: string
+          result: Json | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          completed_at?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          error?: string | null
+          expires_at?: string
+          id?: string
+          op_key: string
+          op_type: string
+          org_id: string
+          result?: Json | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          completed_at?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          error?: string | null
+          expires_at?: string
+          id?: string
+          op_key?: string
+          op_type?: string
+          org_id?: string
+          result?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_idempotency_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billing_plans: {
         Row: {
           code: string
@@ -635,6 +688,119 @@ export type Database = {
           source?: string
         }
         Relationships: []
+      }
+      gateway_health_samples: {
+        Row: {
+          at: string
+          correlation_id: string | null
+          error_code: string | null
+          id: number
+          latency_ms: number
+          mode: string
+          op: string
+          provider: string
+          success: boolean
+        }
+        Insert: {
+          at?: string
+          correlation_id?: string | null
+          error_code?: string | null
+          id?: number
+          latency_ms: number
+          mode?: string
+          op: string
+          provider: string
+          success: boolean
+        }
+        Update: {
+          at?: string
+          correlation_id?: string | null
+          error_code?: string | null
+          id?: number
+          latency_ms?: number
+          mode?: string
+          op?: string
+          provider?: string
+          success?: boolean
+        }
+        Relationships: []
+      }
+      gateway_retry_policies: {
+        Row: {
+          backoff_seconds: Json
+          circuit_breaker_threshold: number
+          circuit_breaker_window_seconds: number
+          max_attempts: number
+          provider: string
+          retry_on: Json
+          updated_at: string
+        }
+        Insert: {
+          backoff_seconds?: Json
+          circuit_breaker_threshold?: number
+          circuit_breaker_window_seconds?: number
+          max_attempts?: number
+          provider: string
+          retry_on?: Json
+          updated_at?: string
+        }
+        Update: {
+          backoff_seconds?: Json
+          circuit_breaker_threshold?: number
+          circuit_breaker_window_seconds?: number
+          max_attempts?: number
+          provider?: string
+          retry_on?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gateway_webhook_events: {
+        Row: {
+          correlation_id: string | null
+          event_type: string | null
+          id: string
+          org_id: string | null
+          processed_at: string | null
+          provider: string
+          provider_event_id: string
+          raw: Json | null
+          received_at: string
+          status: string
+        }
+        Insert: {
+          correlation_id?: string | null
+          event_type?: string | null
+          id?: string
+          org_id?: string | null
+          processed_at?: string | null
+          provider: string
+          provider_event_id: string
+          raw?: Json | null
+          received_at?: string
+          status?: string
+        }
+        Update: {
+          correlation_id?: string | null
+          event_type?: string | null
+          id?: string
+          org_id?: string | null
+          processed_at?: string | null
+          provider?: string
+          provider_event_id?: string
+          raw?: Json | null
+          received_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gateway_webhook_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       idempotency_keys: {
         Row: {
@@ -1761,6 +1927,7 @@ export type Database = {
       }
       payment_gateway_configs: {
         Row: {
+          capabilities: Json
           config: Json
           created_at: string
           display_name: string | null
@@ -1777,6 +1944,7 @@ export type Database = {
           webhook_secret_ref: string | null
         }
         Insert: {
+          capabilities?: Json
           config?: Json
           created_at?: string
           display_name?: string | null
@@ -1793,6 +1961,7 @@ export type Database = {
           webhook_secret_ref?: string | null
         }
         Update: {
+          capabilities?: Json
           config?: Json
           created_at?: string
           display_name?: string | null
@@ -3301,7 +3470,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      billing_metrics_recent: {
+        Row: {
+          avg_retry_7d: number | null
+          failed_24h: number | null
+          failed_7d: number | null
+          org_id: string | null
+          renewed_24h: number | null
+          renewed_7d: number | null
+          success_rate_24h: number | null
+          success_rate_7d: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_org_read: { Args: { _org: string; _user: string }; Returns: boolean }
@@ -3336,6 +3525,10 @@ export type Database = {
           ledger_cents: number
           reserved_cents: number
         }[]
+      }
+      try_billing_lock: {
+        Args: { _key: string; _scope: string }
+        Returns: boolean
       }
     }
     Enums: {

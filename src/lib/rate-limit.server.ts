@@ -58,3 +58,23 @@ export function clientKey(request: Request): string {
   const ip = fwd?.split(",")[0]?.trim() || "unknown";
   return ip;
 }
+
+/**
+ * Per-organization rate limiter for billing APIs and webhook endpoints.
+ * Defaults tuned for interactive dashboards (60/min) and inbound webhooks
+ * (120/min per provider). Fall back to client IP when org is unknown.
+ */
+export const BILLING_ORG_LIMIT: RateLimitOptions = { capacity: 60, refillPerSec: 1 };
+export const WEBHOOK_ORG_LIMIT: RateLimitOptions = { capacity: 120, refillPerSec: 2 };
+
+export function orgKey(scope: string, orgId: string): string {
+  return `org:${orgId}:${scope}`;
+}
+
+export function providerWebhookKey(provider: string, orgIdOrIp: string): string {
+  return `wh:${provider}:${orgIdOrIp}`;
+}
+
+export function rateLimitOrg(scope: string, orgId: string, opts: RateLimitOptions = BILLING_ORG_LIMIT): RateLimitResult {
+  return rateLimit(orgKey(scope, orgId), opts);
+}
