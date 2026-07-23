@@ -38,9 +38,9 @@ export async function writeAudit(entry: AuditEntry): Promise<void> {
       actor_id: entry.actorId,
       action: entry.action,
       target_user_id: entry.targetUserId ?? null,
-      before_value: entry.before ?? null,
-      after_value: entry.after ?? null,
-      meta: entry.meta ?? {},
+      before_value: (entry.before as any) ?? null,
+      after_value: (entry.after as any) ?? null,
+      meta: (entry.meta as any) ?? {},
       ip: clientIp(),
       user_agent: clientUA(),
     });
@@ -83,7 +83,7 @@ export async function writeSecurityEvent(entry: SecurityEventEntry): Promise<voi
       ip: clientIp(),
       user_agent: clientUA(),
       country: entry.country ?? null,
-      meta: entry.meta ?? {},
+      meta: (entry.meta as any) ?? {},
     });
   } catch (e) {
     console.error("[security-event] failed", e);
@@ -108,7 +108,7 @@ export async function emitNotification(entry: NotificationEntry): Promise<void> 
       title: entry.title,
       body: entry.body ?? null,
       severity: entry.severity ?? "info",
-      meta: entry.meta ?? {},
+      meta: (entry.meta as any) ?? {},
     });
   } catch (e) {
     console.error("[notification] failed", e);
