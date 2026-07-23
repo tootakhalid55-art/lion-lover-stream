@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as BootstrapRouteImport } from './routes/bootstrap'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as SeriesIdRouteImport } from './routes/series.$id'
@@ -26,6 +27,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
 import { Route as AdminSecurityRouteImport } from './routes/admin.security'
+import { Route as AdminResellersRouteImport } from './routes/admin.resellers'
 import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminLicensesRouteImport } from './routes/admin.licenses'
@@ -33,6 +35,7 @@ import { Route as AdminDevicesRouteImport } from './routes/admin.devices'
 import { Route as AdminCodesRouteImport } from './routes/admin.codes'
 import { Route as AdminBulkRouteImport } from './routes/admin.bulk'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
+import { Route as AuthenticatedResellerRouteImport } from './routes/_authenticated/reseller'
 import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
 import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
 import { Route as ApiAdminExportFileRouteImport } from './routes/api.admin.export.$file'
@@ -76,6 +79,10 @@ const BootstrapRoute = BootstrapRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -123,6 +130,11 @@ const AdminSecurityRoute = AdminSecurityRouteImport.update({
   path: '/security',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminResellersRoute = AdminResellersRouteImport.update({
+  id: '/resellers',
+  path: '/resellers',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPackagesRoute = AdminPackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
@@ -158,6 +170,11 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AdminRoute,
 } as any)
+const AuthenticatedResellerRoute = AuthenticatedResellerRouteImport.update({
+  id: '/reseller',
+  path: '/reseller',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const WatchKindIdRoute = WatchKindIdRouteImport.update({
   id: '/watch/$kind/$id',
   path: '/watch/$kind/$id',
@@ -189,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/reseller': typeof AuthenticatedResellerRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
@@ -196,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/admin/licenses': typeof AdminLicensesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/resellers': typeof AdminResellersRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/system': typeof AdminSystemRoute
@@ -218,6 +237,7 @@ export interface FileRoutesByTo {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/reseller': typeof AuthenticatedResellerRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
@@ -225,6 +245,7 @@ export interface FileRoutesByTo {
   '/admin/licenses': typeof AdminLicensesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/resellers': typeof AdminResellersRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/system': typeof AdminSystemRoute
@@ -241,6 +262,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/bootstrap': typeof BootstrapRoute
   '/favorites': typeof FavoritesRoute
@@ -249,6 +271,7 @@ export interface FileRoutesById {
   '/redeem': typeof RedeemRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/_authenticated/reseller': typeof AuthenticatedResellerRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bulk': typeof AdminBulkRoute
   '/admin/codes': typeof AdminCodesRoute
@@ -256,6 +279,7 @@ export interface FileRoutesById {
   '/admin/licenses': typeof AdminLicensesRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/resellers': typeof AdminResellersRoute
   '/admin/security': typeof AdminSecurityRoute
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/system': typeof AdminSystemRoute
@@ -281,6 +305,7 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/reseller'
     | '/admin/audit'
     | '/admin/bulk'
     | '/admin/codes'
@@ -288,6 +313,7 @@ export interface FileRouteTypes {
     | '/admin/licenses'
     | '/admin/notifications'
     | '/admin/packages'
+    | '/admin/resellers'
     | '/admin/security'
     | '/admin/sessions'
     | '/admin/system'
@@ -310,6 +336,7 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/reseller'
     | '/admin/audit'
     | '/admin/bulk'
     | '/admin/codes'
@@ -317,6 +344,7 @@ export interface FileRouteTypes {
     | '/admin/licenses'
     | '/admin/notifications'
     | '/admin/packages'
+    | '/admin/resellers'
     | '/admin/security'
     | '/admin/sessions'
     | '/admin/system'
@@ -332,6 +360,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/admin'
     | '/bootstrap'
     | '/favorites'
@@ -340,6 +369,7 @@ export interface FileRouteTypes {
     | '/redeem'
     | '/search'
     | '/settings'
+    | '/_authenticated/reseller'
     | '/admin/audit'
     | '/admin/bulk'
     | '/admin/codes'
@@ -347,6 +377,7 @@ export interface FileRouteTypes {
     | '/admin/licenses'
     | '/admin/notifications'
     | '/admin/packages'
+    | '/admin/resellers'
     | '/admin/security'
     | '/admin/sessions'
     | '/admin/system'
@@ -363,6 +394,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
   BootstrapRoute: typeof BootstrapRoute
   FavoritesRoute: typeof FavoritesRoute
@@ -438,6 +470,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -501,6 +540,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSecurityRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/resellers': {
+      id: '/admin/resellers'
+      path: '/resellers'
+      fullPath: '/admin/resellers'
+      preLoaderRoute: typeof AdminResellersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/packages': {
       id: '/admin/packages'
       path: '/packages'
@@ -550,6 +596,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_authenticated/reseller': {
+      id: '/_authenticated/reseller'
+      path: '/reseller'
+      fullPath: '/reseller'
+      preLoaderRoute: typeof AuthenticatedResellerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/watch/$kind/$id': {
       id: '/watch/$kind/$id'
       path: '/watch/$kind/$id'
@@ -581,6 +634,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedResellerRoute: typeof AuthenticatedResellerRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedResellerRoute: AuthenticatedResellerRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 interface AdminRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBulkRoute: typeof AdminBulkRoute
@@ -589,6 +653,7 @@ interface AdminRouteChildren {
   AdminLicensesRoute: typeof AdminLicensesRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPackagesRoute: typeof AdminPackagesRoute
+  AdminResellersRoute: typeof AdminResellersRoute
   AdminSecurityRoute: typeof AdminSecurityRoute
   AdminSessionsRoute: typeof AdminSessionsRoute
   AdminSystemRoute: typeof AdminSystemRoute
@@ -604,6 +669,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLicensesRoute: AdminLicensesRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPackagesRoute: AdminPackagesRoute,
+  AdminResellersRoute: AdminResellersRoute,
   AdminSecurityRoute: AdminSecurityRoute,
   AdminSessionsRoute: AdminSessionsRoute,
   AdminSystemRoute: AdminSystemRoute,
@@ -615,6 +681,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
   BootstrapRoute: BootstrapRoute,
   FavoritesRoute: FavoritesRoute,

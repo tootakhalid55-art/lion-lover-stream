@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Bell, Key, LayoutDashboard, ListChecks, LogOut, MonitorSmartphone, Package, Server, ShieldAlert, Ticket, Users, Wand2 } from "lucide-react";
+import { Activity, Bell, Key, LayoutDashboard, ListChecks, LogOut, MonitorSmartphone, Network, Package, Server, ShieldAlert, Ticket, Users, Wand2 } from "lucide-react";
 import { me } from "@/lib/auth.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { RouteError } from "@/components/RouteError";
@@ -64,6 +64,7 @@ function AdminLayout() {
             {[
               { to: "/admin", label: "نظرة عامة", icon: LayoutDashboard, exact: true },
               { to: "/admin/users", label: "المستخدمون", icon: Users },
+              { to: "/admin/resellers", label: "الموزّعون", icon: Network },
               { to: "/admin/packages", label: "الباقات", icon: Package },
               { to: "/admin/licenses", label: "الرخص", icon: Key },
               { to: "/admin/codes", label: "رموز التفعيل", icon: Ticket },

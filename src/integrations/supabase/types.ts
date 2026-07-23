@@ -445,48 +445,66 @@ export type Database = {
       }
       license_orders: {
         Row: {
+          cancelled_at: string | null
           created_at: string
+          created_by: string | null
           currency: string
           discount_cents: number
+          fulfilled_at: string | null
           id: string
           invoice_id: string | null
           meta: Json
           org_id: string
           package_id: string
+          paid_at: string | null
+          pricing_trace: Json
           qty: number
           status: string
+          submitted_at: string | null
           tax_cents: number
           total_cents: number
           unit_price_cents: number
           updated_at: string
         }
         Insert: {
+          cancelled_at?: string | null
           created_at?: string
+          created_by?: string | null
           currency?: string
           discount_cents?: number
+          fulfilled_at?: string | null
           id?: string
           invoice_id?: string | null
           meta?: Json
           org_id: string
           package_id: string
+          paid_at?: string | null
+          pricing_trace?: Json
           qty: number
           status?: string
+          submitted_at?: string | null
           tax_cents?: number
           total_cents: number
           unit_price_cents: number
           updated_at?: string
         }
         Update: {
+          cancelled_at?: string | null
           created_at?: string
+          created_by?: string | null
           currency?: string
           discount_cents?: number
+          fulfilled_at?: string | null
           id?: string
           invoice_id?: string | null
           meta?: Json
           org_id?: string
           package_id?: string
+          paid_at?: string | null
+          pricing_trace?: Json
           qty?: number
           status?: string
+          submitted_at?: string | null
           tax_cents?: number
           total_cents?: number
           unit_price_cents?: number
@@ -657,6 +675,58 @@ export type Database = {
           {
             foreignKeyName: "org_members_org_id_fkey"
             columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_move_history: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          from_parent_id: string | null
+          id: string
+          org_id: string
+          reason: string | null
+          to_parent_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          from_parent_id?: string | null
+          id?: string
+          org_id: string
+          reason?: string | null
+          to_parent_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          from_parent_id?: string | null
+          id?: string
+          org_id?: string
+          reason?: string | null
+          to_parent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_move_history_from_parent_id_fkey"
+            columns: ["from_parent_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_move_history_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_move_history_to_parent_id_fkey"
+            columns: ["to_parent_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -1100,6 +1170,9 @@ export type Database = {
           org_id: string
           phone: string | null
           price_level: string
+          status: string
+          tax_profile: Json
+          territory: string | null
           updated_at: string
         }
         Insert: {
@@ -1115,6 +1188,9 @@ export type Database = {
           org_id: string
           phone?: string | null
           price_level?: string
+          status?: string
+          tax_profile?: Json
+          territory?: string | null
           updated_at?: string
         }
         Update: {
@@ -1130,6 +1206,9 @@ export type Database = {
           org_id?: string
           phone?: string | null
           price_level?: string
+          status?: string
+          tax_profile?: Json
+          territory?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1553,6 +1632,53 @@ export type Database = {
           },
         ]
       }
+      wallet_reservations: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          memo: string | null
+          org_id: string
+          ref_id: string
+          ref_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          memo?: string | null
+          org_id: string
+          ref_id: string
+          ref_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          memo?: string | null
+          org_id?: string
+          ref_id?: string
+          ref_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_reservations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_deliveries: {
         Row: {
           attempt: number
@@ -1707,6 +1833,14 @@ export type Database = {
       is_org_member: { Args: { _org: string; _user: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       org_ancestors: { Args: { _org: string }; Returns: string[] }
+      org_wallet_balances: {
+        Args: { _org: string }
+        Returns: {
+          available_cents: number
+          ledger_cents: number
+          reserved_cents: number
+        }[]
+      }
     }
     Enums: {
       account_status: "active" | "suspended" | "expired" | "disabled" | "locked"
