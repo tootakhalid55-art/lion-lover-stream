@@ -2,7 +2,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
-import { existsSync, rmSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { defineConfig, loadEnv, mergeConfig, type PluginOption, type UserConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 
