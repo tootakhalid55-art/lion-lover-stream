@@ -305,7 +305,8 @@ export const adminGetUser = createServerFn({ method: "POST" })
 export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((v: {
-    username?: string; password?: string; displayName?: string; email?: string; phone?: string; durationDays: number | null; notes?: string;
+    username?: string; password?: string; displayName?: string; email?: string; phone?: string;
+    durationDays?: number | null; packageId?: string | null; notes?: string;
   }) =>
     z
       .object({
@@ -314,7 +315,8 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         displayName: z.string().max(80).optional(),
         email: z.string().email().max(200).optional().or(z.literal("")),
         phone: z.string().max(40).optional().or(z.literal("")),
-        durationDays: z.number().int().positive().nullable(),
+        durationDays: z.number().int().positive().nullable().optional(),
+        packageId: z.string().uuid().nullable().optional(),
         notes: z.string().max(2000).optional(),
       })
       .parse(v),
@@ -325,7 +327,16 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     const username = (data.username || genUsername()).toLowerCase();
     const password = data.password || genPassword(12);
     const email = usernameToEmail(username);
-    const expires_at = data.durationDays ? new Date(Date.now() + data.durationDays * 86400_000).toISOString() : null;
+
+    // Package overrides raw duration
+    let pkg: any = null;
+    if (data.packageId) {
+      const { data: p } = await admin.from("packages").select("*").eq("id", data.packageId).single();
+      pkg = p;
+    }
+    const days = pkg ? pkg.duration_days : data.durationDays ?? null;
+    const expires_at = pkg?.tier === "lifetime" ? null : days ? new Date(Date.now() + days * 86400_000).toISOString() : null;
+
     const { data: created, error } = await admin.auth.admin.createUser({
       email, password, email_confirm: true,
       user_metadata: { username, display_name: data.displayName || username },
@@ -338,14 +349,26 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         email: data.email || null,
         phone: data.phone || null,
         status: "active" as AccountStatus,
+        package_id: pkg?.id ?? null,
         expires_at,
         activated_at: new Date().toISOString(),
         notes: data.notes || null,
       },
       { onConflict: "id" },
     );
-    await audit("create_user", created.user.id, { username, durationDays: data.durationDays }, context.userId);
-    return { ok: true as const, id: created.user.id, username, password, expires_at };
+
+    // Issue license row if package chosen
+    if (pkg) {
+      const { generateLicenseKey } = await import("@/lib/licensing.server");
+      await admin.from("licenses").insert({
+        user_id: created.user.id, package_id: pkg.id, license_key: generateLicenseKey(),
+        license_type: pkg.tier === "lifetime" ? "lifetime" : pkg.tier === "trial" ? "trial" : "paid",
+        status: "active", expires_at, issued_by: context.userId,
+      });
+    }
+
+    await audit("create_user", created.user.id, { username, packageId: pkg?.id ?? null, durationDays: days }, context.userId);
+    return { ok: true as const, id: created.user.id, username, password, expires_at, packageName: pkg?.name ?? null };
   });
 
 export const adminUpdateUser = createServerFn({ method: "POST" })
