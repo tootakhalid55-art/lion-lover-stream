@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { buildRuntimeDiagnostic, logRuntimeDiagnostic } from "../lib/runtime-diagnostics";
 import { isRecoverableClientLoadError, requestClientReload } from "../lib/recoverable-errors";
 import { Splash } from "../components/brand/Splash";
+import { AuthGate } from "../components/AuthGate";
 
 
 function NotFoundComponent() {
@@ -172,6 +173,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Splash />
+      <AuthGate />
       <HealthBannerLazy />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
