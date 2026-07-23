@@ -87,7 +87,7 @@ function PackagesPage() {
         <PackageEditor
           initial={editing === "new" ? null : editing}
           onClose={() => setEditing(null)}
-          onSave={(v) => save.mutate(v)}
+          onSave={(v: any) => save.mutate(v)}
           busy={save.isPending}
           error={(save.error as any)?.message}
         />

@@ -82,7 +82,7 @@ function CodesPage() {
       </div>
 
       {showCreate && (
-        <CreateForm packages={packages.data ?? []} onClose={() => setShowCreate(false)} onSubmit={(v) => create.mutate(v)} busy={create.isPending} error={(create.error as any)?.message} />
+        <CreateForm packages={packages.data ?? []} onClose={() => setShowCreate(false)} onSubmit={(v: any) => create.mutate(v)} busy={create.isPending} error={(create.error as any)?.message} />
       )}
       {generated && (
         <GeneratedList codes={generated} onClose={() => setGenerated(null)} />
