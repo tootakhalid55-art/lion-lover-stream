@@ -22,7 +22,7 @@ export interface RuleEffect {
   /** Cents (for money) or a bps/percent (for percent rules). */
   value: number;
   /** Meta captured for audit (e.g. `{ percent: 20 }`). */
-  meta?: Record<string, unknown>;
+  meta?: Record<string, any>;
 }
 
 export interface RuleTrace {
@@ -34,7 +34,7 @@ export interface RuleTrace {
   after: number;
   effect?: RuleEffect;
   reason: string;
-  meta?: Record<string, unknown>;
+  meta?: Record<string, any>;
 }
 
 export interface Rule<F> {
@@ -43,7 +43,7 @@ export interface Rule<F> {
   /** Lower number wins first. Pricing priority order matches spec. */
   priority: number;
   /** Return `null` to skip, or an effect + human reason. */
-  evaluate: (facts: F, current: number) => { effect: RuleEffect; reason: string; meta?: Record<string, unknown> } | null;
+  evaluate: (facts: F, current: number) => { effect: RuleEffect; reason: string; meta?: Record<string, any> } | null;
 }
 
 export interface RuleResult {

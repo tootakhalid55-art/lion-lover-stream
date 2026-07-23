@@ -113,7 +113,7 @@ export const updateOrg = createServerFn({ method: "POST" })
     await assertCapability(context, "canManageResellers");
     await assertTenantAccess(context, data.orgId);
     const admin = await getAdmin();
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const patch: any = { updated_at: new Date().toISOString() };
     if (data.name !== undefined) patch.name = data.name;
     if (data.status !== undefined) patch.status = data.status;
     if (data.currency !== undefined) patch.currency = data.currency;
@@ -122,7 +122,7 @@ export const updateOrg = createServerFn({ method: "POST" })
     const { data: after, error } = await admin.from("organizations").update(patch).eq("id", data.orgId).select("*").single();
     if (error) throw error;
     if (data.profile) {
-      const p: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      const p: any = { updated_at: new Date().toISOString() };
       if (data.profile.territory !== undefined) p.territory = data.profile.territory;
       if (data.profile.creditLimitCents !== undefined) p.credit_limit_cents = Math.round(data.profile.creditLimitCents);
       if (data.profile.priceLevel !== undefined) p.price_level = data.profile.priceLevel;
