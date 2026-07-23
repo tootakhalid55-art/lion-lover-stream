@@ -9,9 +9,9 @@ import { RouteError } from "@/components/RouteError";
 export const Route = createFileRoute("/favorites")({
   head: () => ({
     meta: [
-      { title: "قائمتي — LionTV" },
-      { name: "description", content: "شاهد ما حفظته لاحقًا من الأفلام والمسلسلات على LionTV." },
-      { property: "og:title", content: "قائمتي — LionTV" },
+      { title: "قائمتي — Nova TV" },
+      { name: "description", content: "شاهد ما حفظته لاحقًا من الأفلام والمسلسلات على Nova TV." },
+      { property: "og:title", content: "قائمتي — Nova TV" },
       { property: "og:description", content: "ملفك الشخصي: الأفلام والمسلسلات المحفوظة." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

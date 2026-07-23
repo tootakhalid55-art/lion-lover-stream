@@ -11,9 +11,9 @@ import { RouteError } from "@/components/RouteError";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "الإعدادات — LionTV" },
-      { name: "description", content: "أدر حسابك وتفضيلات التشغيل على LionTV." },
-      { property: "og:title", content: "الإعدادات — LionTV" },
+      { title: "الإعدادات — Nova TV" },
+      { name: "description", content: "أدر حسابك وتفضيلات التشغيل على Nova TV." },
+      { property: "og:title", content: "الإعدادات — Nova TV" },
       { property: "og:description", content: "إدارة اشتراك Xtream وتفضيلات التشغيل." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
