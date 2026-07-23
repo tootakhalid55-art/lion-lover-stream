@@ -55,10 +55,22 @@ async function assertAdmin(ctx: { supabase: any; userId: string }): Promise<AppR
 async function audit(action: string, target_user_id: string | null, meta: any, actor_id: string | null = null) {
   try {
     const admin = await getAdmin();
-    await admin.from("audit_logs").insert({ action, target_user_id, meta, actor_id, ip: clientIp() });
+    await admin.from("audit_logs").insert({ action, target_user_id, meta, actor_id, ip: clientIp(), user_agent: clientUA() });
   } catch (e) {
     console.error("[audit] failed", e);
   }
+}
+async function secEvent(userId: string | null, kind: string, severity: "info" | "warn" | "critical" = "info", meta: any = {}) {
+  try {
+    const admin = await getAdmin();
+    await admin.from("security_events").insert({ user_id: userId, kind, severity, ip: clientIp(), user_agent: clientUA(), meta });
+  } catch (e) { console.error("[sec] failed", e); }
+}
+async function notify(userId: string | null, kind: string, title: string, body?: string, severity: "info" | "warn" | "critical" = "info") {
+  try {
+    const admin = await getAdmin();
+    await admin.from("notifications").insert({ user_id: userId, kind, title, body: body ?? null, severity });
+  } catch (e) { console.error("[notify] failed", e); }
 }
 
 // ─── Password generator ─────────────────────────────────────────────────
@@ -136,9 +148,13 @@ export const resolveLoginEmail = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!p) {
       await admin.from("login_attempts").insert({ username: data.username, ip: clientIp(), success: false, reason: "no_user", user_agent: clientUA() });
+      await secEvent(null, "failed_login", "info", { username: data.username, reason: "no_user" });
       throw new Error("بيانات الدخول غير صحيحة");
     }
-    if (p.locked_until && new Date(p.locked_until) > new Date()) throw new Error("الحساب مقفول مؤقتًا. حاول لاحقًا.");
+    if (p.locked_until && new Date(p.locked_until) > new Date()) {
+      await secEvent(p.id, "failed_login", "warn", { reason: "locked" });
+      throw new Error("الحساب مقفول مؤقتًا. حاول لاحقًا.");
+    }
     if (p.status === "suspended") throw new Error("الحساب معلّق. تواصل مع الإدارة.");
     if (p.status === "disabled") throw new Error("الحساب معطّل.");
     if (p.expires_at && new Date(p.expires_at) < new Date()) {
@@ -188,6 +204,7 @@ export const finalizeLogin = createServerFn({ method: "POST" })
       await admin.from("login_attempts").insert({ username: profile.username, ip: clientIp(), success: false, reason: "device_limit", user_agent: clientUA() });
       throw new Error(`وصلت للحد الأقصى للأجهزة (${maxDevices}). أزل جهازًا سابقًا أو تواصل مع الإدارة.`);
     }
+    const isNewDevice = !existing;
     await admin.from("user_devices").upsert(
       {
         user_id: uid,
@@ -197,6 +214,8 @@ export const finalizeLogin = createServerFn({ method: "POST" })
         browser: data.browser,
         ip: clientIp(),
         last_seen: new Date().toISOString(),
+        last_activity_at: new Date().toISOString(),
+        ...(isNewDevice ? { first_login_at: new Date().toISOString() } : {}),
       },
       { onConflict: "user_id,device_id" },
     );
@@ -208,22 +227,28 @@ export const finalizeLogin = createServerFn({ method: "POST" })
       .eq("user_id", uid)
       .is("revoked_at", null)
       .order("created_at", { ascending: true });
-    // Always revoke prior session on the same device
     const sameDevice = (activeSessions ?? []).filter((s: any) => s.device_id === data.deviceId);
     if (sameDevice.length) {
-      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString() }).in("id", sameDevice.map((s: any) => s.id));
+      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString(), revoked_reason: "reconnect_same_device" }).in("id", sameDevice.map((s: any) => s.id));
     }
     const remaining = (activeSessions ?? []).filter((s: any) => s.device_id !== data.deviceId);
     const overflow = remaining.length - (maxSessions - 1);
     if (overflow > 0) {
       const toRevoke = remaining.slice(0, overflow).map((s: any) => s.id);
-      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString() }).in("id", toRevoke);
+      await admin.from("user_sessions").update({ revoked_at: new Date().toISOString(), revoked_reason: "session_limit" }).in("id", toRevoke);
     }
     await admin.from("user_sessions").insert({
       user_id: uid, device_id: data.deviceId, ip: clientIp(), user_agent: clientUA(),
     });
     await admin.from("profiles").update({ last_login_at: new Date().toISOString(), last_ip: clientIp(), failed_attempts: 0 }).eq("id", uid);
     await admin.from("login_attempts").insert({ username: profile.username, ip: clientIp(), success: true, user_agent: clientUA() });
+
+    await secEvent(uid, "successful_login", "info", { device_id: data.deviceId, isNewDevice });
+    if (isNewDevice) {
+      await secEvent(uid, "new_device", "warn", { device_id: data.deviceId, name: data.deviceName, os: data.os, browser: data.browser });
+      await notify(uid, "new_device", "تسجيل دخول من جهاز جديد",
+        `${data.deviceName} من ${clientIp()}. إن لم يكن أنت، غيّر كلمة المرور فورًا.`, "warn");
+    }
 
     return { ok: true as const };
   });
