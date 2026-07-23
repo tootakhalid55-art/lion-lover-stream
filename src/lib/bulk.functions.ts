@@ -26,7 +26,7 @@ interface BulkResult {
   targetId: string;
   username?: string;
   ok: boolean;
-  change?: Record<string, unknown>;
+  change?: any;
   error?: string;
 }
 
