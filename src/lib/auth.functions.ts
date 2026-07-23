@@ -259,25 +259,31 @@ export const adminListUsers = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     let q = admin
       .from("profiles")
-      .select("id, username, display_name, email, phone, status, expires_at, activated_at, last_login_at, last_ip, created_at")
+      .select("id, username, display_name, email, phone, status, expires_at, activated_at, last_login_at, last_ip, created_at, package_id, packages(name, tier, max_devices)")
       .order("created_at", { ascending: false })
       .limit(500);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
     if (data.search) q = q.ilike("username", `%${data.search.toLowerCase()}%`);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    // Attach device + online status
     const ids = (rows ?? []).map((r: any) => r.id);
     const [{ data: devices }, { data: sessions }] = await Promise.all([
       admin.from("user_devices").select("user_id, device_name, os, browser, last_seen").in("user_id", ids),
       admin.from("user_sessions").select("user_id, last_seen").in("user_id", ids).is("revoked_at", null),
     ]);
-    const devByUser = new Map((devices ?? []).map((d: any) => [d.user_id, d]));
+    const devByUser = new Map<string, any>();
+    (devices ?? []).forEach((d: any) => {
+      const prev = devByUser.get(d.user_id);
+      if (!prev || new Date(d.last_seen) > new Date(prev.last_seen)) devByUser.set(d.user_id, d);
+    });
     const cutoff = Date.now() - 5 * 60 * 1000;
     const onlineSet = new Set((sessions ?? []).filter((s: any) => new Date(s.last_seen).getTime() > cutoff).map((s: any) => s.user_id));
+    const deviceCount = new Map<string, number>();
+    (devices ?? []).forEach((d: any) => deviceCount.set(d.user_id, (deviceCount.get(d.user_id) ?? 0) + 1));
     return (rows ?? []).map((r: any) => ({
       ...r,
       device: devByUser.get(r.id) ?? null,
+      deviceCount: deviceCount.get(r.id) ?? 0,
       online: onlineSet.has(r.id),
     }));
   });
