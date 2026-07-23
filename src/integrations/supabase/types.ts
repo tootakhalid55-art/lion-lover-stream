@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          duration_override_days: number | null
+          expires_at: string | null
+          id: string
+          notes: string | null
+          package_id: string
+          redeemed_at: string | null
+          redeemed_by: string | null
+          updated_at: string
+          uses_allowed: number
+          uses_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          duration_override_days?: number | null
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          package_id: string
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          updated_at?: string
+          uses_allowed?: number
+          uses_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          duration_override_days?: number | null
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          package_id?: string
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          updated_at?: string
+          uses_allowed?: number
+          uses_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_codes_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -43,6 +99,62 @@ export type Database = {
           target_user_id?: string | null
         }
         Relationships: []
+      }
+      licenses: {
+        Row: {
+          activated_at: string
+          auto_renew: boolean
+          created_at: string
+          expires_at: string | null
+          id: string
+          issued_by: string | null
+          license_key: string
+          license_type: Database["public"]["Enums"]["license_type"]
+          notes: string | null
+          package_id: string | null
+          status: Database["public"]["Enums"]["license_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string
+          auto_renew?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          issued_by?: string | null
+          license_key: string
+          license_type?: Database["public"]["Enums"]["license_type"]
+          notes?: string | null
+          package_id?: string | null
+          status?: Database["public"]["Enums"]["license_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activated_at?: string
+          auto_renew?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          issued_by?: string | null
+          license_key?: string
+          license_type?: Database["public"]["Enums"]["license_type"]
+          notes?: string | null
+          package_id?: string | null
+          status?: Database["public"]["Enums"]["license_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licenses_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       login_attempts: {
         Row: {
@@ -74,6 +186,69 @@ export type Database = {
         }
         Relationships: []
       }
+      packages: {
+        Row: {
+          allow_download: boolean
+          allow_recording: boolean
+          allowed_categories: Json
+          allowed_features: Json
+          created_at: string
+          currency: string
+          duration_days: number | null
+          id: string
+          is_active: boolean
+          max_devices: number
+          max_sessions: number
+          name: string
+          notes: string | null
+          price_cents: number
+          simultaneous_streams: number
+          sort_order: number
+          tier: Database["public"]["Enums"]["package_tier"]
+          updated_at: string
+        }
+        Insert: {
+          allow_download?: boolean
+          allow_recording?: boolean
+          allowed_categories?: Json
+          allowed_features?: Json
+          created_at?: string
+          currency?: string
+          duration_days?: number | null
+          id?: string
+          is_active?: boolean
+          max_devices?: number
+          max_sessions?: number
+          name: string
+          notes?: string | null
+          price_cents?: number
+          simultaneous_streams?: number
+          sort_order?: number
+          tier: Database["public"]["Enums"]["package_tier"]
+          updated_at?: string
+        }
+        Update: {
+          allow_download?: boolean
+          allow_recording?: boolean
+          allowed_categories?: Json
+          allowed_features?: Json
+          created_at?: string
+          currency?: string
+          duration_days?: number | null
+          id?: string
+          is_active?: boolean
+          max_devices?: number
+          max_sessions?: number
+          name?: string
+          notes?: string | null
+          price_cents?: number
+          simultaneous_streams?: number
+          sort_order?: number
+          tier?: Database["public"]["Enums"]["package_tier"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           activated_at: string | null
@@ -87,6 +262,7 @@ export type Database = {
           last_login_at: string | null
           locked_until: string | null
           notes: string | null
+          package_id: string | null
           phone: string | null
           status: Database["public"]["Enums"]["account_status"]
           updated_at: string
@@ -104,6 +280,7 @@ export type Database = {
           last_login_at?: string | null
           locked_until?: string | null
           notes?: string | null
+          package_id?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
@@ -121,12 +298,21 @@ export type Database = {
           last_login_at?: string | null
           locked_until?: string | null
           notes?: string | null
+          package_id?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
           username?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_devices: {
         Row: {
@@ -233,6 +419,16 @@ export type Database = {
     Enums: {
       account_status: "active" | "suspended" | "expired" | "disabled" | "locked"
       app_role: "super_admin" | "admin" | "moderator"
+      license_status: "active" | "expired" | "revoked" | "pending"
+      license_type: "trial" | "paid" | "lifetime" | "comp"
+      package_tier:
+        | "trial"
+        | "monthly"
+        | "quarterly"
+        | "semi_annual"
+        | "annual"
+        | "lifetime"
+        | "custom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -362,6 +558,17 @@ export const Constants = {
     Enums: {
       account_status: ["active", "suspended", "expired", "disabled", "locked"],
       app_role: ["super_admin", "admin", "moderator"],
+      license_status: ["active", "expired", "revoked", "pending"],
+      license_type: ["trial", "paid", "lifetime", "comp"],
+      package_tier: [
+        "trial",
+        "monthly",
+        "quarterly",
+        "semi_annual",
+        "annual",
+        "lifetime",
+        "custom",
+      ],
     },
   },
 } as const
