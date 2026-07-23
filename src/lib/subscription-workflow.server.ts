@@ -163,14 +163,16 @@ async function executeRenewal(ctx: RenewalContext, cid: string): Promise<Renewal
   try {
     const charge = await adapter.charge(
       { orgId: sub.org_id, mode, config: (pm.meta ?? {}) as Record<string, unknown>, correlationId: cid },
-      { amountCents, currency: plan.currency, idempotencyKey: `sub:${sub.id}:${invoice.invoiceId}`, savedMethodRef: pm.provider_ref ?? undefined, invoiceId: invoice.invoiceId },
+      { orgId: sub.org_id, amountCents, currency: plan.currency, idempotencyKey: `sub:${sub.id}:${invoice.invoiceId}`, paymentMethodRef: pm.provider_ref ?? undefined, invoiceId: invoice.invoiceId },
     );
 
-    if (charge.status === "captured" || charge.status === "succeeded") {
+    if (charge.status === "succeeded") {
       await handleSuccess(sub, invoice.invoiceId, charge, cid, plan.currency, amountCents, pm.provider);
       return { status: "renewed", correlationId: cid, invoiceId: invoice.invoiceId, paymentId: charge.providerRef };
     }
-    const failure: NormalizedFailure = { reason: "authentication_required", retryable: false, permanent: false, message: `pending:${charge.status}` };
+    const failure: NormalizedFailure = charge.status === "failed"
+      ? { reason: "card_declined", retryable: true, permanent: false, message: charge.failureMessage ?? "declined", providerCode: charge.failureCode }
+      : { reason: "authentication_required", retryable: false, permanent: false, message: `pending:${charge.status}` };
     await handleFailure(sub, invoice.invoiceId, failure, cid);
     return { status: "payment_failed", correlationId: cid, invoiceId: invoice.invoiceId, failure };
   } catch (e) {
