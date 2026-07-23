@@ -5,6 +5,12 @@ import { nitro } from "nitro/vite";
 import { defineConfig, loadEnv, mergeConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 
+const isSandbox = Boolean(
+  process.env.__LOVABLE_JWKS_URL ||
+    process.env.LOVABLE_ASSETS_ENDPOINT_URL ||
+    process.env.LOVABLE_BROWSER_AUTH_STATUS,
+);
+
 export default defineConfig(({ mode }) => {
   const loadedEnv = loadEnv(mode, process.cwd(), "VITE_");
 
@@ -44,21 +50,31 @@ export default defineConfig(({ mode }) => {
               specifiers: ["server-only"],
             },
           },
-          // Redirect TanStack Start's bundled server entry to src/server.ts
-          // so SSR errors go through the production error wrapper.
           server: { entry: "server" },
         }),
-        nitro({
-          preset: "node-server",
-          output: {
-            dir: ".output",
-            serverDir: ".output/server",
-            publicDir: ".output/public",
-          },
-        }),
+        nitro(
+          isSandbox
+            ? {
+                preset: "cloudflare-module",
+                output: {
+                  dir: "dist",
+                  serverDir: "dist/server",
+                  publicDir: "dist/client",
+                },
+              }
+            : {
+                preset: "node-server",
+                output: {
+                  dir: ".output",
+                  serverDir: ".output/server",
+                  publicDir: ".output/public",
+                },
+              },
+        ),
         viteReact(),
       ],
     },
     {},
   );
 });
+
