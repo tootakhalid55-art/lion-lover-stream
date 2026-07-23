@@ -28,6 +28,7 @@ import { Route as AdminLicensesRouteImport } from './routes/admin.licenses'
 import { Route as AdminCodesRouteImport } from './routes/admin.codes'
 import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
 import { Route as ApiDebugXtreamRouteImport } from './routes/api.debug.xtream'
+import { Route as ApiAdminExportFileRouteImport } from './routes/api.admin.export.$file'
 import { Route as ApiPublicStreamKindFileRouteImport } from './routes/api.public.stream.$kind.$file'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -125,6 +126,11 @@ const ApiDebugXtreamRoute = ApiDebugXtreamRouteImport.update({
   path: '/api/debug/xtream',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminExportFileRoute = ApiAdminExportFileRouteImport.update({
+  id: '/api/admin/export/$file',
+  path: '/api/admin/export/$file',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicStreamKindFileRoute = ApiPublicStreamKindFileRouteImport.update({
   id: '/api/public/stream/$kind/$file',
   path: '/api/public/stream/$kind/$file',
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
+  '/api/admin/export/$file': typeof ApiAdminExportFileRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRoutesByTo {
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
+  '/api/admin/export/$file': typeof ApiAdminExportFileRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRoutesById {
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/api/debug/xtream': typeof ApiDebugXtreamRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
+  '/api/admin/export/$file': typeof ApiAdminExportFileRoute
   '/api/public/stream/$kind/$file': typeof ApiPublicStreamKindFileRoute
 }
 export interface FileRouteTypes {
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
+    | '/api/admin/export/$file'
     | '/api/public/stream/$kind/$file'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
+    | '/api/admin/export/$file'
     | '/api/public/stream/$kind/$file'
   id:
     | '__root__'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/api/debug/xtream'
     | '/watch/$kind/$id'
+    | '/api/admin/export/$file'
     | '/api/public/stream/$kind/$file'
   fileRoutesById: FileRoutesById
 }
@@ -280,6 +292,7 @@ export interface RootRouteChildren {
   SeriesIdRoute: typeof SeriesIdRoute
   ApiDebugXtreamRoute: typeof ApiDebugXtreamRoute
   WatchKindIdRoute: typeof WatchKindIdRoute
+  ApiAdminExportFileRoute: typeof ApiAdminExportFileRoute
   ApiPublicStreamKindFileRoute: typeof ApiPublicStreamKindFileRoute
 }
 
@@ -418,6 +431,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDebugXtreamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/export/$file': {
+      id: '/api/admin/export/$file'
+      path: '/api/admin/export/$file'
+      fullPath: '/api/admin/export/$file'
+      preLoaderRoute: typeof ApiAdminExportFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/stream/$kind/$file': {
       id: '/api/public/stream/$kind/$file'
       path: '/api/public/stream/$kind/$file'
@@ -461,6 +481,7 @@ const rootRouteChildren: RootRouteChildren = {
   SeriesIdRoute: SeriesIdRoute,
   ApiDebugXtreamRoute: ApiDebugXtreamRoute,
   WatchKindIdRoute: WatchKindIdRoute,
+  ApiAdminExportFileRoute: ApiAdminExportFileRoute,
   ApiPublicStreamKindFileRoute: ApiPublicStreamKindFileRoute,
 }
 export const routeTree = rootRouteImport

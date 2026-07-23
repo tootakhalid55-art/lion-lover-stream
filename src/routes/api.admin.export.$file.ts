@@ -48,7 +48,7 @@ export const Route = createFileRoute("/api/admin/export/$file")({
 
         const { headers, rows } = await collect(dataset);
         const body = format === "csv" ? toCsv(headers, rows) : toXlsx(headers, rows, dataset);
-        return new Response(body, {
+        return new Response(body as BodyInit, {
           status: 200,
           headers: {
             "content-type": contentType(format),
