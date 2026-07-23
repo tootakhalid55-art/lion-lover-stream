@@ -14,16 +14,225 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          ip: string | null
+          meta: Json | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          meta?: Json | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          meta?: Json | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
+      login_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip: string | null
+          reason: string | null
+          success: boolean
+          user_agent: string | null
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          reason?: string | null
+          success: boolean
+          user_agent?: string | null
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          reason?: string | null
+          success?: boolean
+          user_agent?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          activated_at: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          expires_at: string | null
+          failed_attempts: number
+          id: string
+          last_ip: string | null
+          last_login_at: string | null
+          locked_until: string | null
+          notes: string | null
+          phone: string | null
+          status: Database["public"]["Enums"]["account_status"]
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          expires_at?: string | null
+          failed_attempts?: number
+          id: string
+          last_ip?: string | null
+          last_login_at?: string | null
+          locked_until?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          expires_at?: string | null
+          failed_attempts?: number
+          id?: string
+          last_ip?: string | null
+          last_login_at?: string | null
+          locked_until?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      user_devices: {
+        Row: {
+          bound_at: string
+          browser: string | null
+          device_id: string
+          device_name: string | null
+          ip: string | null
+          last_seen: string
+          os: string | null
+          user_id: string
+        }
+        Insert: {
+          bound_at?: string
+          browser?: string | null
+          device_id: string
+          device_name?: string | null
+          ip?: string | null
+          last_seen?: string
+          os?: string | null
+          user_id: string
+        }
+        Update: {
+          bound_at?: string
+          browser?: string | null
+          device_id?: string
+          device_name?: string | null
+          ip?: string | null
+          last_seen?: string
+          os?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          id: string
+          ip: string | null
+          last_seen: string
+          revoked_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          ip?: string | null
+          last_seen?: string
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          ip?: string | null
+          last_seen?: string
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      account_status: "active" | "suspended" | "expired" | "disabled" | "locked"
+      app_role: "super_admin" | "admin" | "moderator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +359,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_status: ["active", "suspended", "expired", "disabled", "locked"],
+      app_role: ["super_admin", "admin", "moderator"],
+    },
   },
 } as const
