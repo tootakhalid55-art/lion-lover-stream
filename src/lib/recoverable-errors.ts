@@ -20,7 +20,10 @@ export function requestClientReload(error: unknown, scope = "global"): boolean {
 
   const key = `__liontv_recoverable_reload_at:${scope}`;
   const last = Number(window.sessionStorage.getItem(key) ?? 0);
-  if (Date.now() - last < 30_000) return false;
+  // Only throttle rapid reload loops (<3s). Stale-chunk errors that recur
+  // after a normal navigation must still trigger a reload, or the screen
+  // stays blank.
+  if (Date.now() - last < 3_000) return false;
 
   window.sessionStorage.setItem(key, String(Date.now()));
   window.parent?.postMessage?.({ type: "FORCE_RELOAD" }, "*");
