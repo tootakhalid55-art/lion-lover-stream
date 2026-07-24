@@ -129,27 +129,52 @@ function ExternalPlayerLinks({ src, title }: { src: string; title?: string }) {
   const encoded = encodeURIComponent(absUrl);
   const encodedTitle = encodeURIComponent(title || "Nova TV");
 
-  const vlcIos = `vlc-x-callback://x-callback-url/stream?url=${encoded}`;
-  const vlcAndroid = `intent:${absUrl}#Intent;package=org.videolan.vlc;type=video/*;S.title=${encodedTitle};end`;
-  const mxAndroid = `intent:${absUrl}#Intent;package=com.mxtech.videoplayer.ad;type=video/*;S.title=${encodedTitle};end`;
-  const mxProAndroid = `intent:${absUrl}#Intent;package=com.mxtech.videoplayer.pro;type=video/*;S.title=${encodedTitle};end`;
+  // Android intent URI needs scheme in a param: intent://host/path#Intent;scheme=https;...;end
+  const buildAndroidIntent = (pkg: string) => {
+    try {
+      const u = new URL(absUrl);
+      const rest = `${u.host}${u.pathname}${u.search}${u.hash}`;
+      return `intent://${rest}#Intent;scheme=${u.protocol.replace(":", "")};package=${pkg};type=video/*;S.title=${encodedTitle};S.browser_fallback_url=${encoded};end`;
+    } catch { return absUrl; }
+  };
 
-  const btn = "inline-flex items-center gap-1.5 rounded-full glass px-4 py-2 text-xs font-bold text-foreground/90 hover:bg-white/15 transition";
+  const vlcIos = `vlc-x-callback://x-callback-url/stream?url=${encoded}`;
+  const vlcIosAlt = `vlc://${absUrl}`;
+  const vlcAndroid = buildAndroidIntent("org.videolan.vlc");
+  const mxAndroid = buildAndroidIntent("com.mxtech.videoplayer.ad");
+  const mxProAndroid = buildAndroidIntent("com.mxtech.videoplayer.pro");
+
+  const openScheme = (url: string) => { try { window.location.href = url; } catch { /* noop */ } };
+
+  const btn = "inline-flex items-center gap-1.5 rounded-full glass px-4 py-2 text-xs font-bold text-foreground/90 hover:bg-white/15 transition active:scale-95";
   return (
     <div className="mt-4 flex flex-wrap items-center gap-2">
       <span className="text-xs text-foreground/60">فتح في مشغل الهاتف:</span>
-      {isIOS && <a href={vlcIos} className={btn}>VLC</a>}
+      {isIOS && (
+        <>
+          <button type="button" onClick={() => openScheme(vlcIos)} className={btn}>VLC</button>
+          <button type="button" onClick={() => openScheme(vlcIosAlt)} className={btn}>VLC (بديل)</button>
+        </>
+      )}
       {isAndroid && (
         <>
-          <a href={vlcAndroid} className={btn}>VLC</a>
-          <a href={mxAndroid} className={btn}>MX Player</a>
-          <a href={mxProAndroid} className={btn}>MX Pro</a>
+          <button type="button" onClick={() => openScheme(vlcAndroid)} className={btn}>VLC</button>
+          <button type="button" onClick={() => openScheme(mxAndroid)} className={btn}>MX Player</button>
+          <button type="button" onClick={() => openScheme(mxProAndroid)} className={btn}>MX Pro</button>
         </>
       )}
       {!isIOS && !isAndroid && <a href={absUrl} target="_blank" rel="noreferrer" className={btn}>فتح الرابط المباشر</a>}
       <button
         type="button"
-        onClick={() => { void navigator.clipboard?.writeText(absUrl); }}
+        onClick={async () => {
+          try { await navigator.clipboard?.writeText(absUrl); }
+          catch {
+            const ta = document.createElement("textarea");
+            ta.value = absUrl; document.body.appendChild(ta); ta.select();
+            try { document.execCommand("copy"); } catch { /* noop */ }
+            document.body.removeChild(ta);
+          }
+        }}
         className={btn}
       >
         نسخ الرابط
