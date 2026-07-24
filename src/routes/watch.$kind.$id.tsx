@@ -6,6 +6,7 @@ import { resolveStream, getMovieDetail, getLiveChannel } from "@/lib/xtream.func
 import { saveProgress } from "@/lib/user-data";
 import { track } from "@/lib/analytics";
 import { RouteError } from "@/components/RouteError";
+import { adaptStreamUrlForDevice, rewriteStreamUrl, detectDeviceCapabilities } from "@/lib/device-playback";
 
 export const Route = createFileRoute("/watch/$kind/$id")({
   validateSearch: (s: Record<string, unknown>) => ({ ext: typeof s.ext === "string" ? s.ext : undefined }),
