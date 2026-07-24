@@ -6,6 +6,7 @@ import { resolveStream, getMovieDetail, getLiveChannel } from "@/lib/xtream.func
 import { saveProgress } from "@/lib/user-data";
 import { track } from "@/lib/analytics";
 import { RouteError } from "@/components/RouteError";
+import { adaptStreamUrlForDevice, rewriteStreamUrl, detectDeviceCapabilities } from "@/lib/device-playback";
 
 export const Route = createFileRoute("/watch/$kind/$id")({
   validateSearch: (s: Record<string, unknown>) => ({ ext: typeof s.ext === "string" ? s.ext : undefined }),
@@ -24,17 +25,8 @@ function WatchPage() {
   const [meta, setMeta] = useState<{ title: string; imageUrl?: string; gradient: string; year: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const normalizePlayableSrc = (value: string) => {
-    if (kind === "live") return value;
-    try {
-      const url = new URL(value, window.location.origin);
-      const match = url.pathname.match(/\.([a-z0-9]+)$/i);
-      const currentExt = match?.[1]?.toLowerCase() || ext || "mp4";
-      if (!url.searchParams.get("sourceExt")) url.searchParams.set("sourceExt", currentExt === "m3u8" || currentExt === "ts" ? ext || "mp4" : currentExt);
-      url.pathname = url.pathname.replace(/\.[a-z0-9]+$/i, ".ts");
-      return `${url.pathname}${url.search}`;
-    } catch { return value; }
-  };
+  const normalizePlayableSrc = (value: string) => adaptStreamUrlForDevice(value, kind, ext);
+
 
   useEffect(() => {
     let alive = true;
@@ -119,13 +111,15 @@ function WatchPage() {
 }
 
 function ExternalPlayerLinks({ src, title }: { src: string; title?: string }) {
+  const caps = detectDeviceCapabilities();
+  // External native players (VLC/MX) prefer the raw MPEG-TS container.
+  const externalSrc = rewriteStreamUrl(src, caps.preferredExternalContainer);
   const absUrl = (() => {
-    try { return /^https?:\/\//i.test(src) ? src : new URL(src, window.location.origin).toString(); }
-    catch { return src; }
+    try { return /^https?:\/\//i.test(externalSrc) ? externalSrc : new URL(externalSrc, window.location.origin).toString(); }
+    catch { return externalSrc; }
   })();
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-  const isIOS = /iP(hone|ad|od)/i.test(ua);
-  const isAndroid = /Android/i.test(ua);
+  const isIOS = caps.isIOS;
+  const isAndroid = caps.isAndroid;
   const encoded = encodeURIComponent(absUrl);
   const encodedTitle = encodeURIComponent(title || "Nova TV");
 
