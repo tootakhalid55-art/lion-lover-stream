@@ -157,7 +157,3 @@ function ExternalPlayerLinks({ src, title }: { src: string; title?: string }) {
     </div>
   );
 }
-      </div>
-    </div>
-  );
-}
