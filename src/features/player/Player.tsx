@@ -117,8 +117,13 @@ export function Player({
           return false;
         }
         mpegtsSupported.current = true;
+        // mpegts.js validates via `new URL(url)` and rejects relative paths
+        // with "URL is not valid or contains user credentials". Force absolute.
+        const absUrl = /^https?:\/\//i.test(activeSrc)
+          ? activeSrc
+          : new URL(activeSrc, window.location.origin).toString();
         const player = Mpegts.createPlayer(
-          { type: "mpegts", isLive, cors: true, url: activeSrc },
+          { type: "mpegts", isLive, cors: true, url: absUrl },
           {
             enableWorker: false,
             enableWorkerForMSE: true,
