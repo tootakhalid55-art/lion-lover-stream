@@ -111,13 +111,15 @@ function WatchPage() {
 }
 
 function ExternalPlayerLinks({ src, title }: { src: string; title?: string }) {
+  const caps = detectDeviceCapabilities();
+  // External native players (VLC/MX) prefer the raw MPEG-TS container.
+  const externalSrc = rewriteStreamUrl(src, caps.preferredExternalContainer);
   const absUrl = (() => {
-    try { return /^https?:\/\//i.test(src) ? src : new URL(src, window.location.origin).toString(); }
-    catch { return src; }
+    try { return /^https?:\/\//i.test(externalSrc) ? externalSrc : new URL(externalSrc, window.location.origin).toString(); }
+    catch { return externalSrc; }
   })();
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-  const isIOS = /iP(hone|ad|od)/i.test(ua);
-  const isAndroid = /Android/i.test(ua);
+  const isIOS = caps.isIOS;
+  const isAndroid = caps.isAndroid;
   const encoded = encodeURIComponent(absUrl);
   const encodedTitle = encodeURIComponent(title || "Nova TV");
 
