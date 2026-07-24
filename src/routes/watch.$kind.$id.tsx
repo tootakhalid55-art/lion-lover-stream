@@ -102,6 +102,7 @@ function WatchPage() {
               <Player src={src} poster={meta?.imageUrl} onProgress={handleProgress} onEnded={() => track({ name: "playback_completed", titleId: fullId })} />
             </div>
           )}
+          {src && <ExternalPlayerLinks src={src} title={meta?.title} />}
         </div>
         {meta && (
           <div className="mt-6 flex items-center justify-between gap-4">
@@ -113,6 +114,46 @@ function WatchPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ExternalPlayerLinks({ src, title }: { src: string; title?: string }) {
+  const absUrl = (() => {
+    try { return /^https?:\/\//i.test(src) ? src : new URL(src, window.location.origin).toString(); }
+    catch { return src; }
+  })();
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const isIOS = /iP(hone|ad|od)/i.test(ua);
+  const isAndroid = /Android/i.test(ua);
+  const encoded = encodeURIComponent(absUrl);
+  const encodedTitle = encodeURIComponent(title || "Nova TV");
+
+  const vlcIos = `vlc-x-callback://x-callback-url/stream?url=${encoded}`;
+  const vlcAndroid = `intent:${absUrl}#Intent;package=org.videolan.vlc;type=video/*;S.title=${encodedTitle};end`;
+  const mxAndroid = `intent:${absUrl}#Intent;package=com.mxtech.videoplayer.ad;type=video/*;S.title=${encodedTitle};end`;
+  const mxProAndroid = `intent:${absUrl}#Intent;package=com.mxtech.videoplayer.pro;type=video/*;S.title=${encodedTitle};end`;
+
+  const btn = "inline-flex items-center gap-1.5 rounded-full glass px-4 py-2 text-xs font-bold text-foreground/90 hover:bg-white/15 transition";
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-2">
+      <span className="text-xs text-foreground/60">فتح في مشغل الهاتف:</span>
+      {isIOS && <a href={vlcIos} className={btn}>VLC</a>}
+      {isAndroid && (
+        <>
+          <a href={vlcAndroid} className={btn}>VLC</a>
+          <a href={mxAndroid} className={btn}>MX Player</a>
+          <a href={mxProAndroid} className={btn}>MX Pro</a>
+        </>
+      )}
+      {!isIOS && !isAndroid && <a href={absUrl} target="_blank" rel="noreferrer" className={btn}>فتح الرابط المباشر</a>}
+      <button
+        type="button"
+        onClick={() => { void navigator.clipboard?.writeText(absUrl); }}
+        className={btn}
+      >
+        نسخ الرابط
+      </button>
     </div>
   );
 }
