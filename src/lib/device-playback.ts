@@ -34,6 +34,7 @@ export function browserContainerForSource(
   if (kind === "live") {
     return capabilities.preferredBrowserContainer === "ts" ? "ts" : "m3u8";
   }
+  if (capabilities.preferredBrowserContainer === "m3u8") return "m3u8";
   const serverContainer = serverPlaybackContainerForSource(kind, sourceExt);
   if (serverContainer !== "ts") return serverContainer;
   return capabilities.preferredBrowserContainer;
