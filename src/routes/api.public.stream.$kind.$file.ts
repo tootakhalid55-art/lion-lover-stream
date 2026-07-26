@@ -5,6 +5,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { rewriteHlsManifest } from "@/lib/hls-proxy";
+import { fetchXtreamMedia } from "@/lib/xtream-media.server";
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -155,15 +156,18 @@ function parseContentRangeTotal(value: string | null): number | null {
 async function detectContentLength(candidates: string[]): Promise<number | null> {
   for (const candidate of candidates) {
     try {
-      const res = await fetch(candidate, {
-        method: "GET",
-        headers: {
-          range: "bytes=0-0",
-          "user-agent": "VLC/3.0.20 LibVLC/3.0.20",
-          accept: "*/*",
+      const res = await fetchXtreamMedia(
+        candidate,
+        {
+          method: "GET",
+          headers: {
+            range: "bytes=0-0",
+            "user-agent": "VLC/3.0.20 LibVLC/3.0.20",
+            accept: "*/*",
+          },
         },
-        redirect: "follow",
-      });
+        new URL(candidate).origin,
+      );
       const total = parseContentRangeTotal(res.headers.get("content-range"));
       await res.body?.cancel().catch(() => undefined);
       if (total) return total;
@@ -258,11 +262,14 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
       : buildStreamCandidates(creds, kind, id, "m3u8");
     for (const candidate of manifestCandidates) {
       try {
-        const res = await fetch(candidate, {
-          method: "GET",
-          headers: { "user-agent": "VLC/3.0.20 LibVLC/3.0.20", accept: "application/vnd.apple.mpegurl,*/*" },
-          redirect: "follow",
-        });
+        const res = await fetchXtreamMedia(
+          candidate,
+          {
+            method: "GET",
+            headers: { "user-agent": "VLC/3.0.20 LibVLC/3.0.20", accept: "application/vnd.apple.mpegurl,*/*" },
+          },
+          creds.serverUrl,
+        );
         const body = await res.text().catch(() => "");
         if ((res.ok || res.status === 206) && isValidHlsManifest(body)) {
           console.log(`[stream:hls] upstream manifest ok ${kind}/${id}.m3u8 via ${safeUrl(candidate)}`);
@@ -357,12 +364,15 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
     try {
       for (const candidate of upstreamCandidates) {
         usedUpstream = candidate;
-        upstreamRes = await fetch(candidate, {
-          // Some Xtream servers return non-standard codes for HEAD. Always GET.
-          method: "GET",
-          headers: forwardHeaders,
-          redirect: "follow",
-        });
+        upstreamRes = await fetchXtreamMedia(
+          candidate,
+          {
+            // Some Xtream servers return non-standard codes for HEAD. Always GET.
+            method: "GET",
+            headers: forwardHeaders,
+          },
+          creds.serverUrl,
+        );
 
         if (upstreamRes.status !== 401 && upstreamRes.status !== 403) break;
 
