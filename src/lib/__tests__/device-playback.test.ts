@@ -21,16 +21,16 @@ const capabilities = (overrides: Partial<DeviceCapabilities>): DeviceCapabilitie
 });
 
 describe("device playback selection", () => {
-  it("uses the native MP4 proxy for MP4 movies on iPhone", () => {
+  it("uses the provider HLS stream for MP4 movies and episodes on iPhone", () => {
     const target = browserContainerForSource(
       capabilities({ isIOS: true, isSafari: true, preferredBrowserContainer: "m3u8" }),
-      "movie",
+      "series",
       "mp4",
     );
-    const url = rewriteStreamUrl("/api/public/stream/movie/731.ts?sourceExt=mp4", target, "mp4");
+    const url = rewriteStreamUrl("/api/public/stream/series/731.mp4?sourceExt=mp4", target, "mp4");
 
-    expect(target).toBe("mp4");
-    expect(url).toBe("/api/public/stream/movie/731.mp4?sourceExt=mp4");
+    expect(target).toBe("m3u8");
+    expect(url).toBe("/api/public/stream/series/731.m3u8?sourceExt=mp4");
   });
 
   it("uses the provider M3U8 stream for live playback on iPhone", () => {

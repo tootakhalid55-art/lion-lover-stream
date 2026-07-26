@@ -251,23 +251,8 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
 
   const { creds, isOverride } = await resolveCreds();
   if (ext === "m3u8") {
-    // VOD/episode `.m3u8` endpoints on many Xtream panels either return an
-    // empty manifest or consume one of the account's limited stream slots. Do
-    // not probe upstream for VOD. Generate a local HLS wrapper directly so iOS
-    // Safari has a native fallback while desktop browsers use MPEG-TS/MSE.
-    if (kind === "movie" || kind === "series") {
-      console.log(`[stream:hls] generated local VOD manifest ${kind}/${id}.m3u8 sourceExt=${sourceExt}`);
-      const manifest = await syntheticVodManifest(kind, id, sourceExt, buildStreamCandidates(creds, kind, id, sourceExt));
-      return new Response(manifest, {
-        status: 200,
-        headers: {
-          "content-type": "application/vnd.apple.mpegurl; charset=utf-8",
-          "cache-control": "no-store",
-          "access-control-allow-origin": "*",
-        },
-      });
-    }
-
+    // Prefer the provider's real HLS playlist for live, movies, and episodes.
+    // Some panels do not expose VOD HLS, so those fall back to a local wrapper.
     const manifestCandidates = upstreamPath
       ? buildUpstreamPathCandidates(creds, kind, upstreamPath)
       : buildStreamCandidates(creds, kind, id, "m3u8");
@@ -303,6 +288,18 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
       }
     }
 
+    if (kind === "movie" || kind === "series") {
+      console.log(`[stream:hls] provider HLS unavailable; generated local VOD manifest ${kind}/${id}.m3u8 sourceExt=${sourceExt}`);
+      const manifest = await syntheticVodManifest(kind, id, sourceExt, buildStreamCandidates(creds, kind, id, sourceExt));
+      return new Response(manifest, {
+        status: 200,
+        headers: {
+          "content-type": "application/vnd.apple.mpegurl; charset=utf-8",
+          "cache-control": "no-store",
+          "access-control-allow-origin": "*",
+        },
+      });
+    }
   }
 
   const upstreamExt = ext === "ts" || (ext === "mp4" && sourceExt !== "mp4") ? sourceExt : ext;

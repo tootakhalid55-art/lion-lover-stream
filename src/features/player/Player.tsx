@@ -274,6 +274,9 @@ export function Player({
     if (err && (err.code === 3 || err.code === 4) && /\.m3u8($|\?)/i.test(currentSrc) && !prefersNativeHls() && retryWithTsSource()) {
       return;
     }
+    if (err && (err.code === 3 || err.code === 4) && /\.mp4($|\?)/i.test(currentSrc) && canPlayNativeHls && retryWithHlsSource()) {
+      return;
+    }
     if (err && (err.code === 3 || err.code === 4) && /\.ts($|\?)/i.test(currentSrc) && canPlayNativeHls && retryWithHlsSource()) {
       return;
     }
