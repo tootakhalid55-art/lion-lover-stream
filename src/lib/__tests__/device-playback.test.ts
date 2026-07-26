@@ -33,14 +33,22 @@ describe("device playback selection", () => {
     expect(url).toBe("/api/public/stream/movie/731.mp4?sourceExt=mp4");
   });
 
-  it("keeps live playback on HLS", () => {
+  it("uses the provider M3U8 stream for live playback on iPhone", () => {
     expect(
       browserContainerForSource(
         capabilities({ isIOS: true, isSafari: true, preferredBrowserContainer: "m3u8" }),
         "live",
-        "mp4",
+        "ts",
       ),
     ).toBe("m3u8");
+  });
+
+  it("uses the provider default TS stream for live playback with MSE", () => {
+    const target = browserContainerForSource(capabilities({}), "live", "ts");
+    const url = rewriteStreamUrl("/api/public/stream/live/731.m3u8", target, "ts");
+
+    expect(target).toBe("ts");
+    expect(url).toBe("/api/public/stream/live/731.ts?sourceExt=ts");
   });
 
   it("uses the native server MP4 stream for desktop browsers", () => {
