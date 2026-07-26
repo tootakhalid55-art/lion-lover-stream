@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Player } from "@/features/player/Player";
 import { resolveStream, getMovieDetail, getLiveChannel } from "@/lib/xtream.functions";
+import { adaptStreamUrlForDevice } from "@/lib/device-playback";
 import { saveProgress } from "@/lib/user-data";
 import { track } from "@/lib/analytics";
 import { RouteError } from "@/components/RouteError";
