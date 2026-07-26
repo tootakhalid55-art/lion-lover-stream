@@ -37,6 +37,34 @@ describe("Xtream media redirects", () => {
     expect(headers.get("range")).toBe("bytes=0-1023");
   });
 
+  it("rewrites a Cloudflare 1003 IP target back to the provider hostname", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 302,
+          headers: { location: "http://104.21.46.229:8080/media/token/1.mp4" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response("error code: 1003", { status: 403 }))
+      .mockResolvedValueOnce(new Response("video", { status: 206 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await fetchXtreamMedia(
+      "http://provider.example:8080/movie/u/p/1.mp4",
+      { method: "GET" },
+      "http://provider.example:8080",
+    );
+
+    expect(response.status).toBe(206);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(String(fetchMock.mock.calls[2]?.[0])).toBe(
+      "http://provider.example:8080/media/token/1.mp4",
+    );
+    expect(response.headers.get("x-xtream-final-host-type")).toBe("domain");
+    expect(response.headers.get("x-xtream-redirect-count")).toBe("2");
+  });
+
   it("follows an Xtream IP redirect manually with the provider Host header", async () => {
     const fetchMock = vi
       .fn<typeof fetch>()

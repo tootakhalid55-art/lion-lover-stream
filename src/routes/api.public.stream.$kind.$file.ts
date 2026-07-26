@@ -462,6 +462,8 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   const status = upstreamRes.status;
   if (status !== 200 && status !== 206) {
     const body = lastErrorBody || (await upstreamRes.text().catch(() => ""));
+    const finalHostType = upstreamRes.headers.get("x-xtream-final-host-type") || "unknown";
+    const redirectCount = upstreamRes.headers.get("x-xtream-redirect-count") || "unknown";
     releaseStreamSlot();
     const trimmed = body.slice(0, 300).replace(/<[^>]+>/g, "").trim();
     const label =
@@ -478,6 +480,9 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
       headers: {
         "content-type": "text/plain; charset=utf-8",
         "x-stream-proxy-version": STREAM_PROXY_VERSION,
+        "x-stream-direct-source": directSources.length ? "present" : "absent",
+        "x-stream-final-host-type": finalHostType,
+        "x-stream-redirect-count": redirectCount,
       },
     });
   }
@@ -501,6 +506,17 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   if (ext === "ts") respHeaders.set("content-type", "video/mp2t");
   respHeaders.set("access-control-allow-origin", "*");
   respHeaders.set("x-stream-proxy-version", STREAM_PROXY_VERSION);
+  respHeaders.set("x-stream-direct-source", directSources.length ? "present" : "absent");
+  respHeaders.set(
+    "x-stream-final-host-type",
+    upstreamRes.headers.get("x-xtream-final-host-type") || "unknown",
+  );
+  respHeaders.set(
+    "x-stream-redirect-count",
+    upstreamRes.headers.get("x-xtream-redirect-count") || "unknown",
+  );
+  respHeaders.delete("x-xtream-final-host-type");
+  respHeaders.delete("x-xtream-redirect-count");
 
   return new Response(releaseWhenStreamEnds(upstreamRes.body, releaseStreamSlot), {
     status,
