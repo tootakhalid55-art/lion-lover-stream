@@ -15,6 +15,10 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+# Lovable needs the public VITE_* build variables from the tracked .env file.
+# Runtime credentials belong in Lovable Cloud Secrets or ignored .env.local.
+.env.*
+!.env.example
 
 # Wrangler / Cloudflare
 .wrangler/

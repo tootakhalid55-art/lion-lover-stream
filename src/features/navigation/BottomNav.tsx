@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Bookmark, Home, MoreHorizontal, Search } from "lucide-react";
 import { useScrollState } from "@/hooks/use-scroll-state";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { track } from "@/lib/analytics";
 
 const ITEMS = [
@@ -13,10 +14,13 @@ const ITEMS = [
 /** Floating glass dock with animated active pill indicator. */
 export function BottomNav() {
   const { hidden } = useScrollState();
+  const hydrated = useHydrated();
   const pathname = useLocation({ select: (s) => s.pathname });
-  const activeIndex = ITEMS.findIndex((it) =>
-    it.to === "/" ? pathname === "/" : pathname.startsWith(it.to),
-  );
+  const activeIndex = hydrated
+    ? ITEMS.findIndex((it) =>
+        it.to === "/" ? pathname === "/" : pathname.startsWith(it.to),
+      )
+    : -1;
 
   return (
     <nav

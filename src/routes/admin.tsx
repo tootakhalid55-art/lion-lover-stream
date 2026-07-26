@@ -46,7 +46,7 @@ function AdminLayout() {
 
   async function signOut() {
     await supabase.auth.signOut();
-    router.navigate({ to: "/login", replace: true });
+    router.navigate({ to: "/login", search: { redirect: "/admin" }, replace: true });
   }
 
   return (

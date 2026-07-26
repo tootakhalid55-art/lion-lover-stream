@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { Poster } from "@/services/api/types";
+import { api } from "@/services/api";
 import { getMovies, getSeries, getLive } from "@/lib/xtream.functions";
 
 export type BrowseKind = "movies" | "series" | "live";
@@ -11,6 +12,14 @@ export function browseTitle(kind: BrowseKind): string {
 }
 
 function fetchBrowse(kind: BrowseKind): Promise<Poster[]> {
+  const devMockApi =
+    import.meta.env.DEV && import.meta.env.VITE_API_MODE === "mock";
+  if (devMockApi) {
+    if (kind === "movies") return api.catalog.getMovies();
+    if (kind === "series") return api.catalog.getSeries();
+    return Promise.resolve([]);
+  }
+
   if (kind === "movies") return getMovies();
   if (kind === "series") return getSeries();
   return getLive();

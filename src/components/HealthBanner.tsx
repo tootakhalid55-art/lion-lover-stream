@@ -4,15 +4,26 @@
  * hidden when the backend is healthy.
  */
 import { useEffect, useState } from "react";
+import { useLocation } from "@tanstack/react-router";
 import { api } from "@/services/api";
 import { requestClientReload } from "@/lib/recoverable-errors";
 
 const POLL_MS = 30_000;
+const PUBLIC_AUTH_PATHS = ["/login", "/bootstrap", "/redeem"];
+const DEV_MOCK_API =
+  import.meta.env.DEV && import.meta.env.VITE_API_MODE === "mock";
 
 export function HealthBanner() {
+  const pathname = useLocation({ select: (state) => state.pathname });
+  const isPublicAuthPath = PUBLIC_AUTH_PATHS.some((path) => pathname.startsWith(path));
   const [state, setState] = useState<{ ok: boolean; message?: string } | null>(null);
 
   useEffect(() => {
+    if (isPublicAuthPath || DEV_MOCK_API) {
+      setState(null);
+      return;
+    }
+
     let cancelled = false;
     let backoff = POLL_MS;
 
@@ -36,7 +47,7 @@ export function HealthBanner() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isPublicAuthPath]);
 
   if (!state || state.ok) return null;
 

@@ -10,6 +10,8 @@ import { heartbeat } from "@/lib/auth.functions";
  * (no need to move them under `_authenticated/`).
  */
 const PUBLIC_PATHS = ["/login", "/bootstrap", "/redeem"];
+const DEV_AUTH_BYPASS =
+  import.meta.env.DEV && import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
 
 export function AuthGate() {
   const router = useRouter();
@@ -18,13 +20,21 @@ export function AuthGate() {
   const heartbeatFn = useServerFn(heartbeat);
 
   useEffect(() => {
+    if (DEV_AUTH_BYPASS) {
+      setReady(true);
+      if (location.pathname === "/login" || location.pathname === "/bootstrap") {
+        router.navigate({ to: "/", replace: true });
+      }
+      return;
+    }
+
     let mounted = true;
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
       setReady(true);
       const path = location.pathname;
       if (!data.session && !PUBLIC_PATHS.some((p) => path.startsWith(p))) {
-        router.navigate({ to: "/login", search: { redirect: path } as any, replace: true });
+        router.navigate({ to: "/login", search: { redirect: path }, replace: true });
       }
       if (data.session && (path === "/login" || path === "/bootstrap")) {
         router.navigate({ to: "/", replace: true });
@@ -32,7 +42,7 @@ export function AuthGate() {
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
-        router.navigate({ to: "/login", replace: true });
+        router.navigate({ to: "/login", search: { redirect: "/" }, replace: true });
       }
       if (event === "SIGNED_IN" && session) {
         router.invalidate();
@@ -42,10 +52,12 @@ export function AuthGate() {
       mounted = false;
       sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [location.pathname, router]);
 
   // Heartbeat every 60s
   useEffect(() => {
+    if (DEV_AUTH_BYPASS) return;
+
     const tick = () =>
       supabase.auth.getSession().then(({ data }) => {
         if (data.session) heartbeatFn().catch(() => {});

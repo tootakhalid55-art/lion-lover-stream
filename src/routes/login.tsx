@@ -3,8 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent } from "react";
 import { LogIn, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { finalizeLogin, resolveLoginEmail } from "@/lib/auth.functions";
-import { getDeviceFingerprint } from "@/lib/auth-utils";
+import { finalizeLogin } from "@/lib/auth.functions";
+import { getDeviceFingerprint, usernameToEmail } from "@/lib/auth-utils";
 import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/login")({
@@ -29,7 +29,6 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const router = useRouter();
   const { redirect } = Route.useSearch();
-  const resolve = useServerFn(resolveLoginEmail);
   const finalize = useServerFn(finalizeLogin);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +39,7 @@ function LoginPage() {
     e.preventDefault();
     setError(null); setBusy(true);
     try {
-      const { email } = await resolve({ data: { username } });
+      const email = usernameToEmail(username);
       const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
       if (signErr) throw new Error("بيانات الدخول غير صحيحة");
       const fp = getDeviceFingerprint();
@@ -49,7 +48,12 @@ function LoginPage() {
     } catch (e: any) {
       // Sign out to clear an invalid partial session
       await supabase.auth.signOut().catch(() => {});
-      setError(e?.message || "تعذّر تسجيل الدخول");
+      const message = e?.message || "";
+      setError(
+        message.includes("Missing Supabase environment variable")
+          ? "إعدادات الخدمة غير مكتملة. تواصل مع الإدارة."
+          : message || "تعذّر تسجيل الدخول",
+      );
     } finally {
       setBusy(false);
     }
