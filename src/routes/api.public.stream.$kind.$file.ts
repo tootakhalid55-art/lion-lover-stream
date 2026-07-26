@@ -4,6 +4,7 @@
  * Under /api/public/* so it works without auth on published builds.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { rewriteHlsManifest } from "@/lib/hls-proxy";
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -104,6 +105,38 @@ function buildStreamCandidates(
   );
 }
 
+function normalizeUpstreamPath(value: string | null): string | null {
+  if (!value || value.length > 1024) return null;
+  const parts = value.split("/");
+  if (!parts.length || parts.some((part) => !part || part === "." || part === "..")) return null;
+
+  try {
+    return parts
+      .map((part) => {
+        const decoded = decodeURIComponent(part);
+        if (!decoded || decoded === "." || decoded === ".." || /[\/\\\0-\x1f]/.test(decoded)) {
+          throw new Error("Invalid upstream path");
+        }
+        return encodeURIComponent(decoded);
+      })
+      .join("/");
+  } catch {
+    return null;
+  }
+}
+
+function buildUpstreamPathCandidates(
+  creds: { serverUrl: string; username: string; password: string },
+  kind: "movie" | "series" | "live",
+  upstreamPath: string,
+): string[] {
+  const path = kind === "live" ? "live" : kind;
+  return streamOriginFallbacks(creds.serverUrl).map(
+    (origin) =>
+      `${origin}/${path}/${encodeURIComponent(creds.username)}/${encodeURIComponent(creds.password)}/${upstreamPath}`,
+  );
+}
+
 function sanitizeExt(value: string | null | undefined, fallback: string): string {
   const ext = String(value || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
   return ext || fallback;
@@ -190,26 +223,6 @@ async function syntheticVodManifest(
   return lines.join("\n");
 }
 
-function rewriteManifestUrls(text: string, kind: "movie" | "series" | "live", id: string, sourceExt: string): string {
-  return text
-    .split(/\r?\n/)
-    .map((line) => {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) return line;
-      try {
-        const url = new URL(trimmed);
-        const file = url.pathname.split("/").filter(Boolean).pop() || `${id}.ts`;
-        const dot = file.lastIndexOf(".");
-        const ext = dot > -1 ? file.slice(dot + 1) : "ts";
-        const safeFile = /^\d+\.[a-z0-9]+$/i.test(file) ? file : `${id}.${ext}`;
-        return `/api/public/stream/${kind}/${safeFile}?sourceExt=${encodeURIComponent(sourceExt)}`;
-      } catch {
-        return `/api/public/stream/${kind}/${encodeURIComponent(id)}.ts?sourceExt=${encodeURIComponent(sourceExt)}`;
-      }
-    })
-    .join("\n");
-}
-
 async function proxy(request: Request, kind: "movie" | "series" | "live", fileName: string) {
   const { xtream, authenticate } = await import("@/lib/xtream.server");
   const { resolveCreds } = await import("@/lib/xtream-session.server");
@@ -232,6 +245,9 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   if (!/^\d+$/.test(id)) return new Response("Bad id", { status: 400 });
 
   const sourceExt = sanitizeExt(requestUrl.searchParams.get("sourceExt"), kind === "live" ? "ts" : "mp4");
+  const rawUpstreamPath = requestUrl.searchParams.get("upstreamPath");
+  const upstreamPath = normalizeUpstreamPath(rawUpstreamPath);
+  if (rawUpstreamPath && !upstreamPath) return new Response("Bad upstream path", { status: 400 });
 
   const { creds, isOverride } = await resolveCreds();
   if (ext === "m3u8") {
@@ -252,7 +268,9 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
       });
     }
 
-    const manifestCandidates = buildStreamCandidates(creds, kind, id, "m3u8");
+    const manifestCandidates = upstreamPath
+      ? buildUpstreamPathCandidates(creds, kind, upstreamPath)
+      : buildStreamCandidates(creds, kind, id, "m3u8");
     for (const candidate of manifestCandidates) {
       try {
         const res = await fetch(candidate, {
@@ -263,7 +281,14 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
         const body = await res.text().catch(() => "");
         if ((res.ok || res.status === 206) && isValidHlsManifest(body)) {
           console.log(`[stream:hls] upstream manifest ok ${kind}/${id}.m3u8 via ${safeUrl(candidate)}`);
-          return new Response(rewriteManifestUrls(body, kind, id, sourceExt), {
+          return new Response(rewriteHlsManifest(body, {
+            kind,
+            streamId: id,
+            sourceExt,
+            manifestUrl: candidate,
+            username: creds.username,
+            password: creds.password,
+          }), {
             status: 200,
             headers: {
               "content-type": "application/vnd.apple.mpegurl; charset=utf-8",
@@ -281,7 +306,9 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   }
 
   const upstreamExt = ext === "ts" ? sourceExt : ext;
-  const upstreamCandidates = buildStreamCandidates(creds, kind, id, upstreamExt);
+  const upstreamCandidates = upstreamPath
+    ? buildUpstreamPathCandidates(creds, kind, upstreamPath)
+    : buildStreamCandidates(creds, kind, id, upstreamExt);
   const safe = safeUrl(upstreamCandidates[0]);
   const maskedUser = maskUsername(creds.username);
   const accountLabel = isOverride ? "user-override" : "default";
