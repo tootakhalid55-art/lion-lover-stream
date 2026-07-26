@@ -1,8 +1,12 @@
-// Automatic device/browser compatibility detection for streaming playback.
-// Chooses the best in-browser container (HLS vs MPEG-TS) and the best URL
-// variant for external native players (VLC / MX Player).
+import {
+  serverPlaybackContainerForSource,
+  type ServerPlaybackContainer,
+} from "@/lib/stream-playback";
 
-export type PlaybackContainer = "m3u8" | "ts" | "mp4";
+// Automatic device/browser compatibility detection for streaming playback.
+// The built-in player keeps media on same-origin server proxy URLs.
+
+export type PlaybackContainer = ServerPlaybackContainer;
 
 export interface DeviceCapabilities {
   isIOS: boolean;
@@ -22,18 +26,13 @@ export interface DeviceCapabilities {
 
 let cached: DeviceCapabilities | null = null;
 
-const SAFARI_NATIVE_FILE_EXTENSIONS = new Set(["mp4", "m4v", "mov"]);
-
 export function browserContainerForSource(
   capabilities: Pick<DeviceCapabilities, "isIOS" | "isSafari" | "preferredBrowserContainer">,
   kind: string,
   sourceExt?: string,
 ): PlaybackContainer {
-  if (kind === "live") return "m3u8";
-  const normalizedExt = String(sourceExt || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
-  if ((capabilities.isIOS || capabilities.isSafari) && SAFARI_NATIVE_FILE_EXTENSIONS.has(normalizedExt)) {
-    return "mp4";
-  }
+  const serverContainer = serverPlaybackContainerForSource(kind, sourceExt);
+  if (serverContainer !== "ts") return serverContainer;
   return capabilities.preferredBrowserContainer;
 }
 

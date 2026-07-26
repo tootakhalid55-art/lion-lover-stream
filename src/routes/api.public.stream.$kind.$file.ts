@@ -305,7 +305,7 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
 
   }
 
-  const upstreamExt = ext === "ts" ? sourceExt : ext;
+  const upstreamExt = ext === "ts" || (ext === "mp4" && sourceExt !== "mp4") ? sourceExt : ext;
   const upstreamCandidates = upstreamPath
     ? buildUpstreamPathCandidates(creds, kind, upstreamPath)
     : buildStreamCandidates(creds, kind, id, upstreamExt);

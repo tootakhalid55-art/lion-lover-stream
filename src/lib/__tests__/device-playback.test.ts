@@ -43,8 +43,8 @@ describe("device playback selection", () => {
     ).toBe("m3u8");
   });
 
-  it("keeps MPEG-TS transmuxing for desktop browsers", () => {
-    expect(browserContainerForSource(capabilities({}), "movie", "mp4")).toBe("ts");
+  it("uses the native server MP4 stream for desktop browsers", () => {
+    expect(browserContainerForSource(capabilities({}), "movie", "mp4")).toBe("mp4");
   });
 
   it("does not mislabel unsupported MKV files as MP4 on Safari", () => {
