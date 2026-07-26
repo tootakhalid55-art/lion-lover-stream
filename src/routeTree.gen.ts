@@ -9,93 +9,59 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as BootstrapRouteImport } from './routes/bootstrap'
-import { Route as FavoritesRouteImport } from './routes/favorites'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as MoreRouteImport } from './routes/more'
-import { Route as RedeemRouteImport } from './routes/redeem'
-import { Route as SearchRouteImport } from './routes/search'
 import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated/portal'
-import { Route as AuthenticatedResellerRouteImport } from './routes/_authenticated/reseller'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as RedeemRouteImport } from './routes/redeem'
+import { Route as MoreRouteImport } from './routes/more'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as BootstrapRouteImport } from './routes/bootstrap'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as AdminApiRouteImport } from './routes/admin.api'
-import { Route as AdminAuditRouteImport } from './routes/admin.audit'
-import { Route as AdminBillingRouteImport } from './routes/admin.billing'
-import { Route as AdminBulkRouteImport } from './routes/admin.bulk'
-import { Route as AdminCodesRouteImport } from './routes/admin.codes'
-import { Route as AdminDevicesRouteImport } from './routes/admin.devices'
-import { Route as AdminJobsRouteImport } from './routes/admin.jobs'
-import { Route as AdminLicensesRouteImport } from './routes/admin.licenses'
-import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
-import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
-import { Route as AdminResellersRouteImport } from './routes/admin.resellers'
-import { Route as AdminSecurityRouteImport } from './routes/admin.security'
-import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
-import { Route as AdminSystemRouteImport } from './routes/admin.system'
-import { Route as AdminUsersRouteImport } from './routes/admin.users'
-import { Route as BrowseKindRouteImport } from './routes/browse.$kind'
-import { Route as MovieIdRouteImport } from './routes/movie.$id'
 import { Route as SeriesIdRouteImport } from './routes/series.$id'
-import { Route as AdminBillingObservabilityRouteImport } from './routes/admin.billing.observability'
-import { Route as AdminBillingTracesRouteImport } from './routes/admin.billing.traces'
-import { Route as ApiV1DocsRouteImport } from './routes/api.v1.docs'
-import { Route as ApiV1InvoicesRouteImport } from './routes/api.v1.invoices'
-import { Route as ApiV1LicensesRouteImport } from './routes/api.v1.licenses'
-import { Route as ApiV1OpenapiRouteImport } from './routes/api.v1.openapi'
-import { Route as ApiV1OrdersRouteImport } from './routes/api.v1.orders'
-import { Route as ApiV1PackagesRouteImport } from './routes/api.v1.packages'
+import { Route as MovieIdRouteImport } from './routes/movie.$id'
+import { Route as BrowseKindRouteImport } from './routes/browse.$kind'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminSystemRouteImport } from './routes/admin.system'
+import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
+import { Route as AdminSecurityRouteImport } from './routes/admin.security'
+import { Route as AdminResellersRouteImport } from './routes/admin.resellers'
+import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
+import { Route as AdminLicensesRouteImport } from './routes/admin.licenses'
+import { Route as AdminJobsRouteImport } from './routes/admin.jobs'
+import { Route as AdminDevicesRouteImport } from './routes/admin.devices'
+import { Route as AdminCodesRouteImport } from './routes/admin.codes'
+import { Route as AdminBulkRouteImport } from './routes/admin.bulk'
+import { Route as AdminBillingRouteImport } from './routes/admin.billing'
+import { Route as AdminAuditRouteImport } from './routes/admin.audit'
+import { Route as AdminApiRouteImport } from './routes/admin.api'
+import { Route as AuthenticatedResellerRouteImport } from './routes/_authenticated/reseller'
+import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated/portal'
 import { Route as WatchKindIdRouteImport } from './routes/watch.$kind.$id'
-import { Route as ApiAdminExportFileRouteImport } from './routes/api.admin.export.$file'
-import { Route as ApiV1HealthLiveRouteImport } from './routes/api.v1.health.live'
-import { Route as ApiV1HealthReadyRouteImport } from './routes/api.v1.health.ready'
-import { Route as ApiV1HealthVersionRouteImport } from './routes/api.v1.health.version'
-import { Route as ApiV1InvoicesIdRouteImport } from './routes/api.v1.invoices.$id'
-import { Route as ApiV1LicensesIdRouteImport } from './routes/api.v1.licenses.$id'
+import { Route as ApiV1PackagesRouteImport } from './routes/api.v1.packages'
+import { Route as ApiV1OrdersRouteImport } from './routes/api.v1.orders'
+import { Route as ApiV1OpenapiRouteImport } from './routes/api.v1.openapi'
+import { Route as ApiV1LicensesRouteImport } from './routes/api.v1.licenses'
+import { Route as ApiV1InvoicesRouteImport } from './routes/api.v1.invoices'
+import { Route as ApiV1DocsRouteImport } from './routes/api.v1.docs'
+import { Route as AdminBillingTracesRouteImport } from './routes/admin.billing.traces'
+import { Route as AdminBillingObservabilityRouteImport } from './routes/admin.billing.observability'
 import { Route as ApiV1WebhooksEndpointsRouteImport } from './routes/api.v1.webhooks.endpoints'
-import { Route as ApiBillingInvoicesIdPdfRouteImport } from './routes/api.billing.invoices.$id.pdf'
+import { Route as ApiV1LicensesIdRouteImport } from './routes/api.v1.licenses.$id'
+import { Route as ApiV1InvoicesIdRouteImport } from './routes/api.v1.invoices.$id'
+import { Route as ApiV1HealthVersionRouteImport } from './routes/api.v1.health.version'
+import { Route as ApiV1HealthReadyRouteImport } from './routes/api.v1.health.ready'
+import { Route as ApiV1HealthLiveRouteImport } from './routes/api.v1.health.live'
+import { Route as ApiAdminExportFileRouteImport } from './routes/api.admin.export.$file'
 import { Route as ApiPublicStreamKindFileRouteImport } from './routes/api.public.stream.$kind.$file'
+import { Route as ApiBillingInvoicesIdPdfRouteImport } from './routes/api.billing.invoices.$id.pdf'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BootstrapRoute = BootstrapRouteImport.update({
-  id: '/bootstrap',
-  path: '/bootstrap',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FavoritesRoute = FavoritesRouteImport.update({
-  id: '/favorites',
-  path: '/favorites',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MoreRoute = MoreRouteImport.update({
-  id: '/more',
-  path: '/more',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RedeemRoute = RedeemRouteImport.update({
-  id: '/redeem',
-  path: '/redeem',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchRoute = SearchRouteImport.update({
@@ -103,104 +69,53 @@ const SearchRoute = SearchRouteImport.update({
   path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const RedeemRoute = RedeemRouteImport.update({
+  id: '/redeem',
+  path: '/redeem',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedPortalRoute = AuthenticatedPortalRouteImport.update({
-  id: '/portal',
-  path: '/portal',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const MoreRoute = MoreRouteImport.update({
+  id: '/more',
+  path: '/more',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedResellerRoute = AuthenticatedResellerRouteImport.update({
-  id: '/reseller',
-  path: '/reseller',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavoritesRoute = FavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BootstrapRoute = BootstrapRouteImport.update({
+  id: '/bootstrap',
+  path: '/bootstrap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminApiRoute = AdminApiRouteImport.update({
-  id: '/api',
-  path: '/api',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAuditRoute = AdminAuditRouteImport.update({
-  id: '/audit',
-  path: '/audit',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBillingRoute = AdminBillingRouteImport.update({
-  id: '/billing',
-  path: '/billing',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBulkRoute = AdminBulkRouteImport.update({
-  id: '/bulk',
-  path: '/bulk',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminCodesRoute = AdminCodesRouteImport.update({
-  id: '/codes',
-  path: '/codes',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDevicesRoute = AdminDevicesRouteImport.update({
-  id: '/devices',
-  path: '/devices',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminJobsRoute = AdminJobsRouteImport.update({
-  id: '/jobs',
-  path: '/jobs',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLicensesRoute = AdminLicensesRouteImport.update({
-  id: '/licenses',
-  path: '/licenses',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPackagesRoute = AdminPackagesRouteImport.update({
-  id: '/packages',
-  path: '/packages',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminResellersRoute = AdminResellersRouteImport.update({
-  id: '/resellers',
-  path: '/resellers',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSecurityRoute = AdminSecurityRouteImport.update({
-  id: '/security',
-  path: '/security',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSessionsRoute = AdminSessionsRouteImport.update({
-  id: '/sessions',
-  path: '/sessions',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSystemRoute = AdminSystemRouteImport.update({
-  id: '/system',
-  path: '/system',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminUsersRoute = AdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AdminRoute,
-} as any)
-const BrowseKindRoute = BrowseKindRouteImport.update({
-  id: '/browse/$kind',
-  path: '/browse/$kind',
+const SeriesIdRoute = SeriesIdRouteImport.update({
+  id: '/series/$id',
+  path: '/series/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MovieIdRoute = MovieIdRouteImport.update({
@@ -208,45 +123,99 @@ const MovieIdRoute = MovieIdRouteImport.update({
   path: '/movie/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SeriesIdRoute = SeriesIdRouteImport.update({
-  id: '/series/$id',
-  path: '/series/$id',
+const BrowseKindRoute = BrowseKindRouteImport.update({
+  id: '/browse/$kind',
+  path: '/browse/$kind',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminBillingObservabilityRoute =
-  AdminBillingObservabilityRouteImport.update({
-    id: '/observability',
-    path: '/observability',
-    getParentRoute: () => AdminBillingRoute,
-  } as any)
-const AdminBillingTracesRoute = AdminBillingTracesRouteImport.update({
-  id: '/traces',
-  path: '/traces',
-  getParentRoute: () => AdminBillingRoute,
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
 } as any)
-const ApiV1DocsRoute = ApiV1DocsRouteImport.update({
-  id: '/api/v1/docs',
-  path: '/api/v1/docs',
-  getParentRoute: () => rootRouteImport,
+const AdminSystemRoute = AdminSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AdminRoute,
 } as any)
-const ApiV1InvoicesRoute = ApiV1InvoicesRouteImport.update({
-  id: '/api/v1/invoices',
-  path: '/api/v1/invoices',
-  getParentRoute: () => rootRouteImport,
+const AdminSessionsRoute = AdminSessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => AdminRoute,
 } as any)
-const ApiV1LicensesRoute = ApiV1LicensesRouteImport.update({
-  id: '/api/v1/licenses',
-  path: '/api/v1/licenses',
-  getParentRoute: () => rootRouteImport,
+const AdminSecurityRoute = AdminSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => AdminRoute,
 } as any)
-const ApiV1OpenapiRoute = ApiV1OpenapiRouteImport.update({
-  id: '/api/v1/openapi',
-  path: '/api/v1/openapi',
-  getParentRoute: () => rootRouteImport,
+const AdminResellersRoute = AdminResellersRouteImport.update({
+  id: '/resellers',
+  path: '/resellers',
+  getParentRoute: () => AdminRoute,
 } as any)
-const ApiV1OrdersRoute = ApiV1OrdersRouteImport.update({
-  id: '/api/v1/orders',
-  path: '/api/v1/orders',
+const AdminPackagesRoute = AdminPackagesRouteImport.update({
+  id: '/packages',
+  path: '/packages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLicensesRoute = AdminLicensesRouteImport.update({
+  id: '/licenses',
+  path: '/licenses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminJobsRoute = AdminJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDevicesRoute = AdminDevicesRouteImport.update({
+  id: '/devices',
+  path: '/devices',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCodesRoute = AdminCodesRouteImport.update({
+  id: '/codes',
+  path: '/codes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBulkRoute = AdminBulkRouteImport.update({
+  id: '/bulk',
+  path: '/bulk',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBillingRoute = AdminBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminApiRoute = AdminApiRouteImport.update({
+  id: '/api',
+  path: '/api',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AuthenticatedResellerRoute = AuthenticatedResellerRouteImport.update({
+  id: '/reseller',
+  path: '/reseller',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPortalRoute = AuthenticatedPortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const WatchKindIdRoute = WatchKindIdRouteImport.update({
+  id: '/watch/$kind/$id',
+  path: '/watch/$kind/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1PackagesRoute = ApiV1PackagesRouteImport.update({
@@ -254,19 +223,60 @@ const ApiV1PackagesRoute = ApiV1PackagesRouteImport.update({
   path: '/api/v1/packages',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WatchKindIdRoute = WatchKindIdRouteImport.update({
-  id: '/watch/$kind/$id',
-  path: '/watch/$kind/$id',
+const ApiV1OrdersRoute = ApiV1OrdersRouteImport.update({
+  id: '/api/v1/orders',
+  path: '/api/v1/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAdminExportFileRoute = ApiAdminExportFileRouteImport.update({
-  id: '/api/admin/export/$file',
-  path: '/api/admin/export/$file',
+const ApiV1OpenapiRoute = ApiV1OpenapiRouteImport.update({
+  id: '/api/v1/openapi',
+  path: '/api/v1/openapi',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiV1HealthLiveRoute = ApiV1HealthLiveRouteImport.update({
-  id: '/api/v1/health/live',
-  path: '/api/v1/health/live',
+const ApiV1LicensesRoute = ApiV1LicensesRouteImport.update({
+  id: '/api/v1/licenses',
+  path: '/api/v1/licenses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1InvoicesRoute = ApiV1InvoicesRouteImport.update({
+  id: '/api/v1/invoices',
+  path: '/api/v1/invoices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1DocsRoute = ApiV1DocsRouteImport.update({
+  id: '/api/v1/docs',
+  path: '/api/v1/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminBillingTracesRoute = AdminBillingTracesRouteImport.update({
+  id: '/traces',
+  path: '/traces',
+  getParentRoute: () => AdminBillingRoute,
+} as any)
+const AdminBillingObservabilityRoute =
+  AdminBillingObservabilityRouteImport.update({
+    id: '/observability',
+    path: '/observability',
+    getParentRoute: () => AdminBillingRoute,
+  } as any)
+const ApiV1WebhooksEndpointsRoute = ApiV1WebhooksEndpointsRouteImport.update({
+  id: '/api/v1/webhooks/endpoints',
+  path: '/api/v1/webhooks/endpoints',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1LicensesIdRoute = ApiV1LicensesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiV1LicensesRoute,
+} as any)
+const ApiV1InvoicesIdRoute = ApiV1InvoicesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiV1InvoicesRoute,
+} as any)
+const ApiV1HealthVersionRoute = ApiV1HealthVersionRouteImport.update({
+  id: '/api/v1/health/version',
+  path: '/api/v1/health/version',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1HealthReadyRoute = ApiV1HealthReadyRouteImport.update({
@@ -274,34 +284,24 @@ const ApiV1HealthReadyRoute = ApiV1HealthReadyRouteImport.update({
   path: '/api/v1/health/ready',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiV1HealthVersionRoute = ApiV1HealthVersionRouteImport.update({
-  id: '/api/v1/health/version',
-  path: '/api/v1/health/version',
+const ApiV1HealthLiveRoute = ApiV1HealthLiveRouteImport.update({
+  id: '/api/v1/health/live',
+  path: '/api/v1/health/live',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiV1InvoicesIdRoute = ApiV1InvoicesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ApiV1InvoicesRoute,
-} as any)
-const ApiV1LicensesIdRoute = ApiV1LicensesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ApiV1LicensesRoute,
-} as any)
-const ApiV1WebhooksEndpointsRoute = ApiV1WebhooksEndpointsRouteImport.update({
-  id: '/api/v1/webhooks/endpoints',
-  path: '/api/v1/webhooks/endpoints',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiBillingInvoicesIdPdfRoute = ApiBillingInvoicesIdPdfRouteImport.update({
-  id: '/api/billing/invoices/$id/pdf',
-  path: '/api/billing/invoices/$id/pdf',
+const ApiAdminExportFileRoute = ApiAdminExportFileRouteImport.update({
+  id: '/api/admin/export/$file',
+  path: '/api/admin/export/$file',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicStreamKindFileRoute = ApiPublicStreamKindFileRouteImport.update({
   id: '/api/public/stream/$kind/$file',
   path: '/api/public/stream/$kind/$file',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBillingInvoicesIdPdfRoute = ApiBillingInvoicesIdPdfRouteImport.update({
+  id: '/api/billing/invoices/$id/pdf',
+  path: '/api/billing/invoices/$id/pdf',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -641,60 +641,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bootstrap': {
-      id: '/bootstrap'
-      path: '/bootstrap'
-      fullPath: '/bootstrap'
-      preLoaderRoute: typeof BootstrapRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/favorites': {
-      id: '/favorites'
-      path: '/favorites'
-      fullPath: '/favorites'
-      preLoaderRoute: typeof FavoritesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/more': {
-      id: '/more'
-      path: '/more'
-      fullPath: '/more'
-      preLoaderRoute: typeof MoreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/redeem': {
-      id: '/redeem'
-      path: '/redeem'
-      fullPath: '/redeem'
-      preLoaderRoute: typeof RedeemRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search': {
@@ -704,26 +655,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
+    '/redeem': {
+      id: '/redeem'
+      path: '/redeem'
+      fullPath: '/redeem'
+      preLoaderRoute: typeof RedeemRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/portal': {
-      id: '/_authenticated/portal'
-      path: '/portal'
-      fullPath: '/portal'
-      preLoaderRoute: typeof AuthenticatedPortalRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/more': {
+      id: '/more'
+      path: '/more'
+      fullPath: '/more'
+      preLoaderRoute: typeof MoreRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/reseller': {
-      id: '/_authenticated/reseller'
-      path: '/reseller'
-      fullPath: '/reseller'
-      preLoaderRoute: typeof AuthenticatedResellerRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favorites': {
+      id: '/favorites'
+      path: '/favorites'
+      fullPath: '/favorites'
+      preLoaderRoute: typeof FavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bootstrap': {
+      id: '/bootstrap'
+      path: '/bootstrap'
+      fullPath: '/bootstrap'
+      preLoaderRoute: typeof BootstrapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/': {
       id: '/admin/'
@@ -732,116 +718,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/api': {
-      id: '/admin/api'
-      path: '/api'
-      fullPath: '/admin/api'
-      preLoaderRoute: typeof AdminApiRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/audit': {
-      id: '/admin/audit'
-      path: '/audit'
-      fullPath: '/admin/audit'
-      preLoaderRoute: typeof AdminAuditRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/billing': {
-      id: '/admin/billing'
-      path: '/billing'
-      fullPath: '/admin/billing'
-      preLoaderRoute: typeof AdminBillingRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/bulk': {
-      id: '/admin/bulk'
-      path: '/bulk'
-      fullPath: '/admin/bulk'
-      preLoaderRoute: typeof AdminBulkRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/codes': {
-      id: '/admin/codes'
-      path: '/codes'
-      fullPath: '/admin/codes'
-      preLoaderRoute: typeof AdminCodesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/devices': {
-      id: '/admin/devices'
-      path: '/devices'
-      fullPath: '/admin/devices'
-      preLoaderRoute: typeof AdminDevicesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/jobs': {
-      id: '/admin/jobs'
-      path: '/jobs'
-      fullPath: '/admin/jobs'
-      preLoaderRoute: typeof AdminJobsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/licenses': {
-      id: '/admin/licenses'
-      path: '/licenses'
-      fullPath: '/admin/licenses'
-      preLoaderRoute: typeof AdminLicensesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/notifications': {
-      id: '/admin/notifications'
-      path: '/notifications'
-      fullPath: '/admin/notifications'
-      preLoaderRoute: typeof AdminNotificationsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/packages': {
-      id: '/admin/packages'
-      path: '/packages'
-      fullPath: '/admin/packages'
-      preLoaderRoute: typeof AdminPackagesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/resellers': {
-      id: '/admin/resellers'
-      path: '/resellers'
-      fullPath: '/admin/resellers'
-      preLoaderRoute: typeof AdminResellersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/security': {
-      id: '/admin/security'
-      path: '/security'
-      fullPath: '/admin/security'
-      preLoaderRoute: typeof AdminSecurityRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/sessions': {
-      id: '/admin/sessions'
-      path: '/sessions'
-      fullPath: '/admin/sessions'
-      preLoaderRoute: typeof AdminSessionsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/system': {
-      id: '/admin/system'
-      path: '/system'
-      fullPath: '/admin/system'
-      preLoaderRoute: typeof AdminSystemRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/users': {
-      id: '/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AdminUsersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/browse/$kind': {
-      id: '/browse/$kind'
-      path: '/browse/$kind'
-      fullPath: '/browse/$kind'
-      preLoaderRoute: typeof BrowseKindRouteImport
+    '/series/$id': {
+      id: '/series/$id'
+      path: '/series/$id'
+      fullPath: '/series/$id'
+      preLoaderRoute: typeof SeriesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/movie/$id': {
@@ -851,60 +732,137 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MovieIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/series/$id': {
-      id: '/series/$id'
-      path: '/series/$id'
-      fullPath: '/series/$id'
-      preLoaderRoute: typeof SeriesIdRouteImport
+    '/browse/$kind': {
+      id: '/browse/$kind'
+      path: '/browse/$kind'
+      fullPath: '/browse/$kind'
+      preLoaderRoute: typeof BrowseKindRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/billing/observability': {
-      id: '/admin/billing/observability'
-      path: '/observability'
-      fullPath: '/admin/billing/observability'
-      preLoaderRoute: typeof AdminBillingObservabilityRouteImport
-      parentRoute: typeof AdminBillingRoute
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/admin/billing/traces': {
-      id: '/admin/billing/traces'
-      path: '/traces'
-      fullPath: '/admin/billing/traces'
-      preLoaderRoute: typeof AdminBillingTracesRouteImport
-      parentRoute: typeof AdminBillingRoute
+    '/admin/system': {
+      id: '/admin/system'
+      path: '/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AdminSystemRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/api/v1/docs': {
-      id: '/api/v1/docs'
-      path: '/api/v1/docs'
-      fullPath: '/api/v1/docs'
-      preLoaderRoute: typeof ApiV1DocsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/admin/sessions': {
+      id: '/admin/sessions'
+      path: '/sessions'
+      fullPath: '/admin/sessions'
+      preLoaderRoute: typeof AdminSessionsRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/api/v1/invoices': {
-      id: '/api/v1/invoices'
-      path: '/api/v1/invoices'
-      fullPath: '/api/v1/invoices'
-      preLoaderRoute: typeof ApiV1InvoicesRouteImport
-      parentRoute: typeof rootRouteImport
+    '/admin/security': {
+      id: '/admin/security'
+      path: '/security'
+      fullPath: '/admin/security'
+      preLoaderRoute: typeof AdminSecurityRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/api/v1/licenses': {
-      id: '/api/v1/licenses'
-      path: '/api/v1/licenses'
-      fullPath: '/api/v1/licenses'
-      preLoaderRoute: typeof ApiV1LicensesRouteImport
-      parentRoute: typeof rootRouteImport
+    '/admin/resellers': {
+      id: '/admin/resellers'
+      path: '/resellers'
+      fullPath: '/admin/resellers'
+      preLoaderRoute: typeof AdminResellersRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/api/v1/openapi': {
-      id: '/api/v1/openapi'
-      path: '/api/v1/openapi'
-      fullPath: '/api/v1/openapi'
-      preLoaderRoute: typeof ApiV1OpenapiRouteImport
-      parentRoute: typeof rootRouteImport
+    '/admin/packages': {
+      id: '/admin/packages'
+      path: '/packages'
+      fullPath: '/admin/packages'
+      preLoaderRoute: typeof AdminPackagesRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/api/v1/orders': {
-      id: '/api/v1/orders'
-      path: '/api/v1/orders'
-      fullPath: '/api/v1/orders'
-      preLoaderRoute: typeof ApiV1OrdersRouteImport
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/licenses': {
+      id: '/admin/licenses'
+      path: '/licenses'
+      fullPath: '/admin/licenses'
+      preLoaderRoute: typeof AdminLicensesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/jobs': {
+      id: '/admin/jobs'
+      path: '/jobs'
+      fullPath: '/admin/jobs'
+      preLoaderRoute: typeof AdminJobsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/devices': {
+      id: '/admin/devices'
+      path: '/devices'
+      fullPath: '/admin/devices'
+      preLoaderRoute: typeof AdminDevicesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/codes': {
+      id: '/admin/codes'
+      path: '/codes'
+      fullPath: '/admin/codes'
+      preLoaderRoute: typeof AdminCodesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bulk': {
+      id: '/admin/bulk'
+      path: '/bulk'
+      fullPath: '/admin/bulk'
+      preLoaderRoute: typeof AdminBulkRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/billing': {
+      id: '/admin/billing'
+      path: '/billing'
+      fullPath: '/admin/billing'
+      preLoaderRoute: typeof AdminBillingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/api': {
+      id: '/admin/api'
+      path: '/api'
+      fullPath: '/admin/api'
+      preLoaderRoute: typeof AdminApiRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_authenticated/reseller': {
+      id: '/_authenticated/reseller'
+      path: '/reseller'
+      fullPath: '/reseller'
+      preLoaderRoute: typeof AuthenticatedResellerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal': {
+      id: '/_authenticated/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof AuthenticatedPortalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/watch/$kind/$id': {
+      id: '/watch/$kind/$id'
+      path: '/watch/$kind/$id'
+      fullPath: '/watch/$kind/$id'
+      preLoaderRoute: typeof WatchKindIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/packages': {
@@ -914,25 +872,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1PackagesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/watch/$kind/$id': {
-      id: '/watch/$kind/$id'
-      path: '/watch/$kind/$id'
-      fullPath: '/watch/$kind/$id'
-      preLoaderRoute: typeof WatchKindIdRouteImport
+    '/api/v1/orders': {
+      id: '/api/v1/orders'
+      path: '/api/v1/orders'
+      fullPath: '/api/v1/orders'
+      preLoaderRoute: typeof ApiV1OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/admin/export/$file': {
-      id: '/api/admin/export/$file'
-      path: '/api/admin/export/$file'
-      fullPath: '/api/admin/export/$file'
-      preLoaderRoute: typeof ApiAdminExportFileRouteImport
+    '/api/v1/openapi': {
+      id: '/api/v1/openapi'
+      path: '/api/v1/openapi'
+      fullPath: '/api/v1/openapi'
+      preLoaderRoute: typeof ApiV1OpenapiRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/v1/health/live': {
-      id: '/api/v1/health/live'
-      path: '/api/v1/health/live'
-      fullPath: '/api/v1/health/live'
-      preLoaderRoute: typeof ApiV1HealthLiveRouteImport
+    '/api/v1/licenses': {
+      id: '/api/v1/licenses'
+      path: '/api/v1/licenses'
+      fullPath: '/api/v1/licenses'
+      preLoaderRoute: typeof ApiV1LicensesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/invoices': {
+      id: '/api/v1/invoices'
+      path: '/api/v1/invoices'
+      fullPath: '/api/v1/invoices'
+      preLoaderRoute: typeof ApiV1InvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/docs': {
+      id: '/api/v1/docs'
+      path: '/api/v1/docs'
+      fullPath: '/api/v1/docs'
+      preLoaderRoute: typeof ApiV1DocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/billing/traces': {
+      id: '/admin/billing/traces'
+      path: '/traces'
+      fullPath: '/admin/billing/traces'
+      preLoaderRoute: typeof AdminBillingTracesRouteImport
+      parentRoute: typeof AdminBillingRoute
+    }
+    '/admin/billing/observability': {
+      id: '/admin/billing/observability'
+      path: '/observability'
+      fullPath: '/admin/billing/observability'
+      preLoaderRoute: typeof AdminBillingObservabilityRouteImport
+      parentRoute: typeof AdminBillingRoute
+    }
+    '/api/v1/webhooks/endpoints': {
+      id: '/api/v1/webhooks/endpoints'
+      path: '/api/v1/webhooks/endpoints'
+      fullPath: '/api/v1/webhooks/endpoints'
+      preLoaderRoute: typeof ApiV1WebhooksEndpointsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/licenses/$id': {
+      id: '/api/v1/licenses/$id'
+      path: '/$id'
+      fullPath: '/api/v1/licenses/$id'
+      preLoaderRoute: typeof ApiV1LicensesIdRouteImport
+      parentRoute: typeof ApiV1LicensesRoute
+    }
+    '/api/v1/invoices/$id': {
+      id: '/api/v1/invoices/$id'
+      path: '/$id'
+      fullPath: '/api/v1/invoices/$id'
+      preLoaderRoute: typeof ApiV1InvoicesIdRouteImport
+      parentRoute: typeof ApiV1InvoicesRoute
+    }
+    '/api/v1/health/version': {
+      id: '/api/v1/health/version'
+      path: '/api/v1/health/version'
+      fullPath: '/api/v1/health/version'
+      preLoaderRoute: typeof ApiV1HealthVersionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/health/ready': {
@@ -942,39 +956,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1HealthReadyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/v1/health/version': {
-      id: '/api/v1/health/version'
-      path: '/api/v1/health/version'
-      fullPath: '/api/v1/health/version'
-      preLoaderRoute: typeof ApiV1HealthVersionRouteImport
+    '/api/v1/health/live': {
+      id: '/api/v1/health/live'
+      path: '/api/v1/health/live'
+      fullPath: '/api/v1/health/live'
+      preLoaderRoute: typeof ApiV1HealthLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/v1/invoices/$id': {
-      id: '/api/v1/invoices/$id'
-      path: '/$id'
-      fullPath: '/api/v1/invoices/$id'
-      preLoaderRoute: typeof ApiV1InvoicesIdRouteImport
-      parentRoute: typeof ApiV1InvoicesRoute
-    }
-    '/api/v1/licenses/$id': {
-      id: '/api/v1/licenses/$id'
-      path: '/$id'
-      fullPath: '/api/v1/licenses/$id'
-      preLoaderRoute: typeof ApiV1LicensesIdRouteImport
-      parentRoute: typeof ApiV1LicensesRoute
-    }
-    '/api/v1/webhooks/endpoints': {
-      id: '/api/v1/webhooks/endpoints'
-      path: '/api/v1/webhooks/endpoints'
-      fullPath: '/api/v1/webhooks/endpoints'
-      preLoaderRoute: typeof ApiV1WebhooksEndpointsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/billing/invoices/$id/pdf': {
-      id: '/api/billing/invoices/$id/pdf'
-      path: '/api/billing/invoices/$id/pdf'
-      fullPath: '/api/billing/invoices/$id/pdf'
-      preLoaderRoute: typeof ApiBillingInvoicesIdPdfRouteImport
+    '/api/admin/export/$file': {
+      id: '/api/admin/export/$file'
+      path: '/api/admin/export/$file'
+      fullPath: '/api/admin/export/$file'
+      preLoaderRoute: typeof ApiAdminExportFileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/stream/$kind/$file': {
@@ -982,6 +975,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/stream/$kind/$file'
       fullPath: '/api/public/stream/$kind/$file'
       preLoaderRoute: typeof ApiPublicStreamKindFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/invoices/$id/pdf': {
+      id: '/api/billing/invoices/$id/pdf'
+      path: '/api/billing/invoices/$id/pdf'
+      fullPath: '/api/billing/invoices/$id/pdf'
+      preLoaderRoute: typeof ApiBillingInvoicesIdPdfRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -1110,3 +1110,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
