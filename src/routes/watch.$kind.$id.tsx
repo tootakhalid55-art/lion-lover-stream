@@ -31,7 +31,7 @@ function WatchPage() {
       try {
         const r = await resolveStream({ data: { id: fullId, ext } });
         if (!alive) return;
-        setSrc(r.manifestUrl);
+        setSrc(adaptStreamUrlForDevice(r.manifestUrl, kind, ext));
         track({ name: "playback_started", titleId: fullId });
         if (kind === "movie") {
           const m = await getMovieDetail({ data: { id: fullId } });
