@@ -49,6 +49,17 @@ export function headersForXtreamTarget(
   return next;
 }
 
+function responseWithRedirectTrace(response: Response, target: URL, redirectCount: number): Response {
+  const headers = new Headers(response.headers);
+  headers.set("x-xtream-final-host-type", isIpHostname(target.hostname) ? "ip" : "domain");
+  headers.set("x-xtream-redirect-count", String(redirectCount));
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export async function fetchXtreamMedia(
   input: string | URL,
   init: RequestInit,
@@ -69,10 +80,26 @@ export async function fetchXtreamMedia(
       redirect: "manual",
     });
 
-    if (!REDIRECT_STATUSES.has(response.status)) return response;
+    if (response.status === 403 && isIpHostname(target.hostname)) {
+      const errorText = await response.clone().text().catch(() => "");
+      if (/\berror\s+code:\s*1003\b/i.test(errorText)) {
+        const provider = new URL(providerServerUrl);
+        const rewritten = new URL(target);
+        rewritten.hostname = provider.hostname;
+        if (!visited.has(rewritten.toString())) {
+          await response.body?.cancel().catch(() => undefined);
+          target = rewritten;
+          continue;
+        }
+      }
+    }
+
+    if (!REDIRECT_STATUSES.has(response.status)) {
+      return responseWithRedirectTrace(response, target, redirectCount);
+    }
 
     const location = response.headers.get("location");
-    if (!location) return response;
+    if (!location) return responseWithRedirectTrace(response, target, redirectCount);
     if (redirectCount === maxRedirects) {
       await response.body?.cancel().catch(() => undefined);
       throw new Error("Xtream media exceeded redirect limit");
