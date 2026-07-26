@@ -31,6 +31,9 @@ export function browserContainerForSource(
   kind: string,
   sourceExt?: string,
 ): PlaybackContainer {
+  if (kind === "live") {
+    return capabilities.preferredBrowserContainer === "ts" ? "ts" : "m3u8";
+  }
   const serverContainer = serverPlaybackContainerForSource(kind, sourceExt);
   if (serverContainer !== "ts") return serverContainer;
   return capabilities.preferredBrowserContainer;
@@ -107,15 +110,17 @@ export function rewriteStreamUrl(rawSrc: string, targetExt: PlaybackContainer, f
  * One-shot helper: pick the best container for this device and rewrite the URL.
  */
 export function adaptStreamUrlForDevice(rawSrc: string, kind: "movie" | "series" | "live" | string, fallbackSourceExt?: string): string {
-  if (kind === "live") return rawSrc;
   const caps = detectDeviceCapabilities();
+  const effectiveFallbackExt = kind === "live" ? "ts" : fallbackSourceExt;
   const sourceExt = (() => {
     try {
       const url = new URL(rawSrc, typeof window !== "undefined" ? window.location.origin : "http://localhost");
-      return url.searchParams.get("sourceExt") || fallbackSourceExt;
+      return url.searchParams.get("sourceExt") || effectiveFallbackExt;
     } catch {
-      return fallbackSourceExt;
+      return effectiveFallbackExt;
     }
   })();
-  return rewriteStreamUrl(rawSrc, browserContainerForSource(caps, kind, sourceExt), fallbackSourceExt);
+  const target = browserContainerForSource(caps, kind, sourceExt);
+  if (kind === "live" && target === "m3u8") return rawSrc;
+  return rewriteStreamUrl(rawSrc, target, effectiveFallbackExt);
 }
