@@ -22,6 +22,21 @@ export interface DeviceCapabilities {
 
 let cached: DeviceCapabilities | null = null;
 
+const SAFARI_NATIVE_FILE_EXTENSIONS = new Set(["mp4", "m4v", "mov"]);
+
+export function browserContainerForSource(
+  capabilities: Pick<DeviceCapabilities, "isIOS" | "isSafari" | "preferredBrowserContainer">,
+  kind: string,
+  sourceExt?: string,
+): PlaybackContainer {
+  if (kind === "live") return "m3u8";
+  const normalizedExt = String(sourceExt || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+  if ((capabilities.isIOS || capabilities.isSafari) && SAFARI_NATIVE_FILE_EXTENSIONS.has(normalizedExt)) {
+    return "mp4";
+  }
+  return capabilities.preferredBrowserContainer;
+}
+
 export function detectDeviceCapabilities(): DeviceCapabilities {
   if (cached) return cached;
   if (typeof window === "undefined") {
@@ -95,5 +110,13 @@ export function rewriteStreamUrl(rawSrc: string, targetExt: PlaybackContainer, f
 export function adaptStreamUrlForDevice(rawSrc: string, kind: "movie" | "series" | "live" | string, fallbackSourceExt?: string): string {
   if (kind === "live") return rawSrc;
   const caps = detectDeviceCapabilities();
-  return rewriteStreamUrl(rawSrc, caps.preferredBrowserContainer, fallbackSourceExt);
+  const sourceExt = (() => {
+    try {
+      const url = new URL(rawSrc, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+      return url.searchParams.get("sourceExt") || fallbackSourceExt;
+    } catch {
+      return fallbackSourceExt;
+    }
+  })();
+  return rewriteStreamUrl(rawSrc, browserContainerForSource(caps, kind, sourceExt), fallbackSourceExt);
 }
