@@ -18,9 +18,15 @@ describe("server playback routing", () => {
     );
   });
 
-  it("preserves native MOV sources while exposing a browser MP4 route", () => {
+  it("preserves the provider's native MOV extension for episodes", () => {
     expect(buildServerStreamPath("series", "88", "mov")).toBe(
-      "/api/public/stream/series/88.mp4?sourceExt=mov",
+      "/api/public/stream/series/88.mov?sourceExt=mov",
+    );
+  });
+
+  it("preserves the provider's MKV extension instead of relabeling it as TS", () => {
+    expect(buildServerStreamPath("movie", "90", "mkv")).toBe(
+      "/api/public/stream/movie/90.mkv?sourceExt=mkv",
     );
   });
 

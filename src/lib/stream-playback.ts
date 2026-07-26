@@ -19,11 +19,12 @@ export function serverPlaybackContainerForSource(
 }
 
 export function buildServerStreamPath(kind: string, rawId: string, sourceExt?: string): string {
-  const container = serverPlaybackContainerForSource(kind, sourceExt);
   const id = encodeURIComponent(rawId);
   if (kind === "live") return `/api/public/stream/live/${id}.m3u8`;
 
+  // Preserve the provider's advertised file extension. This was the original
+  // working playback path before VOD was forced through synthetic HLS/TS.
   const mediaKind = kind === "series" ? "series" : "movie";
   const normalizedExt = normalizeSourceExtension(sourceExt);
-  return `/api/public/stream/${mediaKind}/${id}.${container}?sourceExt=${encodeURIComponent(normalizedExt)}`;
+  return `/api/public/stream/${mediaKind}/${id}.${normalizedExt}?sourceExt=${encodeURIComponent(normalizedExt)}`;
 }
