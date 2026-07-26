@@ -8,6 +8,9 @@ import { BottomNav } from "@/features/navigation/BottomNav";
 import { getAccountInfo, signInWithOwnAccount, useDefaultAccount } from "@/lib/xtream.functions";
 import { RouteError } from "@/components/RouteError";
 
+const DEV_MOCK_API =
+  import.meta.env.DEV && import.meta.env.VITE_API_MODE === "mock";
+
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
@@ -31,7 +34,20 @@ function SettingsPage() {
   const signIn = useServerFn(signInWithOwnAccount);
   const useDefault = useServerFn(useDefaultAccount);
 
-  const account = useQuery({ queryKey: ["xtream", "account"], queryFn: () => accountFn(), staleTime: 30_000, throwOnError: true });
+  const account = useQuery({
+    queryKey: ["xtream", "account"],
+    queryFn: () =>
+      DEV_MOCK_API
+        ? Promise.resolve({
+            username: "معاينة محلية",
+            isOverride: false,
+            status: "preview",
+            expiresAt: null,
+          })
+        : accountFn(),
+    staleTime: 30_000,
+    throwOnError: true,
+  });
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +67,10 @@ function SettingsPage() {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault(); setError(null);
+    if (DEV_MOCK_API) {
+      setError("تغيير حساب البث غير متاح أثناء وضع المعاينة.");
+      return;
+    }
     login.mutate({ username, password, serverUrl: serverUrl.trim() || undefined });
   }
 
@@ -109,6 +129,11 @@ function SettingsPage() {
           <p className="mb-4 text-sm text-foreground/70">
             استخدم بيانات اشتراكك من مزوّد Xtream لعرض محتواك بدل الحساب الافتراضي.
           </p>
+          {DEV_MOCK_API && (
+            <p className="mb-4 rounded-xl bg-sky-500/10 px-3 py-2 text-xs text-sky-200 ring-1 ring-sky-500/30">
+              وضع المعاينة مفعّل؛ لا تُرسل بيانات حقيقية من هذه الصفحة.
+            </p>
+          )}
           <form onSubmit={onSubmit} className="space-y-3">
             <label className="block">
               <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-foreground/70">اسم المستخدم</span>
@@ -137,10 +162,10 @@ function SettingsPage() {
               </p>
             )}
             <button
-              type="submit" disabled={login.isPending}
+              type="submit" disabled={login.isPending || DEV_MOCK_API}
               className="w-full rounded-full bg-lime px-4 py-3 text-sm font-black text-neutral-900 shadow-[0_15px_40px_-10px_color-mix(in_oklab,var(--lime)_55%,transparent)] transition hover:scale-[1.02] active:scale-95 disabled:opacity-60"
             >
-              {login.isPending ? "جارٍ الدخول..." : "تسجيل الدخول"}
+              {DEV_MOCK_API ? "غير متاح في وضع المعاينة" : login.isPending ? "جارٍ الدخول..." : "تسجيل الدخول"}
             </button>
           </form>
         </section>

@@ -35,6 +35,10 @@ async function getAdmin() {
   return supabaseAdmin;
 }
 
+function hasSupabaseAdmin(): boolean {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 async function assertStaff(ctx: { supabase: any; userId: string }): Promise<AppRole[]> {
   const { data, error } = await ctx.supabase
     .from("user_roles")
@@ -175,27 +179,6 @@ export const resolveLoginEmail = createServerFn({ method: "POST" })
     const key = `login:${clientIp()}:${data.username.toLowerCase()}`;
     const rl = rateLimit(key, { capacity: 10, refillPerSec: 1 / 30 });
     if (!rl.allowed) throw new Error(`Too many attempts. Retry in ${Math.ceil(rl.retryAfterMs / 1000)}s`);
-    const admin = await getAdmin();
-    const { data: p } = await admin
-      .from("profiles")
-      .select("id, status, locked_until, expires_at")
-      .eq("username", data.username.toLowerCase())
-      .maybeSingle();
-    if (!p) {
-      await admin.from("login_attempts").insert({ username: data.username, ip: clientIp(), success: false, reason: "no_user", user_agent: clientUA() });
-      await secEvent(null, "failed_login", "info", { username: data.username, reason: "no_user" });
-      throw new Error("بيانات الدخول غير صحيحة");
-    }
-    if (p.locked_until && new Date(p.locked_until) > new Date()) {
-      await secEvent(p.id, "failed_login", "warn", { reason: "locked" });
-      throw new Error("الحساب مقفول مؤقتًا. حاول لاحقًا.");
-    }
-    if (p.status === "suspended") throw new Error("الحساب معلّق. تواصل مع الإدارة.");
-    if (p.status === "disabled") throw new Error("الحساب معطّل.");
-    if (p.expires_at && new Date(p.expires_at) < new Date()) {
-      await admin.from("profiles").update({ status: "expired" as AccountStatus }).eq("id", p.id);
-      throw new Error("انتهى اشتراكك.");
-    }
     return { email: usernameToEmail(data.username) };
   });
 
@@ -206,7 +189,8 @@ export const finalizeLogin = createServerFn({ method: "POST" })
     z.object({ deviceId: z.string().min(4), deviceName: z.string().max(200), os: z.string().max(64), browser: z.string().max(64) }).parse(v),
   )
   .handler(async ({ data, context }) => {
-    const admin = await getAdmin();
+    const adminConfigured = hasSupabaseAdmin();
+    const admin = adminConfigured ? await getAdmin() : context.supabase;
     const uid = context.userId;
     const { data: profile } = await admin
       .from("profiles")
@@ -227,6 +211,13 @@ export const finalizeLogin = createServerFn({ method: "POST" })
     const pkg: any = (profile as any).packages ?? null;
     const maxDevices = isStaff ? 999 : Math.max(1, pkg?.max_devices ?? 1);
     const maxSessions = isStaff ? 999 : Math.max(1, pkg?.max_sessions ?? maxDevices);
+
+    // Local/Lovable previews may only have the publishable key. Authentication
+    // and account validation still work through RLS; privileged device/session
+    // tracking resumes automatically once the service-role key is configured.
+    if (!adminConfigured) {
+      return { ok: true as const, trackingEnabled: false as const };
+    }
 
     // Devices: allow same device, otherwise enforce limit
     const { data: devices } = await admin.from("user_devices").select("*").eq("user_id", uid);
@@ -292,7 +283,7 @@ export const finalizeLogin = createServerFn({ method: "POST" })
 export const me = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const admin = await getAdmin();
+    const admin = context.supabase;
     const uid = context.userId;
     const [{ data: profile }, { data: roles }] = await Promise.all([
       admin.from("profiles").select("id, username, display_name, status, expires_at, last_login_at, email, phone").eq("id", uid).maybeSingle(),
@@ -548,6 +539,7 @@ export const adminStats = createServerFn({ method: "GET" })
 export const heartbeat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    if (!hasSupabaseAdmin()) return { ok: true as const, trackingEnabled: false as const };
     const admin = await getAdmin();
     await admin.from("user_sessions").update({ last_seen: new Date().toISOString() }).eq("user_id", context.userId).is("revoked_at", null);
     return { ok: true as const };

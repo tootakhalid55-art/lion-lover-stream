@@ -5,6 +5,10 @@
  */
 import type { Api } from "./types";
 import { xtreamApi } from "./xtream";
+import { mockApi } from "./mock";
 
-export const api: Api = xtreamApi;
+const DEV_MOCK_API =
+  import.meta.env.DEV && import.meta.env.VITE_API_MODE === "mock";
+
+export const api: Api = DEV_MOCK_API ? mockApi : xtreamApi;
 export type { Api } from "./types";

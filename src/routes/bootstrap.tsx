@@ -43,7 +43,10 @@ function BootstrapPage() {
 
   useEffect(() => {
     if (status.locked) {
-      const t = setTimeout(() => router.navigate({ to: "/login" }), 3500);
+      const t = setTimeout(
+        () => router.navigate({ to: "/login", search: { redirect: "/" } }),
+        3500,
+      );
       return () => clearTimeout(t);
     }
   }, [status.locked, router]);
@@ -53,7 +56,10 @@ function BootstrapPage() {
     try {
       await bootstrap({ data: { username, password, code } });
       setOk(true);
-      setTimeout(() => router.navigate({ to: "/login" }), 1500);
+      setTimeout(
+        () => router.navigate({ to: "/login", search: { redirect: "/" } }),
+        1500,
+      );
     } catch (e: any) {
       setError(e?.message || "فشل الإنشاء");
     } finally { setBusy(false); }
@@ -72,7 +78,11 @@ function BootstrapPage() {
               ? "تم إعداد المسؤول الرئيسي مسبقًا. لا يمكن استخدام هذه الصفحة مرة أخرى."
               : "رمز التهيئة غير مُهيّأ على الخادم."}
           </p>
-          <Link to="/login" className="mt-6 inline-block rounded-full bg-white/10 px-5 py-2.5 text-sm font-bold ring-1 ring-white/15">
+          <Link
+            to="/login"
+            search={{ redirect: "/" }}
+            className="mt-6 inline-block rounded-full bg-white/10 px-5 py-2.5 text-sm font-bold ring-1 ring-white/15"
+          >
             الانتقال لتسجيل الدخول
           </Link>
         </div>
@@ -130,4 +140,3 @@ function BootstrapPage() {
     </div>
   );
 }
-
