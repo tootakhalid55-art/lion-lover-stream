@@ -5,7 +5,9 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { rewriteHlsManifest } from "@/lib/hls-proxy";
-import { fetchXtreamMedia } from "@/lib/xtream-media.server";
+import { fetchXtreamMedia, safeDirectSourceUrl } from "@/lib/xtream-media.server";
+
+const STREAM_PROXY_VERSION = "direct-source-v1";
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -254,12 +256,37 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   if (rawUpstreamPath && !upstreamPath) return new Response("Bad upstream path", { status: 400 });
 
   const { creds, isOverride } = await resolveCreds();
+  const accountLabel = isOverride ? "user-override" : "default";
+  const scope = isOverride ? `u:${creds.username}` : "default";
+  const directSources: string[] = [];
+  try {
+    const { cached, TTL } = await import("@/lib/xtream-cache.server");
+    if (kind === "movie") {
+      const info = await cached(`${scope}:vod-info:${id}`, TTL.lists, () => xtream.getVodInfo(creds, Number(id)));
+      const direct = safeDirectSourceUrl((info?.movie_data as Record<string, unknown> | undefined)?.direct_source);
+      if (direct) directSources.push(direct);
+    } else if (kind === "live") {
+      const list = await cached(`${scope}:live`, TTL.lists, () => xtream.getLiveStreams(creds));
+      const direct = safeDirectSourceUrl(list.find((item) => item.stream_id === Number(id))?.direct_source);
+      if (direct) directSources.push(direct);
+    }
+  } catch (error) {
+    console.warn(
+      `[stream:direct] lookup failed ${kind}/${id}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  const withDirectSources = (candidates: string[]) =>
+    upstreamPath ? candidates : [...new Set([...directSources, ...candidates])];
+
   if (ext === "m3u8") {
     // Prefer the provider's real HLS playlist for live, movies, and episodes.
     // Some panels do not expose VOD HLS, so those fall back to a local wrapper.
     const manifestCandidates = upstreamPath
       ? buildUpstreamPathCandidates(creds, kind, upstreamPath)
-      : buildStreamCandidates(creds, kind, id, "m3u8");
+      : [
+          ...directSources.filter((candidate) => /\.m3u8(?:$|\?)/i.test(candidate)),
+          ...buildStreamCandidates(creds, kind, id, "m3u8"),
+        ];
     for (const candidate of manifestCandidates) {
       try {
         const res = await fetchXtreamMedia(
@@ -286,6 +313,7 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
               "content-type": "application/vnd.apple.mpegurl; charset=utf-8",
               "cache-control": "no-store",
               "access-control-allow-origin": "*",
+              "x-stream-proxy-version": STREAM_PROXY_VERSION,
             },
           });
         }
@@ -297,13 +325,19 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
 
     if (kind === "movie" || kind === "series") {
       console.log(`[stream:hls] provider HLS unavailable; generated local VOD manifest ${kind}/${id}.m3u8 sourceExt=${sourceExt}`);
-      const manifest = await syntheticVodManifest(kind, id, sourceExt, buildStreamCandidates(creds, kind, id, sourceExt));
+      const manifest = await syntheticVodManifest(
+        kind,
+        id,
+        sourceExt,
+        withDirectSources(buildStreamCandidates(creds, kind, id, sourceExt)),
+      );
       return new Response(manifest, {
         status: 200,
         headers: {
           "content-type": "application/vnd.apple.mpegurl; charset=utf-8",
           "cache-control": "no-store",
           "access-control-allow-origin": "*",
+          "x-stream-proxy-version": STREAM_PROXY_VERSION,
         },
       });
     }
@@ -312,11 +346,9 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   const upstreamExt = ext === "ts" || (ext === "mp4" && sourceExt !== "mp4") ? sourceExt : ext;
   const upstreamCandidates = upstreamPath
     ? buildUpstreamPathCandidates(creds, kind, upstreamPath)
-    : buildStreamCandidates(creds, kind, id, upstreamExt);
+    : withDirectSources(buildStreamCandidates(creds, kind, id, upstreamExt));
   const safe = safeUrl(upstreamCandidates[0]);
   const maskedUser = maskUsername(creds.username);
-  const accountLabel = isOverride ? "user-override" : "default";
-
   if (requestUrl.searchParams.get("debug") === "1") {
     console.log(
       `[stream:auth] server=${creds.serverUrl} user=${maskedUser} account=${accountLabel} media=${kind}:${id}.${ext} upstreamExt=${upstreamExt}`,
@@ -419,7 +451,10 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
     releaseStreamSlot();
     return new Response(`Upstream unreachable: ${lastErr instanceof Error ? lastErr.message : "network error"}`, {
       status: 502,
-      headers: { "content-type": "text/plain; charset=utf-8" },
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "x-stream-proxy-version": STREAM_PROXY_VERSION,
+      },
     });
   }
 
@@ -440,7 +475,10 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
     console.warn(`[stream] non-2xx: ${label}${trimmed ? ` — ${trimmed}` : ""}`);
     return new Response(`${label}${trimmed ? ` — ${trimmed}` : ""}`, {
       status,
-      headers: { "content-type": "text/plain; charset=utf-8" },
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "x-stream-proxy-version": STREAM_PROXY_VERSION,
+      },
     });
   }
 
@@ -462,6 +500,7 @@ async function proxy(request: Request, kind: "movie" | "series" | "live", fileNa
   }
   if (ext === "ts") respHeaders.set("content-type", "video/mp2t");
   respHeaders.set("access-control-allow-origin", "*");
+  respHeaders.set("x-stream-proxy-version", STREAM_PROXY_VERSION);
 
   return new Response(releaseWhenStreamEnds(upstreamRes.body, releaseStreamSlot), {
     status,

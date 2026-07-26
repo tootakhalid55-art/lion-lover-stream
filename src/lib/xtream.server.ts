@@ -177,6 +177,7 @@ export interface XtreamVod {
   category_id?: string;
   container_extension?: string;
   year?: string;
+  direct_source?: string;
 }
 
 export interface XtreamSeries {
@@ -205,6 +206,7 @@ export interface XtreamLive {
   stream_icon?: string;
   epg_channel_id?: string;
   category_id?: string;
+  direct_source?: string;
 }
 
 export const xtream = {

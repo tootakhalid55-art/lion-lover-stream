@@ -3,6 +3,7 @@ import {
   fetchXtreamMedia,
   headersForXtreamTarget,
   isIpHostname,
+  safeDirectSourceUrl,
 } from "../xtream-media.server";
 
 describe("Xtream media redirects", () => {
@@ -14,6 +15,15 @@ describe("Xtream media redirects", () => {
     expect(isIpHostname("104.21.46.229")).toBe(true);
     expect(isIpHostname("2606:4700:3030::6815:2ee5")).toBe(true);
     expect(isIpHostname("provider.example")).toBe(false);
+  });
+
+  it("accepts public HTTP direct sources and rejects local targets", () => {
+    expect(safeDirectSourceUrl("https://media.example/video/1.mp4")).toBe(
+      "https://media.example/video/1.mp4",
+    );
+    expect(safeDirectSourceUrl("http://127.0.0.1/video.mp4")).toBeNull();
+    expect(safeDirectSourceUrl("http://192.168.1.10/video.mp4")).toBeNull();
+    expect(safeDirectSourceUrl("javascript:alert(1)")).toBeNull();
   });
 
   it("retains the provider Host header for an IP redirect", () => {
