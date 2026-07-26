@@ -13,21 +13,23 @@
 9. **artifact** — upload `.output/` as build artifact tagged with commit SHA
 10. **deploy staging** (auto on `main`)
 11. **smoke tests** — `scripts/smoke.sh` against staging
-12. **production approval** — required reviewer + tag `v*` push
-13. **deploy production** — manual approval gate
+12. **deploy production** (auto on `main` after staging smoke passes)
+13. **smoke tests** — `scripts/smoke.sh` against production
 
 ## Branch policy
 
-- `main` — deploys to Staging automatically.
-- Production deploys only from tags matching `v[0-9]+.[0-9]+.[0-9]+`.
-- Direct pushes to `main` disabled; PRs require 1 review + green CI.
+- `main` — deploys to Staging automatically, then to Production automatically after smoke tests pass.
+- Tags `v*` still trigger the same workflow for traceability, but are no longer required for production deploys.
+- Direct pushes to `main` should be disabled; PRs require 1 review + green CI.
 
 ## Environment promotion
 
 ```
 dev  ──►  staging  ──►  production
-       (auto)         (tag + approval)
+       (auto)         (auto after staging smoke)
 ```
 
 Each environment has its own Supabase project, secrets, and domain. No
 manual promotion; all changes go through the pipeline.
+
+> **Warning:** Because production deploys automatically, any merge to `main` reaches users within minutes. Keep `main` protected and require pull-request reviews.

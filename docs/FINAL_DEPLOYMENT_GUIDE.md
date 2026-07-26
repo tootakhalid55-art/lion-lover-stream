@@ -1,19 +1,21 @@
 # FINAL Deployment Guide — Nova TV v1.0.0
 
-Three environments, strict promotion, no direct-to-production changes.
+Three environments, continuous promotion from `main`.
 
 ```
 dev  ──►  staging  ──►  production
-       (auto on main)   (tag v* + approval + smoke)
+       (auto on main)   (auto on main after staging smoke)
 ```
+
+> ⚠️ **Auto-deploy is enabled for Production.** Every merge/push to `main` that passes build, tests, migration validation, and staging smoke tests will be deployed automatically to `https://tv.canarmodern.com`. Make sure branch protection and peer review are active on `main` to avoid shipping broken code directly to users.
 
 ## Environments
 
-| Env         | Domain                     | Deploy trigger              | Supabase project |
-|-------------|----------------------------|-----------------------------|------------------|
-| Development | preview URLs               | Every commit                | dev              |
-| Staging     | `https://staging.nova-tv.app` | Auto on `main`           | staging          |
-| Production  | `https://tv.canarmodern.com` | Git tag `v*` + approval | production       |
+| Env         | Domain                     | Deploy trigger                                  | Supabase project |
+|-------------|----------------------------|-------------------------------------------------|------------------|
+| Development | preview URLs               | Every commit                                    | dev              |
+| Staging     | `https://staging.nova-tv.app` | Auto on `main`                               | staging          |
+| Production  | `https://tv.canarmodern.com` | Auto on `main` after staging smoke passes    | production       |
 
 ## CI/CD pipeline
 
@@ -29,8 +31,8 @@ Defined in `.github/workflows/ci.yml`:
 8. Upload build artifact (14-day retention)
 9. Auto-deploy staging (from `main`)
 10. `scripts/smoke.sh https://staging.nova-tv.app`
-11. Tag `v*` triggers production job; manual approver required
-12. `scripts/deploy.sh production` + smoke
+11. Auto-deploy production (from `main`) **only after staging smoke passes**
+12. `scripts/smoke.sh https://tv.canarmodern.com`
 
 ## Deploy targets
 
@@ -43,12 +45,23 @@ Defined in `.github/workflows/ci.yml`:
 
 ## Release procedure
 
-1. Merge to `main` → staging auto-deploys.
-2. Verify staging smoke (12/12 green).
-3. Tag: `git tag v1.0.0 && git push --tags`.
-4. Approve production job in GitHub Actions.
-5. Watch monitoring dashboards for 72h.
-6. Rollback: `git revert` + tag `v1.0.<n+1>` OR `scripts/deploy.sh production <previous-artifact>`.
+1. Open a PR to `main`; ensure CI is green and at least one reviewer approves.
+2. Merge to `main` → staging auto-deploys.
+3. Staging smoke tests must pass (12/12 green).
+4. Production deploys automatically from the same artifact.
+5. Production smoke tests must pass.
+6. Watch monitoring dashboards for 72h after major releases.
+7. Rollback: `git revert` the offending commit, merge the revert to `main`, or run `scripts/deploy.sh production <previous-artifact>`.
+
+## GitHub environment protection
+
+To allow fully automatic production deploys, disable the manual approval gate in the repository settings:
+
+1. GitHub repo → Settings → Environments → `production`.
+2. Remove required reviewers / wait timer, or delete the `production` environment.
+3. Keep `staging` environment protection if you want an optional pause before production.
+
+If you ever need to pause auto-deploy, push an empty commit with `[skip ci]` in the message or temporarily disable the workflow in GitHub Actions.
 
 ## Migrations
 
