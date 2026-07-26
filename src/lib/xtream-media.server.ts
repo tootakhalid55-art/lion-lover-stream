@@ -11,6 +11,26 @@ export function isIpHostname(hostname: string): boolean {
   );
 }
 
+export function safeDirectSourceUrl(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+
+    const hostname = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+    if (hostname === "localhost" || hostname.endsWith(".local")) return null;
+    if (/^127\./.test(hostname) || /^10\./.test(hostname) || /^192\.168\./.test(hostname)) return null;
+    const private172 = hostname.match(/^172\.(\d{1,3})\./);
+    if (private172 && Number(private172[1]) >= 16 && Number(private172[1]) <= 31) return null;
+    if (hostname === "::1" || hostname.startsWith("fc") || hostname.startsWith("fd")) return null;
+
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 export function headersForXtreamTarget(
   headers: HeadersInit | undefined,
   target: URL,
