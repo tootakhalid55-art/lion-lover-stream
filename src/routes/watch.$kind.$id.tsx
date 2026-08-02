@@ -31,7 +31,9 @@ function WatchPage() {
       try {
         const r = await resolveStream({ data: { id: fullId, ext } });
         if (!alive) return;
-        setSrc(adaptStreamUrlForDevice(r.manifestUrl, kind, ext));
+        // Cloudflare Stream already delivers adaptive HLS on every device.
+        setSrc(r.origin === "cloudflare" ? r.manifestUrl : adaptStreamUrlForDevice(r.manifestUrl, kind, ext));
+
         track({ name: "playback_started", titleId: fullId });
         if (kind === "movie") {
           const m = await getMovieDetail({ data: { id: fullId } });
