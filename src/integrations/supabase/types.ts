@@ -376,6 +376,148 @@ export type Database = {
         }
         Relationships: []
       }
+      cf_restreamer_nodes: {
+        Row: {
+          active_channels: number
+          created_at: string
+          id: string
+          last_heartbeat_at: string | null
+          meta: Json
+          node_name: string
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          active_channels?: number
+          created_at?: string
+          id?: string
+          last_heartbeat_at?: string | null
+          meta?: Json
+          node_name: string
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          active_channels?: number
+          created_at?: string
+          id?: string
+          last_heartbeat_at?: string | null
+          meta?: Json
+          node_name?: string
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
+      cf_stream_assets: {
+        Row: {
+          cf_uid: string | null
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          error_message: string | null
+          id: string
+          kind: string
+          last_seen_at: string | null
+          live_input_id: string | null
+          playback_dash: string | null
+          playback_hls: string | null
+          rtmps_stream_key: string | null
+          rtmps_url: string | null
+          source_ext: string | null
+          srt_url: string | null
+          status: string
+          title: string | null
+          updated_at: string
+          xtream_id: string
+        }
+        Insert: {
+          cf_uid?: string | null
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          error_message?: string | null
+          id?: string
+          kind: string
+          last_seen_at?: string | null
+          live_input_id?: string | null
+          playback_dash?: string | null
+          playback_hls?: string | null
+          rtmps_stream_key?: string | null
+          rtmps_url?: string | null
+          source_ext?: string | null
+          srt_url?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          xtream_id: string
+        }
+        Update: {
+          cf_uid?: string | null
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          error_message?: string | null
+          id?: string
+          kind?: string
+          last_seen_at?: string | null
+          live_input_id?: string | null
+          playback_dash?: string | null
+          playback_hls?: string | null
+          rtmps_stream_key?: string | null
+          rtmps_url?: string | null
+          source_ext?: string | null
+          srt_url?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          xtream_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cf_stream_assets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cf_stream_events: {
+        Row: {
+          asset_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          message: string | null
+          raw: Json
+        }
+        Insert: {
+          asset_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          message?: string | null
+          raw?: Json
+        }
+        Update: {
+          asset_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string | null
+          raw?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cf_stream_events_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "cf_stream_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           code: string

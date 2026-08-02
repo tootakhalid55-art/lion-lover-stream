@@ -247,19 +247,48 @@ export const resolveStream = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{
     manifestUrl: string;
     protocol: "hls" | "dash";
+    origin: "cloudflare" | "xtream";
     audioLanguages: string[];
     subtitleLanguages: string[];
   }> => {
     try {
       const [kind, rawId] = data.id.split(":");
       if (!kind || !rawId) throw new Error("Invalid stream id");
-      // Keep playback on the application's server proxy: provider HLS for
-      // live channels, native MP4 for compatible VOD, and MPEG-TS otherwise.
+
+      // Prefer a Cloudflare Stream delivery when this title has a ready asset.
+      try {
+        const { isCloudflareConfigured } = await import("./cloudflare-stream.server");
+        if (isCloudflareConfigured()) {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data: asset } = await supabaseAdmin
+            .from("cf_stream_assets")
+            .select("playback_hls, status, enabled")
+            .eq("kind", kind)
+            .eq("xtream_id", rawId)
+            .maybeSingle();
+          const a = asset as { playback_hls: string | null; status: string; enabled: boolean } | null;
+          if (a?.enabled && a.playback_hls && (a.status === "ready" || a.status === "live")) {
+            return {
+              manifestUrl: a.playback_hls,
+              protocol: "hls",
+              origin: "cloudflare",
+              audioLanguages: ["ar", "en"],
+              subtitleLanguages: ["ar", "en"],
+            };
+          }
+        }
+      } catch (cfErr) {
+        console.error("[cf-stream] lookup failed", cfErr instanceof Error ? cfErr.message : cfErr);
+      }
+
+      // Fallback: the application's own server proxy — provider HLS for live
+      // channels, native MP4 for compatible VOD, and MPEG-TS otherwise.
       const sourceExt = normalizeSourceExtension(data.ext);
       const proxyPath = buildServerStreamPath(kind, rawId, sourceExt);
       return {
         manifestUrl: proxyPath,
         protocol: "hls",
+        origin: "xtream",
         audioLanguages: ["ar", "en"],
         subtitleLanguages: ["ar", "en"],
       };
@@ -268,6 +297,7 @@ export const resolveStream = createServerFn({ method: "POST" })
       throw err;
     }
   });
+
 
 // ─── Auth (per-user override) ────────────────────────────────────────────
 
