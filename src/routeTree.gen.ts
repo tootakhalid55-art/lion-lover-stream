@@ -56,6 +56,7 @@ import { Route as ApiV1HealthVersionRouteImport } from './routes/api.v1.health.v
 import { Route as ApiV1HealthReadyRouteImport } from './routes/api.v1.health.ready'
 import { Route as ApiV1HealthLiveRouteImport } from './routes/api.v1.health.live'
 import { Route as ApiPublicCfStreamWebhookRouteImport } from './routes/api.public.cf-stream.webhook'
+import { Route as ApiPublicCfStreamRestreamerRouteImport } from './routes/api.public.cf-stream.restreamer'
 import { Route as ApiAdminExportFileRouteImport } from './routes/api.admin.export.$file'
 import { Route as ApiPublicStreamKindFileRouteImport } from './routes/api.public.stream.$kind.$file'
 import { Route as ApiBillingInvoicesIdPdfRouteImport } from './routes/api.billing.invoices.$id.pdf'
@@ -296,6 +297,12 @@ const ApiPublicCfStreamWebhookRoute =
     path: '/api/public/cf-stream/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCfStreamRestreamerRoute =
+  ApiPublicCfStreamRestreamerRouteImport.update({
+    id: '/api/public/cf-stream/restreamer',
+    path: '/api/public/cf-stream/restreamer',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAdminExportFileRoute = ApiAdminExportFileRouteImport.update({
   id: '/api/admin/export/$file',
   path: '/api/admin/export/$file',
@@ -353,6 +360,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/packages': typeof ApiV1PackagesRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/public/cf-stream/restreamer': typeof ApiPublicCfStreamRestreamerRoute
   '/api/public/cf-stream/webhook': typeof ApiPublicCfStreamWebhookRoute
   '/api/v1/health/live': typeof ApiV1HealthLiveRoute
   '/api/v1/health/ready': typeof ApiV1HealthReadyRoute
@@ -403,6 +411,7 @@ export interface FileRoutesByTo {
   '/api/v1/packages': typeof ApiV1PackagesRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/public/cf-stream/restreamer': typeof ApiPublicCfStreamRestreamerRoute
   '/api/public/cf-stream/webhook': typeof ApiPublicCfStreamWebhookRoute
   '/api/v1/health/live': typeof ApiV1HealthLiveRoute
   '/api/v1/health/ready': typeof ApiV1HealthReadyRoute
@@ -456,6 +465,7 @@ export interface FileRoutesById {
   '/api/v1/packages': typeof ApiV1PackagesRoute
   '/watch/$kind/$id': typeof WatchKindIdRoute
   '/api/admin/export/$file': typeof ApiAdminExportFileRoute
+  '/api/public/cf-stream/restreamer': typeof ApiPublicCfStreamRestreamerRoute
   '/api/public/cf-stream/webhook': typeof ApiPublicCfStreamWebhookRoute
   '/api/v1/health/live': typeof ApiV1HealthLiveRoute
   '/api/v1/health/ready': typeof ApiV1HealthReadyRoute
@@ -509,6 +519,7 @@ export interface FileRouteTypes {
     | '/api/v1/packages'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/public/cf-stream/restreamer'
     | '/api/public/cf-stream/webhook'
     | '/api/v1/health/live'
     | '/api/v1/health/ready'
@@ -559,6 +570,7 @@ export interface FileRouteTypes {
     | '/api/v1/packages'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/public/cf-stream/restreamer'
     | '/api/public/cf-stream/webhook'
     | '/api/v1/health/live'
     | '/api/v1/health/ready'
@@ -611,6 +623,7 @@ export interface FileRouteTypes {
     | '/api/v1/packages'
     | '/watch/$kind/$id'
     | '/api/admin/export/$file'
+    | '/api/public/cf-stream/restreamer'
     | '/api/public/cf-stream/webhook'
     | '/api/v1/health/live'
     | '/api/v1/health/ready'
@@ -644,6 +657,7 @@ export interface RootRouteChildren {
   ApiV1PackagesRoute: typeof ApiV1PackagesRoute
   WatchKindIdRoute: typeof WatchKindIdRoute
   ApiAdminExportFileRoute: typeof ApiAdminExportFileRoute
+  ApiPublicCfStreamRestreamerRoute: typeof ApiPublicCfStreamRestreamerRoute
   ApiPublicCfStreamWebhookRoute: typeof ApiPublicCfStreamWebhookRoute
   ApiV1HealthLiveRoute: typeof ApiV1HealthLiveRoute
   ApiV1HealthReadyRoute: typeof ApiV1HealthReadyRoute
@@ -984,6 +998,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCfStreamWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cf-stream/restreamer': {
+      id: '/api/public/cf-stream/restreamer'
+      path: '/api/public/cf-stream/restreamer'
+      fullPath: '/api/public/cf-stream/restreamer'
+      preLoaderRoute: typeof ApiPublicCfStreamRestreamerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/export/$file': {
       id: '/api/admin/export/$file'
       path: '/api/admin/export/$file'
@@ -1121,6 +1142,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1PackagesRoute: ApiV1PackagesRoute,
   WatchKindIdRoute: WatchKindIdRoute,
   ApiAdminExportFileRoute: ApiAdminExportFileRoute,
+  ApiPublicCfStreamRestreamerRoute: ApiPublicCfStreamRestreamerRoute,
   ApiPublicCfStreamWebhookRoute: ApiPublicCfStreamWebhookRoute,
   ApiV1HealthLiveRoute: ApiV1HealthLiveRoute,
   ApiV1HealthReadyRoute: ApiV1HealthReadyRoute,
