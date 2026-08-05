@@ -65,6 +65,7 @@ export async function fetchXtreamMedia(
   init: RequestInit,
   providerServerUrl: string,
   maxRedirects = 5,
+  routing: { viaCountry?: string | null } = {},
 ): Promise<Response> {
   let target = new URL(input.toString());
   const visited = new Set<string>();
@@ -74,11 +75,24 @@ export async function fetchXtreamMedia(
     if (visited.has(key)) throw new Error("Xtream media redirect loop");
     visited.add(key);
 
-    const response = await fetch(target, {
-      ...init,
-      headers: headersForXtreamTarget(init.headers, target, providerServerUrl),
-      redirect: "manual",
-    });
+    const headers = headersForXtreamTarget(init.headers, target, providerServerUrl);
+    const forwardHost = headers.get("host") ?? undefined;
+
+    // Geo-unblock: route the upstream hop through an exit node when one is
+    // configured. Falls back to a direct fetch automatically.
+    let response: Response;
+    try {
+      const { routedFetch } = await import("./vpn.server");
+      const routed = await routedFetch(
+        target,
+        { ...init, headers, redirect: "manual" },
+        { ...(forwardHost ? { forwardHost } : {}), viaCountry: routing.viaCountry ?? null },
+      );
+      response = routed.response;
+    } catch {
+      response = await fetch(target, { ...init, headers, redirect: "manual" });
+    }
+
 
     if (response.status === 403 && isIpHostname(target.hostname)) {
       const errorText = await response.clone().text().catch(() => "");

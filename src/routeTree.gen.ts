@@ -23,6 +23,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as SeriesIdRouteImport } from './routes/series.$id'
 import { Route as MovieIdRouteImport } from './routes/movie.$id'
 import { Route as BrowseKindRouteImport } from './routes/browse.$kind'
+import { Route as AdminVpnRouteImport } from './routes/admin.vpn'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
@@ -130,6 +131,11 @@ const BrowseKindRoute = BrowseKindRouteImport.update({
   id: '/browse/$kind',
   path: '/browse/$kind',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminVpnRoute = AdminVpnRouteImport.update({
+  id: '/vpn',
+  path: '/vpn',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
@@ -353,6 +359,7 @@ export interface FileRoutesByFullPath {
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/vpn': typeof AdminVpnRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
@@ -405,6 +412,7 @@ export interface FileRoutesByTo {
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/vpn': typeof AdminVpnRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
@@ -460,6 +468,7 @@ export interface FileRoutesById {
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/vpn': typeof AdminVpnRoute
   '/browse/$kind': typeof BrowseKindRoute
   '/movie/$id': typeof MovieIdRoute
   '/series/$id': typeof SeriesIdRoute
@@ -515,6 +524,7 @@ export interface FileRouteTypes {
     | '/admin/sessions'
     | '/admin/system'
     | '/admin/users'
+    | '/admin/vpn'
     | '/browse/$kind'
     | '/movie/$id'
     | '/series/$id'
@@ -567,6 +577,7 @@ export interface FileRouteTypes {
     | '/admin/sessions'
     | '/admin/system'
     | '/admin/users'
+    | '/admin/vpn'
     | '/browse/$kind'
     | '/movie/$id'
     | '/series/$id'
@@ -621,6 +632,7 @@ export interface FileRouteTypes {
     | '/admin/sessions'
     | '/admin/system'
     | '/admin/users'
+    | '/admin/vpn'
     | '/browse/$kind'
     | '/movie/$id'
     | '/series/$id'
@@ -778,6 +790,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/browse/$kind'
       preLoaderRoute: typeof BrowseKindRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/vpn': {
+      id: '/admin/vpn'
+      path: '/vpn'
+      fullPath: '/admin/vpn'
+      preLoaderRoute: typeof AdminVpnRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/users': {
       id: '/admin/users'
@@ -1092,6 +1111,7 @@ interface AdminRouteChildren {
   AdminSessionsRoute: typeof AdminSessionsRoute
   AdminSystemRoute: typeof AdminSystemRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminVpnRoute: typeof AdminVpnRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -1112,6 +1132,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSessionsRoute: AdminSessionsRoute,
   AdminSystemRoute: AdminSystemRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminVpnRoute: AdminVpnRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -1175,13 +1196,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
