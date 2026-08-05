@@ -3359,6 +3359,95 @@ export type Database = {
         }
         Relationships: []
       }
+      vpn_exit_nodes: {
+        Row: {
+          country: string | null
+          country_code: string | null
+          created_at: string
+          enabled: boolean
+          id: string
+          last_checked_at: string | null
+          last_error: string | null
+          latency_ms: number | null
+          name: string
+          priority: number
+          relay_token: string
+          relay_url: string
+          request_count: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          country?: string | null
+          country_code?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          latency_ms?: number | null
+          name: string
+          priority?: number
+          relay_token: string
+          relay_url: string
+          request_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          country?: string | null
+          country_code?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          latency_ms?: number | null
+          name?: string
+          priority?: number
+          relay_token?: string
+          relay_url?: string
+          request_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vpn_route_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          latency_ms: number | null
+          message: string | null
+          node_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          latency_ms?: number | null
+          message?: string | null
+          node_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          latency_ms?: number | null
+          message?: string | null
+          node_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vpn_route_events_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "vpn_exit_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallet_ledger: {
         Row: {
           actor_id: string | null
