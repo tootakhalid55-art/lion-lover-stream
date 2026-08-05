@@ -76,6 +76,8 @@ function AdminLayout() {
               { to: "/admin/bulk", label: "جماعي", icon: Wand2 },
               { to: "/admin/notifications", label: "الإشعارات", icon: Bell },
               { to: "/admin/cdn", label: "التوزيع CDN", icon: Cloud },
+              { to: "/admin/vpn", label: "تجاوز الحجب", icon: Globe2 },
+
               { to: "/admin/system", label: "النظام", icon: Server },
               { to: "/admin/api", label: "REST API", icon: Plug },
             ].map((l) => (
