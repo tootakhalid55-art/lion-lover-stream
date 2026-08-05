@@ -36,8 +36,11 @@ const CACHE_TTL_MS = 60_000;
 let cache: NodeCache | null = null;
 
 function supabaseConfigured(): boolean {
+  // Never touch the database from unit tests (fetch is stubbed there).
+  if (process.env["NODE_ENV"] === "test" || process.env["VITEST"]) return false;
   return Boolean(process.env["SUPABASE_URL"] && process.env["SUPABASE_SERVICE_ROLE_KEY"]);
 }
+
 
 /** Loads enabled exit nodes (cached). Returns [] when routing is not set up. */
 export async function loadExitNodes(force = false): Promise<VpnExitNode[]> {
